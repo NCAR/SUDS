@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.12 $ $Date: 1990-05-04 13:39:41 $ $Author: burghart $
+ * $Revision: 1.13 $ $Date: 1990-05-11 14:34:25 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -400,7 +400,7 @@ skt_background ()
 	 * to a saturated parcel at the surface at temperature t
 	 */
 		if (Flg_theta_w)
-			ept = theta_e (t + T_K, 1000.);
+			ept = theta_e (t + T_K, t + T_K, 1000.);
 		else
 			ept = (float) t;
 	/*
@@ -827,7 +827,7 @@ float	*pres, *temp, *dp;
 	pt = theta_dry (t_sfc, p_sfc);
 	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
 	t_lcl = lcl_temp (t_sfc, dp_sfc);
-	ept = theta_e (t_lcl, p_lcl);
+	ept = theta_e (t_lcl, t_lcl, p_lcl);
 /*
  * Get the forecasted (700 mb) LCL pressure, temp, and ept
  */
@@ -836,7 +836,7 @@ float	*pres, *temp, *dp;
 		pt_700 = theta_dry (t_700, 700.0);
 		p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
 		t_lcl700 = lcl_temp (t_700, dp_700);
-		ept_700 = theta_e (t_lcl700, p_lcl700);
+		ept_700 = theta_e (t_lcl700, t_lcl700, p_lcl700);
 		do_700 = TRUE;
 	}
 	else

@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.11 $ $Date: 1990-05-04 13:34:37 $ $Author: burghart $ 
+ * $Revision: 1.12 $ $Date: 1990-05-11 14:33:09 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -161,7 +161,7 @@ int	npts;
 	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
 	an_printf ("\t LCL pressure: %.1f mb\n", p_lcl);
 	theta_lcl = theta_dry (t_lcl, p_lcl);
-	theta_e_lcl = theta_e (t_lcl, p_lcl);
+	theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 /*
  * Print the lifted index info
  */
@@ -448,7 +448,7 @@ int	npts;
  */
 	p_lcl = lcl_pres (t_sfc + T_K, dp_sfc + T_K, p_sfc);
 	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
-	theta_e_lcl = theta_e (t_lcl, p_lcl);
+	theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 /*
  * Search through the pressure array until we pass the LCL, then go
  * back to the previous good point

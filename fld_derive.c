@@ -1,6 +1,6 @@
 /*
  * Fields derivation module
- * $Revision: 1.2 $ $Date: 1990-05-04 13:36:58 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1990-05-11 14:35:07 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
@@ -98,7 +98,7 @@ fdd_dt_init ()
 	fdd_add_derivation (f_u_wind, fdd_u_wind, 2, f_wspd, f_wdir);
 	fdd_add_derivation (f_v_wind, fdd_v_wind, 2, f_wspd, f_wdir);
 	fdd_add_derivation (f_theta, fdd_theta, 2, f_temp, f_pres);
-	fdd_add_derivation (f_theta_e, fdd_theta_e, 2, f_dp, f_pres);
+	fdd_add_derivation (f_theta_e, fdd_theta_e, 3, f_temp, f_dp, f_pres);
 	fdd_add_derivation (f_alt, fdd_alt, 3, f_dp, f_temp, f_pres);
 	fdd_add_derivation (f_wspd, fdd_wspd, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_wdir, fdd_wdir, 2, f_u_wind, f_v_wind);
@@ -282,15 +282,15 @@ int	npts;
  * equivalent potential temperature derivation routine
  */
 {
-	float	*dp = dbufs[0], *pres = dbufs[1];
+	float	*t = dbufs[0], *dp = dbufs[1], *pres = dbufs[2];
 	int	i;
 
 	for (i = 0; i < npts; i++)
 	{
-		if (dp[i] == badval || pres[i] == badval)
+		if (t[i] == badval || dp[i] == badval || pres[i] == badval)
 			buf[i] = badval;
 		else
-			buf[i] = theta_e (dp[i] + T_K, pres[i]);
+			buf[i] = theta_e (t[i] + T_K, dp[i] + T_K, pres[i]);
 	}
 }
 

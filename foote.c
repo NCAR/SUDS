@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.10 $ $Date: 1990-05-04 13:37:08 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-05-11 14:34:12 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>
@@ -152,7 +152,7 @@ struct ui_command *cmds;
 		 */
 			p_lcl = lcl_pres (temp[i] + T_K, dp[i] + T_K, pres[i]);
 			t_lcl = lcl_temp (temp[i] + T_K, dp[i] + T_K);
-			theta_e_lcl = theta_e (t_lcl, p_lcl);
+			theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 		/*
 		 * Get the parcel lifted index and calculate the y coordinate
 		 * for this point
