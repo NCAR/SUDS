@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.12 1991-10-21 21:36:02 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.13 1991-12-16 21:03:40 burghart Exp $";
 
 # include <math.h>
 # include "globals.h"
@@ -1111,116 +1111,128 @@ struct ui_command	*cmds;
 {
 	char	*id_name;
 	char	*snd_default ();
-	fldtype	targetfld, threshfld;
-	int	criterion, ndx, i;
-	float	compare_val;
-	struct snd_datum	*target, *thresh, *nexttarget;
+	fldtype	targetfld, threshfld[10];
+	int	c, criterion[10], ncrit, ndx, i;
+	float	compare_val[10], *thresh[10];
+	bool	remove;
+	struct snd_datum	*target;
 	struct snd_datum	*snd_data_ptr ();
 /*
- * Get the target and threshold fields, and the threshold criterion
+ * Get the target field
  */
 	targetfld = fd_num (UPTR (cmds[0]));
-	threshfld = fd_num (UPTR (cmds[1]));
-	criterion = UKEY (cmds[2]);
 /*
- * Get the comparison value (if any)
+ * Get the threshold fields, criteria, and comparison values
  */
-	if (cmds[3].uc_ctype == UTT_VALUE && cmds[3].uc_vptype == SYMT_FLOAT)
+	ndx = 1;
+	ncrit = 0;
+
+	while (cmds[ndx].uc_ctype == UTT_VALUE)
 	{
-		compare_val = UFLOAT (cmds[3]);
-		ndx = 4;
+		if (ncrit == 10)
+			ui_error ("Only 10 threshold criteria can be used");
+	/*
+	 * Threshold field and criterion
+	 */
+		threshfld[ncrit] = fd_num (UPTR (cmds[ndx++]));
+		criterion[ncrit] = UKEY (cmds[ndx++]);
+	/*
+	 * Comparison value (for criteria other than BAD)
+	 */
+		if (criterion[ncrit] != THR_BAD)
+		{
+			compare_val[ncrit] = UFLOAT (cmds[ndx++]);
+		/*
+		 * Allocate space for this threshold field
+		 */
+			thresh[ncrit] = (float *) 
+				malloc (BUFLEN * sizeof (float));
+		}
+		else
+			thresh[ncrit] = (float *) 0;
+	/*
+	 * Increment the criterion count
+	 */
+		ncrit++;
 	}
-	else
-		ndx = 3;
 /*
  * Get the sounding if specified, otherwise use the default
  */
 	if (cmds[ndx].uc_ctype != UTT_END)
-		id_name = UPTR (cmds[ndx]);
+		id_name = UPTR (cmds[ndx + 1]);
 	else
 		id_name = snd_default ();
 /*
- * Get pointers to the data linked lists for the threshold and target fields
+ * Get pointers to the data linked list for the target field
  */
-	thresh = snd_data_ptr (id_name, threshfld);
 	target = snd_data_ptr (id_name, targetfld);
 /*
- * Apply the thresholding
+ * Get threshold field data arrays
  */
-	while (thresh && target)
+	for (c = 0; c < ncrit; c++)
 	{
-		if (thresh->index == target->index)
-		{
-			nexttarget = target->next;
-		/*
-		 * Switch based on the thresholding being done
-		 */
-		    switch (criterion)
-		    {
-			case THR_EQ:
-				if (thresh->value == compare_val)
-					edit_unpoint (id_name, target, 
-						targetfld);
-				break;
-			case THR_LT:
-				if (thresh->value < compare_val)
-					edit_unpoint (id_name, target, 
-						targetfld);
-				break;
-			case THR_GT:
-				if (thresh->value > compare_val)
-					edit_unpoint (id_name, target, 
-						targetfld);
-				break;
-			case THR_LE:
-				if (thresh->value <= compare_val)
-					edit_unpoint (id_name, target, 
-						targetfld);
-				break;
-			case THR_GE:
-				if (thresh->value >= compare_val)
-					edit_unpoint (id_name, target, 
-						targetfld);
-				break;
-		    }
-		/*
-		 * Bump both points
-		 */
-		    target = nexttarget;
-		    thresh = thresh->next;
-		}
-	/*
-	 * For non-matching indices, bump the lower index.
-	 */
-		else
-		{
-			if (target->index < thresh->index)
-			{
-				nexttarget = target->next;
-			/*
-			 * If we're doing bad value thresholding, remove the
-			 * target point now, since there was no threshold point
-			 * with a matching index.
-			 */
-				if (criterion == THR_BAD)
-					edit_unpoint (id_name, target, 
-						targetfld);
-
-				target = nexttarget;
-			}
-			else
-				thresh = thresh->next;
-		}
+		if (thresh[c])
+			snd_get_data (id_name, thresh[c], BUFLEN, threshfld[c],
+				BADVAL);
 	}
 /*
- * For bad value thresholding, remove the remaining target points, if any
+ * Loop through the target points
  */
-	if (criterion == THR_BAD)
-		for (; target; target = nexttarget)
+	while (target)
+	{
+		ndx = target->index;
+		remove = TRUE;
+	/*
+	 * Test against each criterion
+	 */
+		for (c = 0; c < ncrit; c++)
 		{
-			nexttarget = target->next;
-			edit_unpoint (id_name, target, targetfld);
+			switch (criterion[c])
+			{
+			    case THR_EQ:
+				remove &= (thresh[c][ndx] == compare_val[c]);
+				break;
+			    case THR_NE:
+				remove &= (thresh[c][ndx] != compare_val[c]);
+				break;
+			    case THR_GT:
+				remove &= (thresh[c][ndx] > compare_val[c]);
+				break;
+			    case THR_LT:
+				remove &= (thresh[c][ndx] < compare_val[c]);
+				break;
+			    case THR_GE:
+				remove &= (thresh[c][ndx] >= compare_val[c]);
+				break;
+			    case THR_LE:
+				remove &= (thresh[c][ndx] <= compare_val[c]);
+				break;
+			    case THR_BAD:
+				remove &= (thresh[c][ndx] == BADVAL);
+				break;
+			}
+		/*
+		 * Short-circuit if a criterion fails
+		 */
+			if (! remove)
+				break;
 		}
+	/*
+	 * Remove the point if all criteria were met
+	 */
+		if (remove)
+			edit_unpoint (id_name, target, targetfld);
+	/*
+	 * Next point
+	 */
+		target = target->next;
+	}
+/*
+ * Free the threshold arrays
+ */
+	for (c = 0; c < ncrit; c++)
+		if (thresh[c])
+			free (thresh[c]);
 /*
  * If the affected sounding is in the current plot, replot it
  */
