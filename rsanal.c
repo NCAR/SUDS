@@ -2,6 +2,12 @@
  * RSANAL format sounding access
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/05/19  15:48:25  burghart
+ * Changed from stdio (fopen, fgets, fclose) to Jon's file I/O stuff
+ * (dview, dget, dclose) to get around problems with fixed length
+ * record files on the VAX.  Also changed (start == 5) to (start == 4) so
+ * it reads the whole file instead of just half of it.
+ * 
  * Revision 1.1  89/03/16  15:16:06  burghart
  * Initial revision
  * 
@@ -35,9 +41,9 @@ struct snd	*sounding;
  * Get the RSANAL format sounding from the given file
  */
 {
-	int	sfile, ndx, i, status, start;
+	int	sfile, ndx, i, status, start = 0;
 	struct snd_datum	*dptr[NFLD];
-	float	sitelat, sitelon, sitealt, val[NFLD];
+	float	sitelat, sitelon, val[NFLD];
 	char	string[STRSIZE], site[27];
 	void	rsn_insert_data ();
 /*

@@ -1,9 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  89/03/16  15:16:30  burghart
- * Initial revision
+ * $Revision: 1.3 $ $Date: 1989-08-11 11:04:33 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -514,7 +512,6 @@ struct ui_command	*cmds;
 
 	while (sounding)
 	{
-		char	*fmt;
 	/*
 	 * Just ID's for a brief listing
 	 */
@@ -651,7 +648,7 @@ struct snd_datum	*ptr;
  * to 'ptr'
  */
 {
-	struct snd	*sounding = Snd_list, *prev = 0;
+	struct snd	*sounding = Snd_list;
 	int	i;
 /*
  * Find the sounding in the list
@@ -660,7 +657,6 @@ struct snd_datum	*ptr;
 	{
 		if (! strcmp (id_name, sounding->name))
 			break;
-		prev = sounding;
 		sounding = sounding->next;
 	}
 

@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.4 $ $Date: 1989-08-02 14:42:48 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1989-08-11 11:02:54 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -122,7 +122,7 @@ struct ui_command	*cmds;
  */
 {
 	char	*id_name;
-	int	i, plot_ndx = 0, nplots;
+	int	plot_ndx = 0, nplots;
 	overlay ovlist[3];
 	char	*snd_default ();
 /*
@@ -720,7 +720,7 @@ float	*pres, *temp, *dp;
  * and dp data
  */
 {
-	int	sfc = 0, npts, ndx_700;
+	int	npts, ndx_700;
 	float	x[200], y[200];
 	float	p_lcl, t_lcl, pt, w, t_sfc, p_sfc, dp_sfc, ept;
 	float	t_700, dp_700, p_lcl700, t_lcl700, ept_700, pt_700;
