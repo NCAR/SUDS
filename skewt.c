@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.27 1993-04-28 16:23:08 carson Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.28 1993-05-10 20:17:37 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -1180,15 +1180,21 @@ int	plot_ndx, nplots;
 		}
 	}
 /*
- * Calculate the x starting position and the x and y scaling factors
+ * Calculate the x starting position
  */
 	xstart = (float) (plot_ndx + 0.5) / (float) (nplots);
-	xscale = 2.0*(4-nplots) / (W_scale );
+/*
+ * Scale factors for wind vectors
+ */
+	xscale = 1.0 / (W_scale * 2 * nplots);
 	yscale = W_aspect * xscale;
 /*
- * Set size parameters for wind barbs
+ * Set size parameters for wind barbs. (Barb size scaling using W_scale has
+ * been kluged in here.  A default W_scale of 20 is assumed, and the barbs
+ * are made smaller as W_scale increases.  This provides some symmetry with
+ * the way W_scale is used for wind vectors.)
  */
-        size = 0.8 * xscale;
+        size = 0.7 * 20.0 / (W_scale * 2 * nplots);
         blen = size * 0.4;
         tlen = size * 1.0;
         sp   = size * 0.15;
@@ -1240,9 +1246,9 @@ int	plot_ndx, nplots;
 				C_DATA1+2*plot_ndx, 2, xov, yov);
                 }
 
-		/* 
-		 * Else draw wind barbs
-		 */
+	/* 
+	 * Else draw wind barbs
+	 */
                 else
                 {
 		    if ( wdir[i] == BADVAL )
