@@ -3,6 +3,12 @@
  * (stolen from ROBOT's flag.c)
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  90/05/04  13:36:47  burghart
+ * function theta_w() changed name to theta_e()
+ * 
+ * Revision 1.1  89/03/16  15:13:51  burghart
+ * Initial revision
+ * 
  */
 # include "globals.h"
 # include "flags.h"
@@ -16,14 +22,20 @@ struct flgst
 {
 	char	*flg_name;	/* Name of this flag	*/
 	char	*flg_value;	/* Pointer to the flag	*/
-	char	*flg_desc;	/* Description of this flag	*/
 	char	flg_default;	/* Default value for this flag	*/
+	char	*flg_desc;	/* Description of this flag	*/
 } Flg_tbl[] =
 {
-	/* name		value		description			def  */
-	{ "winds",	&Flg_winds,	"Put winds on skew-t plots",	TRUE },
-	{ "mli",	&Flg_mli,	"Use modified lifted index",	TRUE },
-	{ "lift",	&Flg_lift,	"Show lifted parcel on skew-t",	TRUE },
+	/* name		value		default	*/
+	/*	description  */
+	{ "winds",	&Flg_winds,	TRUE,
+		"Put winds on skew-t plots"},
+	{ "mli",	&Flg_mli,	TRUE,
+		"Use modified lifted index"},
+	{ "lift",	&Flg_lift,	TRUE,
+		"Show lifted parcel on skew-t"},
+	{ "theta_w",	&Flg_theta_w,	TRUE,
+		"Use equivalent wet-bulb temperature on skew-t"},
 	{ ___,		___,		___,		___ }
 };
 
