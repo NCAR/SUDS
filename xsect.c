@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.7 $ $Date: 1990-05-22 13:24:27 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-05-29 10:25:55 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -17,13 +17,12 @@
  * The cross-section plane array, its length, its height, 
  * its dimensions, and a macro to reference it two-dimensionally
  */
-static float	*Plane, *Weight, P_len, P_hgt = 12.0, P_bot = 0.0;
+static float	*Plane, P_len, P_hgt = 12.0, P_bot = 0.0;
 
 # define HDIM	50
 # define VDIM	50
 
 # define PDATA(i,j)	(Plane[(i*VDIM)+j])
-# define WDATA(i,j)	(Weight[(i*VDIM)+j])
 
 /*
  * The endpoints of the plane for a spatial cross-section, and the starting
@@ -177,10 +176,9 @@ struct ui_command	*cmds;
 	ovlist[1] = Xs_bg_ov;
 	edit_set_plot (xs_plot, 0, cmds, ovlist, 2);
 /*
- * Allocate space for the plane and weight arrays
+ * Allocate space for the plane array
  */
 	Plane = (float *) malloc (HDIM * VDIM * sizeof (float));
-	Weight = (float *) malloc (HDIM * VDIM * sizeof (float));
 /*
  * Get the overlays ready and draw the background
  */
@@ -195,10 +193,7 @@ struct ui_command	*cmds;
  */
 	for (i = 0; i < HDIM; i++)
 		for (j = 0; j < VDIM; j++)
-		{
 			PDATA (i, j) = BADVAL;
-			WDATA (i, j) = -1.0;
-		}
 
 	xs_put_data ();
 /*
@@ -215,7 +210,6 @@ struct ui_command	*cmds;
  * Release the arrays and exit
  */
 	free (Plane);
-	free (Weight);
 	return;
 }
 
@@ -270,9 +264,12 @@ xs_put_data ()
 			npts = snd_get_data (S_id[snd], zpos, BUFLEN, f_alt, 
 				BADVAL);
 			site_alt = snd_s_alt (S_id[snd]);
-			for (i = 0; i < npts; i++)
-				if (zpos[i] != BADVAL)
-					zpos[i] = 0.001 * (zpos[i] + site_alt);
+			for (pt = 0; pt < npts; pt++)
+				if (zpos[pt] != BADVAL)
+				{
+					zpos[pt] += site_alt;
+					zpos[pt] *= 0.001;
+				}
 		}
 		else
 		/*
@@ -284,9 +281,9 @@ xs_put_data ()
 	 * We want the vertical data to be relative to the bottom 
 	 * value of the plane
 	 */
-		for (i = 0; i < npts; i++)
-			if (zpos[i] != BADVAL)
-				zpos[i] -= P_bot;
+		for (pt = 0; pt < npts; pt++)
+			if (zpos[pt] != BADVAL)
+				zpos[pt] -= P_bot;
 	/*
 	 * Put together the x,y position data
 	 */
@@ -302,10 +299,13 @@ xs_put_data ()
 		else
 			snd_get_data (S_id[snd], fdata, BUFLEN, Fld, BADVAL);
 	/*
-	 * Initialize the weight array to zero
+	 * Initialize the value and weight arrays to zero
 	 */
-		for (i = 0; i < VDIM; i++)
-			weight[i] = 0.0;
+		for (j = 0; j < VDIM; j++)
+		{
+			fval[j] = 0.0;
+			weight[j] = 0.0;
+		}
 	/*
 	 * Loop through the points
 	 */
@@ -345,7 +345,7 @@ xs_put_data ()
 		 * Find the closest vertical grid level to the z position
 		 * of this point
 		 */
-			level = (int)((VDIM - 1) * zpos[pt] / P_hgt + 0.5);
+			level = (int)(zpos[pt] / zstep + 0.5);
 		/*
 		 * If the grid level is reasonable, add this point to
 		 * the weighted average for the level
@@ -943,6 +943,8 @@ xs_time_height ()
 							(int)(tdata[pt] + 0.5);
 						break;
 					}
+
+				free (tdata);
 			}
 			else
 				sec_delta = 0;
@@ -1155,6 +1157,8 @@ float	*tpos;
 		else
 			tpos[pt] = BADVAL;
 
+	free (time);
+
 	return;
 }
 
@@ -1205,6 +1209,11 @@ fldtype	fld;
 		else
 			ui_error ("BUG! Shouldn't be here in xs_special_data");
 	}
+/*
+ * Free the u and v arrays
+ */
+	free (u);
+	free (v);
 }
 
 
