@@ -1,0 +1,6 @@
+	XYPLOT xfld yfld [s1 s2 s3]
+
+The XYPLOT command will plot field 'xfld' against field 'yfld' for up to 
+three soundings ('s1', 's2', 's3').
+
+

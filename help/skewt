@@ -1,0 +1,26 @@
+	SKEWT [s1 s2 s3]
+		-or-
+	SKEWT PLIMITS [MAX] pmax [MIN] pmin
+		-or-
+	SKEWT TLIMITS [MIN] tmin [MAX] tmax
+                -or-
+        SKEWT BARBRES wres
+
+The normal SKEWT command will plot up to three soundings ('s1', 's2', 's3') 
+together on a single skew-t, log p plot.  If no sounding is specified, the
+current default sounding will be plotted.  
+
+The default pressure and temperature limits of skew-t, log p plots can be 
+changed with the SKEWT PLIMITS and SKEWT TLIMITS commands, respectively.
+For pressure, 'pmax' and 'pmin' specify the maximum and minimum pressures 
+in millibars to be plotted.  For temperature, 'tmin' and 'tmax' are the 
+temperature limits in deg. C for the bottom of the plot (which corresponds
+to pmax).  
+ 
+The command "SKEWT PLIMITS pmax pmin" has exactly the same effect as 
+"LIMITS PRES pmax pmin".  This equivalence does NOT exist for the temperature
+field, though, because of temperature skewing.
+
+The default wind barb resolution (10 m/s) can be changed with the SKEWT
+BARBRES command.  This changes the definition of one wind barb to 'wres' m/s.
+

@@ -1,0 +1,6 @@
+	FILE [NAME] filename [TYPE] format [ID] id-name
+
+The FILE command makes the sounding in file 'filename' available for use.
+The parameter 'format' is the type of file being accessed (class, nws, netcdf,
+etc.), and 'id-name' is the name to be assigned to the sounding.  The current
+default sounding will be re-assigned by this command.

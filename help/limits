@@ -1,0 +1,21 @@
+	LIMITS fld bottom top
+
+	CONLIMITS fld center step
+
+	ILIMITS fld bottom top step gap
+
+The LIMITS command allows the user to set the bounds for plotting a field.
+The 'bottom' and 'top' values will be the bottom (or left) and top (or right)
+bounds for the field in x-y plots, and for the pressure and altitude fields
+in skew-t and cross-section plots.
+
+The CONLIMITS command allows the user to specify the contour plot limits for
+field 'fld'.  The value 'center' should be a good middle value for the field
+and 'step' is the spacing used between contours.  Note that the center value
+only makes a difference for color displays, but it must always be specified.
+
+The ILIMITS command allows the user to specify the bounds for
+interpolating a sounding.  The 'bottom' and 'top' values will be the
+bottom and top of the interpolated data.  The 'step' will be the output
+step size of the data, and 'gap' is the gap size.  If a gap is detected
+in the input data, no interpolation will occur across the gap.

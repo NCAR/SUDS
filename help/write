@@ -1,0 +1,11 @@
+	WRITE [FILE] fname [[FROM] id-name]
+		--or--
+	NETCDF [FILE] fname [[FROM] id-name]
+
+The WRITE and NETCDF commands will cause sounding 'id-name' to be written 
+to the disk as file 'fname'.  If the sounding is not specified, the current
+default sounding will be written.  When the WRITE command is used, soundings
+will be written using the  CLASS format.  The 'old' or 'new' CLASS format may
+be selected by the oldCLASS flag (default=false).  The NETCDF command causes a 
+netCDF file to be written.
+

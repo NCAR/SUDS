@@ -1,0 +1,12 @@
+
+	WINDSTEP mval
+
+For skewt and xsect plots, each 'mval' wind measurement is 
+drawn on the plot if the winds flag is set.  The default is 1
+so that every wind measurement is drawn.  For example,
+
+  WINDSTEP 5
+
+will cause every fifth wind measurement to be drawn on the 
+skewt or xsect plot.
+

@@ -1,0 +1,39 @@
+	THRESHOLD [FIELD] fld [ON] tfld criterion [value] [[AND] tfld criterion [value] ...] [SOUNDING id-name]
+
+The THRESHOLD command will remove points from target field 'fld' based on
+the values of points in field(s) 'tfld' and the selected 'criterion'
+relation(s).  If the sounding is not specified with the 'id-name'
+parameter, the current default sounding will be used.  In the case of
+multiple criteria, all must be met before the associated target point is
+removed.  The list below shows what relations may be selected for the
+criteria:
+
+	    Criterion	Meaning
+	----------------------------------------------------
+		=	equal to 'value'
+		<>	not equal to 'value'
+		<	less than 'value'
+		<=	less than or equal to 'value'
+		> 	greater than 'value'
+		>=	greater than or equal to 'value'
+		BAD	bad data in 'tfld' (no 'value' is specified)
+		INCREASING  increasing data in 'tfld' (no 'value' is
+			specified)
+		DECREASING  decreasing data in 'tfld' (no 'value' is
+			specified)
+
+As an example, the following command will remove all dewpoint values in the 
+current default sounding for which the corresponding temperature is bad:
+
+	threshold dp on temp bad
+
+The next command would remove all wind speed values from the current default
+sounding which were greater than 200 m/s:
+
+	threshold wspd on wspd > 200.0
+
+The next command would remove all temperature values from the current
+default sounding for which the corresponding pressure is not decreasing:
+
+	threshold temp on pres decreasing
+

@@ -1,0 +1,7 @@
+	ORIGIN lat lon
+
+The ORIGIN command is used to set the origin for (latitude,longitude) <-> (x,y)
+conversions.  The values 'lat' and 'lon' should be specified in decimal degrees
+(e.g., 20 degrees 30 minutes is specified as 20.5).  Note that west longitudes
+must be negative.
+

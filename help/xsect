@@ -1,0 +1,44 @@
+	XSECT fld
+		or
+	XSECT TIME-HEIGHT fld
+
+The XSECT command draws a cross-section plot for field 'fld', given the current
+settings of parameters specified below.  If the keyword TIME-HEIGHT appears, 
+the plot will be a time-height plot of the chosen field.  If a
+time-height plot is selected, wind barbs may be drawn at the times
+corresponding to the soundings.  This is controlled by WINDS flag.
+
+	XSECT USE snd1 snd2 snd3 [...sndN]
+
+The XSECT USE command specifies the soundings to use for subsequent cross-
+sections.  Two or more soundings must be specified.
+
+	XSECT FROM SITE snd1 TO SITE snd2
+		-or-
+	XSECT FROM x0 y0 TO x1 y1
+
+The endpoints 'snd1' and 'snd2' of a spatial cross-section are specified
+with the XSECT FROM command.  The values are the names of soundings (not
+site names) whose site locations will be used as the endpoints.  They need
+not be soundings that are specified in the XSECT USE command.  Without
+the SITE qualifier, (x,y) endpoints in km from the origin may be used.
+Site and (x,y) endpoints may both be used if desired.
+
+	XSECT CENTER x y [ANGLE] ang [LENGTH] len
+
+The cross-section plane may alternately be specified using the XSECT CENTER
+command.  The (x,y) center of the plane is given in km with respect to the
+current origin, 'ang' chooses the angle (in degrees clockwise from north) of 
+the plane, and 'len' specifies the length of the plane in km.
+
+	XSECT VSCALE vfld
+
+The vertical scale field is controlled with the XSECT VSCALE command.  The
+parameter 'vfld' must be either "pres" or "alt", and specifies whether the
+vertical is scaled by mb or km MSL.
+
+	XSECT BARBRES value
+
+The wind barb resolution is changed to 'value'.  It defaults to 10.0 m/s
+and will be changed for wind barbs on either xsect or skewt plots by
+this command.

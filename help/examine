@@ -1,0 +1,4 @@
+	EXAMINE
+
+The EXAMINE command displays the position of the point under the cursor,
+as well as a few points before and after.

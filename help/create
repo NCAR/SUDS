@@ -1,0 +1,5 @@
+	CREATE [SOUNDING] id [FROM] parent_id
+
+The CREATE command makes a new sounding with name 'id' from the parent
+sounding named 'parent_id'.  The sounding created will become the current
+default sounding.

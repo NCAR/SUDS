@@ -1,0 +1,5 @@
+	FORGET id-name
+
+The FORGET command causes a sounding to be removed from the current sounding
+list.  Note that the sounding must be specified; the current default sounding
+will NOT be assumed.

@@ -1,0 +1,6 @@
+	ERASE
+
+The ERASE command removes the point which is under the current cursor 
+position.  The cursor is moved to the next point up (or down if the top 
+point is deleted).  If the current MARK is on the deleted point, it will be 
+moved to the new cursor position.

@@ -1,0 +1,23 @@
+	INTERPOLATE field snd1 [snd2]
+
+The INTERPOLATE command will use the sounding  snd2  to interpolate the 
+data fields to a grid of field.  The result will be a new sounding with
+the name  snd1. If no old sounding (snd2) is specified, the current default 
+sounding will be used as the input data to the interpolation.
+
+The new sounding which is created by the interpolation must be written 
+with the WRITE command or it will be lost when suds exits.  It can be
+used in plots and other commands prior to exiting suds.
+
+The default limits for the independent field are shown with the SHOW
+LIMITS command.  These can be changed with the ILIMITS command.  Only
+three fields are allowed for independent fields during interpolation - 
+temp, pres, and alt.
+
+Care must be taken in selecting the limits of the interpolation.  Any
+interpolation beyond the original data (extrapolation) may result in 
+unrealistic data.  Some of these occurances are restricted by suds (i.e.
+negative pressures), but data extrapolated beyond the original data is 
+suspect.
+
+

@@ -1,0 +1,6 @@
+	WSCALE val
+
+The scaling of winds in skew-t and hodograph plots may be changed with the 
+WSCALE command.  An approximation of the maximum wind speed in m/s should be 
+used for 'val'.  Winds less than this speed are assured to appear within the 
+bounds of the plot.  The wind scale value defaults to 25.0 m/s.

@@ -1,0 +1,7 @@
+	MARK
+
+The MARK command causes the current cursor position to be marked as the 
+beginning of the edit region.  As the cursor is moved from this point, the
+edit region will be highlighted by being displayed in white.  The MARK
+stays in effect until either:  1) The edit region is CUT,  2) a new edit
+field is SELECTed, or 3) A new MARK is set.

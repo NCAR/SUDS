@@ -1,0 +1,19 @@
+	SHOW item
+
+The SHOW command can be used to display various information depending on the 
+value of 'item'.  The legal values are shown below, along with a decription 
+of what each will display.
+
+	Item		Information Displayed
+        ----------------------------------------------------------------------
+	SOUNDINGS	All soundings currently available, with their 
+			id names, sites, and times
+
+	FLAGS		The program flags and their current values
+
+	COLORS		The color index names and the colors currently 
+			associated with them
+
+	ORIGIN		The current origin for (lat,lon) <--> (x,y) conversion
+
+	LIMITS		The current contour limits for all fields

@@ -1,0 +1,4 @@
+	CUT
+
+The CUT command removes all points in the current edit region, exclusive of 
+the endpoints.

@@ -1,0 +1,5 @@
+	FOOTE [s1 s2 s3]
+
+The FOOTE command will plot Foote charts for one to three soundings 
+specified by 's1', 's2' and 's3'.  If no sounding is specified, the current 
+default sounding will be used.

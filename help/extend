@@ -1,0 +1,8 @@
+	EXTEND
+
+The EXTEND command causes the currently selected field to be altered such
+that the value of the field at the cursor will be extended to the surface.
+The extension follows a dry adiabat if temperature is currently selected or
+holds a constant mixing ratio if dewpoint is selected.  Other fields cannot
+be EXTENDed.
+

@@ -1,0 +1,4 @@
+	OUTPUT [DEVICE] dev [TYPE] typ
+
+The output command specifies where the graphics output of the program should
+go.  The 'dev' parameter is the name of the device and 'typ' is its type.

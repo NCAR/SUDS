@@ -1,0 +1,14 @@
+	HODOGRAPH [STEP sval] [MARK mval] [TOP topval] [s1 s2...sn]
+
+The HODOGRAPH command will plot hodographs for one or more soundings 
+specified by 's1'...'sn'.  If no sounding is specified, the current default
+sounding will be used.  
+
+If STEP is specified, a wind point will be drawn every 'sval' km 
+rather than for every point in the sounding.  
+
+When MARK is used, an altitude label will be placed on the plot at each 
+increment of 'mval' km MSL.  By default, the labels are drawn every 1 km.
+
+If TOP is specified, the hodograph will only be plotted up to 'topval'
+km MSL.  By default, soundings are plotted up to 20 km.

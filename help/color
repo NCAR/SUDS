@@ -1,0 +1,22 @@
+	COLOR index-name color-name
+		-or-
+	COLOR index-name RGB redval greenval blueval
+
+The COLOR command is used to change the color associated with the specified 
+'index-name' to some user selected value.  The allowed index names are:
+
+	black	white	bg1	bg2	bg3	bg4
+	data1	data2	data3	data4	data5	data6
+	data7	data8	data9
+
+These correspond to the current 'black' and 'white' values, the four colors 
+used to draw backgrounds and annotations (bg1-bg4), and the nine colors used 
+for drawing data traces (data1-data9).
+
+A 'color-name' from the list of colors in the printed SUDS documentation is
+then selected.  Normal colors like red, green, and blue are understood,
+but there are many others defined ranging from aquamarine to wheat.
+
+Optionally, the keyword RGB may be used, followed by 'redval', 'greenval', 
+and 'blueval' to choose a custom color.  These values should be in the 
+range 0.0-1.0.

@@ -1,0 +1,5 @@
+	ANALYZE [id]
+
+The ANALYZE command executes a brief analysis of sounding 'id' or of the
+current default sounding if none is specified.  The values of parameters 
+such as the LCL, LFC, and various areas will be displayed.

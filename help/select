@@ -1,0 +1,8 @@
+	SELECT [FIELD] fname [[SOUNDING] id]
+
+The SELECT command chooses a field to be edited.  The field is specified by
+'fname' and the sounding may be specified by 'id'.  If no sounding is
+given, the current default sounding will be used.  If a field which is in
+the current plot is SELECTed, a cursor will appear on the screen at the
+first point of the selected field.
+

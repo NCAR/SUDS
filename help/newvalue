@@ -1,0 +1,4 @@
+	NEWVALUE val
+
+The NEWVALUE command replaces the value at the point under the cursor with
+the 'val' specified.
