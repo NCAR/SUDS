@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.19 $ $Date: 1991-01-16 21:38:07 $ $Author: burghart $ 
+ * $Revision: 1.20 $ $Date: 1991-03-21 17:08:36 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -15,7 +15,8 @@
 
 # define R_D	287.
 
-# define DEG_TO_RAD	0.017453293
+# define DEG_TO_RAD(x)	(0.017453293 * (x))
+# define RAD_TO_DEG(x)	(57.29577951 * (x))
 
 /*
  * Pressure to use for lifted index calculations
@@ -23,21 +24,29 @@
 # define LI_PRES	(Flg_mli ? 400 : 500)
 
 /*
+ * Mean Layer Vector Wind pressure bounds
+ */
+float	Mlvw_bot = 1000.0, Mlvw_top = 700.0;
+
+/*
  * Forward declarations
  */
 float	an_lfc_calc (), an_area (), an_li (), an_li_ref (), an_shear ();
-void	an_surface (), an_printf (), an_do_analysis ();
+void	an_surface (), an_printf (), an_do_analysis (), an_mlvw ();
 
 /*
  * Sounding id
  */
 char	*Id_name;
+
 /*
  * Output file info
  */
 static char	Outfile_name[80] = "";
 static FILE	*Outfile = (FILE *) 0;
 static int	Write_to_file = FALSE;
+
+
 
 
 analyze (cmds)
@@ -48,8 +57,8 @@ struct ui_command	*cmds;
 {
 	float	t[BUFLEN], vt[BUFLEN], p[BUFLEN], dp[BUFLEN];
 	float	u[BUFLEN], v[BUFLEN];
-	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t700, vt700, dp700, ref;
-	int	i, npts, name_loc = 0, success, ndx700;
+	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t_fore, vt_fore, dp_fore, ref;
+	int	i, npts, name_loc = 0, success, ndx_fore;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
@@ -152,32 +161,35 @@ struct ui_command	*cmds;
  */
 	an_do_analysis (vt, p, dp, npts, vt_sfc, p_sfc, dp_sfc);
 /*
- * Preliminaries for the forecast (700 mb based) analysis
+ * Preliminaries for the forecast analysis
  */
-	an_printf ("FORECAST (700 mb-BASED) ANALYSIS\n");
+	an_printf ("FORECAST (%.0f mb-BASED) ANALYSIS\n", Forecast_pres);
 
-	success = an_700 (t, p, dp, npts, p_sfc, dp_sfc, &t700, &dp700, 
-		&ndx700);
+	success = an_forecast (t, p, dp, npts, p_sfc, dp_sfc, &t_fore, 
+		&dp_fore, &ndx_fore);
 
 	if (success)
 	{
-		an_printf ("\t 700 mb temperature: %.1f K ", t700);
+		an_printf ("\t %.0f mb temperature: %.1f K ", Forecast_pres,
+			t_fore);
 		an_printf ("(potential temp.: %.1f K)\n", 
-			theta_dry (t700, 700.0));
+			theta_dry (t_fore, Forecast_pres));
 	}
 
-	success = an_700 (vt, p, dp, npts, p_sfc, dp_sfc, &vt700, &dp700, 
-		&ndx700);
+	success = an_forecast (vt, p, dp, npts, p_sfc, dp_sfc, &vt_fore, 
+		&dp_fore, &ndx_fore);
 
 	if (! success)
 	{
-		an_printf ("\t Unable to find 700 mb virtual temperature\n");
+		an_printf ("\t Unable to find %.0f mb virtual temperature\n",
+			Forecast_pres);
 		return;
 	}
 
-	an_printf ("\t 700 mb virtual temperature: %.1f K ", vt700);
+	an_printf ("\t %.0f mb virtual temperature: %.1f K ", Forecast_pres,
+		vt_fore);
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
-		theta_dry (vt700, 700.0));
+		theta_dry (vt_fore, Forecast_pres));
 
 	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
@@ -194,8 +206,8 @@ struct ui_command	*cmds;
 /*
  * Do the analysis, using virtual temperature
  */
-	an_do_analysis (vt + ndx700, p + ndx700, dp + ndx700, 
-		npts - ndx700, vt700, 700.0, dp700);
+	an_do_analysis (vt + ndx_fore, p + ndx_fore, dp + ndx_fore, 
+		npts - ndx_fore, vt_fore, Forecast_pres, dp_fore);
 }
 
 
@@ -214,6 +226,7 @@ int	npts;
 	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
 	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
 	float	area_pos = 0.0, area_neg = 0.0;
+	float	mspd, mdir;
 	int	i, stop = 0;
 /*
  * Get the pressure, temperature, potential temp. and equivalent
@@ -487,6 +500,13 @@ int	npts;
 			2.0 * R_D * area_pos / (shear * shear));
 	else
 		an_printf ("\t Bulk Richardson number: NO SHEAR\n");
+/*
+ * Mean Layer Vector Wind
+ */
+	an_mlvw (&mspd, &mdir);
+	an_printf ("\t MLVW between %.0f mb and %.0f mb: ", Mlvw_bot, 
+		Mlvw_top);
+	an_printf ("%.1f m/s from %.0f deg.\n", mspd, mdir);
 
 	an_printf ("\n");
 }
@@ -734,50 +754,50 @@ int	npts;
 
 
 int
-an_700 (t, p, dp, npts, p_sfc, dp_sfc, temp700, dp700, ndx700)
-float	*t, *p, *dp, p_sfc, dp_sfc, *temp700, *dp700;
-int	npts, *ndx700;
+an_forecast (t, p, dp, npts, p_sfc, dp_sfc, temp_fore, dp_fore, ndx_fore)
+float	*t, *p, *dp, p_sfc, dp_sfc, *temp_fore, *dp_fore;
+int	npts, *ndx_fore;
 /*
- * Find the 700 mb temperature, the 700 mb dewpoint corresponding to the
- * surface mixing ratio, and the index of the last pressure > 700 mb in 
- * the data arrays.
+ * Find the temperature, dewpoint corresponding to the surface mixing ratio 
+ * at the selected forecast pressure level, and the index of the last 
+ * pressure > the forecast pressure in the data arrays.
  */
 {
 	int	i;
 	float	t_prev, p_prev, w;
 /*
- * Find the first pressure < 700.0
+ * Find the first pressure < the forecast pressure
  */
 	for (i = 0; i < npts; i++)
 	{
 		if (p[i] == BADVAL || t[i] == BADVAL)
 			continue;
 
-		if (p[i] < 700.0)
+		if (p[i] < Forecast_pres)
 			break;
 
 		p_prev = p[i];
 		t_prev = t[i];
 	}
 
-	*ndx700 = i - 1;
+	*ndx_fore = i - 1;
 /*
  * Make sure we have two good points to interpolate between
  */
 	if (p_prev == BADVAL || i == npts)
 		return (FALSE);
 /*
- * Interpolate the 700 mb temperature from the point we just found and the
- * previous good point
+ * Interpolate the forecast level temperature from the point we just found 
+ * and the previous good point
  */
-	*temp700 = t_prev + (700.0 - p_prev) / (p[i] - p_prev) * 
+	*temp_fore = t_prev + (Forecast_pres - p_prev) / (p[i] - p_prev) * 
 		(t[i] - t_prev);
 /*
  * Find the mixing ratio of our surface dewpoint, then find the
- * corresponding 700 mb dewpoint
+ * corresponding forecast level dewpoint
  */
 	w = w_sat (dp_sfc, p_sfc);
-	*dp700 = t_mr (700.0, w);
+	*dp_fore = t_mr (Forecast_pres, w);
 	return (TRUE);
 }
 
@@ -893,9 +913,10 @@ an_shear ()
 {
 	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN], p[BUFLEN];
 	float	p_sum = 0.0, u_sum = 0.0, v_sum = 0.0;
-	float	sfc_u, sfc_v, delta_u, delta_v;
+	float	sfc_u, sfc_v, delta_u, delta_v, sitealt;
 	int	sfc_vals = FALSE;
 	int	npts, i;
+	float	snd_s_alt ();
 /*
  * Get the wind and altitude data
  */
@@ -908,6 +929,10 @@ an_shear ()
 		return (0.0);
 	ENDCATCH
 /*
+ * Get the site altitude for conversion of altitudes to AGL
+ */
+	sitealt = snd_s_alt (Id_name);
+/*
  * Find the mean wind speeds up to 500m and up to 6km
  */
 	for (i = 0; i < npts; i++)
@@ -918,6 +943,10 @@ an_shear ()
 		if (p[i] == BADVAL || wspd[i] == BADVAL || 
 			wdir[i] == BADVAL || alt[i] == BADVAL)
 			continue;
+	/*
+	 * Convert altitude to AGL
+	 */
+		alt[i] -= sitealt;
 	/*
 	 * Get the mean surface wind if we passed 500m
 	 */
@@ -950,9 +979,9 @@ an_shear ()
 	 * Increment the sums for the pressure and pressure weighted
 	 * wind speed
 	 */
-		u_sum += p[i] * wspd[i] * sin (wdir[i] * DEG_TO_RAD);
-		v_sum += p[i] * wspd[i] * cos (wdir[i] * DEG_TO_RAD);
-		p_sum += p[i];
+		u_sum -= p[i] * wspd[i] * sin (DEG_TO_RAD (wdir[i]));
+		v_sum -= p[i] * wspd[i] * cos (DEG_TO_RAD (wdir[i]));
+		p_sum -= p[i];
 	}
 /*
  * If we get here, it means the sounding doesn't extend to 6km
@@ -967,5 +996,91 @@ an_shear ()
 	delta_u = u_sum / p_sum - sfc_u;
 	delta_v = v_sum / p_sum - sfc_v;
 	return (hypot (delta_u, delta_v));
+}
+
+
+
+
+void
+an_mlvw (speed, dir)
+float	*speed, *dir;
+/*
+ * Mean Layer Vector Wind (MLVW) between user-specified pressure limits
+ */
+{
+	float	wspd[BUFLEN], wdir[BUFLEN], p[BUFLEN];
+	float	u_sum = 0.0, v_sum = 0.0, u, v;
+	int	npts, i, ngood = 0;
+/*
+ * Get the wind and altitude data
+ */
+	ERRORCATCH
+		npts = snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
+		snd_get_data (Id_name, wspd, BUFLEN, f_wspd, BADVAL);
+		snd_get_data (Id_name, wdir, BUFLEN, f_wdir, BADVAL);
+	ON_ERROR
+		*speed = 0.0;
+		*dir = 0.0;
+		return;
+	ENDCATCH
+/*
+ * Find the mean wind speed
+ */
+	for (i = 0; i < npts; i++)
+	{
+	/*
+	 * Make sure we have good points
+	 */
+		if (p[i] == BADVAL || wspd[i] == BADVAL || wdir[i] == BADVAL)
+			continue;
+	/*
+	 * Next point if we're below the bottom or break out when we get 
+	 * above our top
+	 */
+		if (p[i] > Mlvw_bot)
+			continue;
+		else if (p[i] < Mlvw_top)
+			break;
+	/*
+	 * Increment the sums for u and v
+	 */
+		u_sum -= wspd[i] * sin (DEG_TO_RAD (wdir[i]));
+		v_sum -= wspd[i] * cos (DEG_TO_RAD (wdir[i]));
+		ngood++;
+	}
+/*
+ * Calculate MLVW
+ */
+	if (ngood > 0)
+	{
+		u = u_sum / ngood;
+		v = v_sum / ngood;
+		*speed = hypot (u, v);
+		*dir = RAD_TO_DEG (atan2 (-u, -v));
+		if (*dir < 0.0)
+			*dir += 360.0;
+	}
+	else
+	{
+		ui_warning ("No good winds in MLVW interval");
+		*speed = 0.0;
+		*dir = 0.0;
+	}
+
+	return;
+}
+
+
+
+
+void
+an_mlvw_limits (cmds)
+struct ui_command	*cmds;
+/*
+ * Change the pressure limits used to calculate MLVW
+ */
+{
+	Mlvw_bot = UFLOAT (cmds[0]);
+	Mlvw_top = UFLOAT (cmds[1]);
 }
 
