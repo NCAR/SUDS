@@ -1,15 +1,13 @@
 /*
  * FGGE format sounding access
  *
- * $Log: not supported by cvs2svn $
+ * $Revision: 1.2 $ $Date: 1989-07-26 15:56:41 $ $Author: burghart $
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include "globals.h"
 # include "sounding.h"
 
-# define TRUE	1
-# define FALSE	0
 # define BAD	-999
 
 /*
