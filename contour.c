@@ -20,10 +20,11 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: contour.c,v 1.6 1991-10-21 21:33:08 burghart Exp $";
+static char *rcsid = "$Id: contour.c,v 1.7 1998-05-15 21:43:38 burghart Exp $";
 
 # include <errno.h>
 # include <math.h>
+# include <stdio.h>
 # include <graphics.h>
 
 # define TRUE	1
