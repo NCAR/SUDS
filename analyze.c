@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.31 1993-10-01 15:47:32 case Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.32 1994-05-16 20:28:59 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -1105,6 +1105,11 @@ an_shear ()
 	}
 
 	npts = ndx;
+	if (npts == 0)
+	{
+		ui_warning ("Unable to calculate shear");
+		return (0.0);
+	}
 /*
  * Find the density weighted vector mean wind speeds up to 500m and up to 6km
  */
