@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.8 $ $Date: 1990-02-08 16:13:17 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-09-12 09:25:45 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -159,7 +159,7 @@ main_cmd_init ()
 	void	edit_erase (), edit_newvalue (), edit_examine ();
 	void	edit_threshold (), snd_forget (), skt_wscale ();
 	void	ft_plot (), hd_plot (), color_change (), edit_insert ();
-	void	xs_xsect (), cvt_origin (), fd_set_limits ();
+	void	xs_xsect (), cvt_origin (), fd_set_limits (), edit_extend ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -187,6 +187,7 @@ main_cmd_init ()
 	Cmd_routine[KW_XSECT]		= xs_xsect;
 	Cmd_routine[KW_ORIGIN]		= cvt_origin;
 	Cmd_routine[KW_LIMITS]		= fd_set_limits;
+	Cmd_routine[KW_EXTEND]		= edit_extend;
 }
 
 
