@@ -1,0 +1,6 @@
+read suds.i
+set ui$initial_state "suds-initial"
+read suds.menu
+set ui$pager_mode false
+save suds.lf all
+exit
