@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.15 $ $Date: 1990-11-05 11:20:48 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1990-11-12 09:38:02 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -39,7 +39,8 @@ static int	Tstep;
 /*
  * Overlays for the skew-t background and the data
  */
-static overlay	Skewt_bg_ov, Skewt_ov, Winds_ov;
+static overlay	Skewt_bg_ov = (overlay) 0, Skewt_ov = (overlay) 0;
+static overlay	Winds_ov = (overlay) 0;
 
 /*
  * True aspect ratio for the rectangle in the winds overlay with
@@ -760,36 +761,34 @@ skt_ov_check ()
  */
 {
 /*
- * Do we have an overlay for the background?
+ * Get new overlays if necessary
  */
-	if (! Skewt_bg_ov ||  G_ov_to_ws (Skewt_bg_ov) != Wkstn)
+	if (! Skewt_bg_ov || G_ov_to_ws (Skewt_bg_ov) != Wkstn ||
+	    ! Skewt_ov || G_ov_to_ws (Skewt_ov) != Wkstn ||
+	    ! Winds_ov || G_ov_to_ws (Winds_ov) != Wkstn)
 	{
+		int	xres, yres;
+	/*
+	 * Background overlay
+	 */
 		Redraw = TRUE;	/* Make sure we draw a new background */
+
 		Skewt_bg_ov = G_new_overlay (Wkstn, 0);
 		G_set_coords (Skewt_bg_ov, -BORDER, -BORDER, 1.0 + 2 * BORDER,
 			1.0 + BORDER);
-	}
-/*
- * Do we have an overlay for the data?
- */
-	if (! Skewt_ov || G_ov_to_ws (Skewt_ov) != Wkstn) 
-	{
+	/*
+	 * Main data overlay
+	 */
 		Skewt_ov = G_new_overlay (Wkstn, 0);
 		G_set_coords (Skewt_ov, -BORDER, -BORDER, 1.0 + 2 * BORDER,
 			1.0 + BORDER);
-	}
-/*
- * Do we have a winds overlay?
- */
-	if (! Winds_ov || G_ov_to_ws (Winds_ov) != Wkstn)
-	{
-		int	xres, yres;
-
-		Winds_ov = G_new_overlay (Wkstn, 0);
 	/*
+	 * Winds overlay
+	 *
 	 * Set up the overlay so that the coordinates 0.0-1.0 in x and y
 	 * plot a window to the right of the skew-t plot
 	 */
+		Winds_ov = G_new_overlay (Wkstn, 0);
 		G_set_coords (Winds_ov, -0.5 * (1.0/BORDER + 1), -BORDER, 
 			1.0, 1.0 + BORDER);
 	/*
