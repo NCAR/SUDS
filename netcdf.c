@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.20 2002-07-12 15:38:56 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.21 2002-08-23 23:00:34 burghart Exp $";
 
 # if HAVE_LIBNETCDF
 
@@ -340,9 +340,6 @@ struct ui_command	*cmds;
 	char	string[80];
 	fldtype	fld, nc_fld;
 	struct snd_datum	*data[MAXFLDS];
-#if defined(SYSV) || defined(linux)
-        char tz[20];
-#endif
 /*
  * Get the filename then the sounding name
  */
@@ -496,23 +493,15 @@ struct ui_command	*cmds;
 	t.tm_hour = sounding.rls_time.ds_hhmmss / 10000;
 	t.tm_min = (sounding.rls_time.ds_hhmmss / 100) % 100;
 	t.tm_sec = sounding.rls_time.ds_hhmmss % 100;
-#if defined(SYSV) || defined(linux)
-        strcpy (tz, "TZ=GMT");
-        putenv (tz);
-#ifdef SVR4
-        altzone = 0;
-#endif
+
+        putenv ("TZ=UTC");
+
         timezone = 0;
         daylight = 0;
         t.tm_wday = t.tm_yday = 0;
         t.tm_isdst = -1;
         base_time = (long) mktime (&t) + offset * 3600;
-#else
-        t.tm_gmtoff = 0;
-        t.tm_zone = (char *) 0;
-        t.tm_wday = t.tm_isdst = t.tm_yday = 0;
-        base_time = timegm (&t) + offset * 3600;
-#endif
+
 	ncvarput1 (Sfile, v_base, 0, &base_time);
 /*
  * If we don't have an offset time field, put in zeros now
