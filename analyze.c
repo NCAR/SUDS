@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.13 $ $Date: 1990-10-26 10:28:14 $ $Author: burghart $ 
+ * $Revision: 1.14 $ $Date: 1990-10-30 16:00:18 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -66,6 +66,12 @@ struct ui_command	*cmds;
 				fclose (Outfile);
 			strcpy (Outfile_name, UPTR (cmds[1]));
 			Outfile = fopen (Outfile_name, "w");
+			if (Outfile == NULL)
+			{
+				Write_to_file = FALSE;
+				ui_error ("Unable to open file '%s'", 
+					Outfile_name);
+			}
 		}
 	/*
 	 * Otherwise, put a form feed between soundings
