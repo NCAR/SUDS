@@ -29,15 +29,21 @@
 # define KW_BRIEF	25
 # define KW_HODOGRAPH	26
 # define KW_COLOR	27
-# define KW_LIST	28
-# define KW_INSERT	29
-# define KW_ABOVE	30
-# define KW_BELOW	31
+# define KW_INSERT	28
+# define KW_ABOVE	29
+# define KW_BELOW	30
+# define KW_ORIGIN	31
+# define KW_LIMITS	32
+# define KW_XSECT	33
+# define KW_USE		34
+# define KW_FROM	35
+# define KW_VSCALE	36
+# define KW_TIMHGT	37
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	31
+# define MAXKW	37
 
 /*
  * Threshold criteria keywords
@@ -68,3 +74,7 @@
  */
 # define SHOW_SOUNDINGS	0
 # define SHOW_FLAGS	1
+# define SHOW_COLORS	2
+# define SHOW_ORIGIN	3
+# define SHOW_LIMITS	4
+
