@@ -49,11 +49,12 @@
 # define KW_MLVW	45
 # define KW_XYPLOT	46
 # define KW_CONLIMITS	47
+# define KW_TO		48
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	47
+# define MAXKW	48
 
 /*
  * Threshold criteria keywords
