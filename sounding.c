@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.12 $ $Date: 1990-11-21 11:17:19 $ $Author: burghart $
+ * $Revision: 1.13 $ $Date: 1990-12-11 10:39:36 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -49,6 +49,7 @@ snd_init ()
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
 	void	mist_read_file (), gale_read_file (), nmc_read_file ();
+	void	nc_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -82,6 +83,9 @@ snd_init ()
 
 	Read_file[SFMT_NMC]	= nmc_read_file;
 	Fmt_name[SFMT_NMC]	= "NMC";
+
+	Read_file[SFMT_NETCDF]	= nc_read_file;
+	Fmt_name[SFMT_NETCDF]	= "netCDF";
 
 	Init = TRUE;
 }
