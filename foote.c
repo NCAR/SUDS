@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: foote.c,v 1.20 1993-09-16 21:47:24 case Exp $";
+static char *rcsid = "$Id: foote.c,v 1.21 1993-10-01 15:49:52 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -71,7 +71,8 @@ struct ui_command *cmds;
 	float	x[400], yli[400], ydist[400];
 	float	sitealt, pres[BUFLEN], vt[BUFLEN], dp[BUFLEN], alt[BUFLEN];
 	float	li_pres, li_temp, li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
-	float	an_li_ref (), an_lfc_calc (), snd_s_alt ();
+	double	an_li_ref (), an_lfc_calc ();
+        float   snd_s_alt ();
 	char	*snd_default ();
 	void	ft_reset_annot ();
 /*
@@ -160,7 +161,7 @@ struct ui_command *cmds;
 	 * Get the reference pressure and temp. for lifted index calculations
 	 */
 		li_pres = Flg_mli ? 400.0 : 500.0;
-		li_temp = an_li_ref (pres, vt, maxpts);
+		li_temp = (float) an_li_ref (pres, vt, maxpts);
 		if (li_temp == BADVAL)
 			ui_printf ("No %d mb temp. for lifted index\n",
 				(int) li_pres);
@@ -206,7 +207,7 @@ struct ui_command *cmds;
 		/*
 		 * Find the LFC pressure for this parcel
 		 */
-			lfc_pres = an_lfc_calc (vt, pres, dp, maxpts, 
+			lfc_pres = (float) an_lfc_calc (vt, pres, dp, maxpts, 
 				vt[i], pres[i], dp[i], 350.0);
 
 			if (lfc_pres != BADVAL)
