@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.17 $ $Date: 1990-11-05 11:14:01 $ $Author: burghart $ 
+ * $Revision: 1.18 $ $Date: 1990-11-06 14:42:54 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -16,6 +16,11 @@
 # define R_D	287.
 
 # define DEG_TO_RAD	0.017453293
+
+/*
+ * Pressure to use for lifted index calculations
+ */
+# define LI_PRES	(Flg_mli ? 400 : 500)
 
 /*
  * Forward declarations
@@ -41,8 +46,9 @@ struct ui_command	*cmds;
  * Perform an analysis of a sounding
  */
 {
-	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN], u[BUFLEN], v[BUFLEN];
-	float	t_sfc, p_sfc, dp_sfc, temp700, dp700;
+	float	t[BUFLEN], vt[BUFLEN], p[BUFLEN], dp[BUFLEN];
+	float	u[BUFLEN], v[BUFLEN];
+	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t700, vt700, dp700, ref;
 	int	i, npts, name_loc = 0, success, ndx700;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
@@ -89,18 +95,22 @@ struct ui_command	*cmds;
 	else
 		Id_name = snd_default ();
 /*
- * Get the necessary sounding data (note that we use virtual temperature
- * instead of temperature)
+ * Get the necessary sounding data
  */
-	npts = snd_get_data (Id_name, t, BUFLEN, f_vt, BADVAL);
+	npts = snd_get_data (Id_name, t, BUFLEN, f_temp, BADVAL);
+	snd_get_data (Id_name, vt, BUFLEN, f_vt, BADVAL);
 	snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
 	snd_get_data (Id_name, dp, BUFLEN, f_dp, BADVAL);
 /*
- * Convert the dewpoints to K so they're easier to deal with
+ * Convert the temperatures and dewpoints to K so they're easier to deal with
  */
 	for (i = 0; i < npts; i++)
+	{
+		if (t[i] != BADVAL)
+			t[i] += T_K;
 		if (dp[i] != BADVAL)
 			dp[i] += T_K;
+	}
 /*
  * Begin printing info
  */
@@ -111,7 +121,7 @@ struct ui_command	*cmds;
 	an_printf ("Time: %s, Site: %s\n", string, snd_site (Id_name));
 	an_printf ("-----------------------------------------------\n");
 /*
- * Perform the surface-based analysis
+ * Print preliminaries for the surface-based analysis
  */
 	an_printf ("SURFACE-BASED ANALYSIS\n");
 
@@ -119,32 +129,73 @@ struct ui_command	*cmds;
 	an_printf ("\t Surface potential temperature%s: %.1f K\n", 
 		Flg_mli ? " (50 mb average)" : "",
 		theta_dry (t_sfc, p_sfc));
+
+	an_surface (vt, p, dp, npts, &vt_sfc, &p_sfc, &dp_sfc);
+	an_printf ("\t Surface virtual potential temperature%s: %.1f K\n", 
+		Flg_mli ? " (50 mb average)" : "",
+		theta_dry (vt_sfc, p_sfc));
+
 	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
 		w_sat (dp_sfc, p_sfc));
-	an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc);
+
+	ref = an_li_ref (p, t, npts);
+	an_printf ("\t %d mb temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
+
+	ref = an_li_ref (p, vt, npts);
+	an_printf ("\t %d mb virtual temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("(virtual potential temp.: %.1f K)\n", 
+		theta_dry (ref, LI_PRES));
 /*
- * Do the forecast analysis (i.e., start from 700mb)
+ * Do the analysis, using virtual temperature
+ */
+	an_do_analysis (vt, p, dp, npts, vt_sfc, p_sfc, dp_sfc);
+/*
+ * Preliminaries for the forecast (700 mb based) analysis
  */
 	an_printf ("FORECAST (700 mb-BASED) ANALYSIS\n");
 
-	success = an_700 (t, p, dp, npts, p_sfc, dp_sfc, &temp700, 
-		&dp700, &ndx700);
+	success = an_700 (t, p, dp, npts, p_sfc, dp_sfc, &t700, &dp700, 
+		&ndx700);
+
+	if (success)
+	{
+		an_printf ("\t 700 mb temperature: %.1f K ", t700);
+		an_printf ("(potential temp.: %.1f K)\n", 
+			theta_dry (t700, 700.0));
+	}
+
+	success = an_700 (vt, p, dp, npts, p_sfc, dp_sfc, &vt700, &dp700, 
+		&ndx700);
 
 	if (! success)
 	{
-		an_printf ("\t Unable to find 700 mb temperature\n");
+		an_printf ("\t Unable to find 700 mb virtual temperature\n");
 		return;
 	}
 
-	an_printf (
-		"\t 700 mb temperature: %.1f K (potential temp.: %.1f K)\n",
-		temp700, theta_dry (temp700, 700.0));
+	an_printf ("\t 700 mb virtual temperature: %.1f K ", vt700);
+	an_printf ("(virtual potential temp.: %.1f K)\n", 
+		theta_dry (vt700, 700.0));
+
 	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
 		w_sat (dp_sfc, p_sfc));
-	an_do_analysis (t + ndx700, p + ndx700, dp + ndx700, npts - ndx700, 
-		temp700, 700.0, dp700);
+
+	ref = an_li_ref (p, t, npts);
+	an_printf ("\t %d mb temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
+
+	ref = an_li_ref (p, vt, npts);
+	an_printf ("\t %d mb virtual temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("(virtual potential temp.: %.1f K)\n", 
+		theta_dry (ref, LI_PRES));
+/*
+ * Do the analysis, using virtual temperature
+ */
+	an_do_analysis (vt + ndx700, p + ndx700, dp + ndx700, 
+		npts - ndx700, vt700, 700.0, dp700);
 }
 
 
@@ -734,15 +785,14 @@ int	npts, *ndx700;
 
 
 float
-an_li (p, t, npts, theta_e_lcl, verbose)
+an_li (p, t, npts, theta_e_lcl)
 float	*p, *t, theta_e_lcl;
-int	npts, verbose;
+int	npts;
 /*
  * Find the lifted index (or modified lifted index) for the sounding
  */
 {
 	float	ref, li;
-	float	ndx_level = Flg_mli ? 400.0 : 500.0;
 /*
  * Get the lifted index using the reference temperature, and be verbose
  * if requested
@@ -750,15 +800,11 @@ int	npts, verbose;
 	if ((ref = an_li_ref (p, t, npts)) == BADVAL)
 	{
 		an_printf ("\t Cannot find %d mb temp. for lifted index\n", 
-			(int) ndx_level);
+			LI_PRES);
 		return (BADVAL);
 	}
 
-	li = ref - t_sat (theta_e_lcl, ndx_level);
-	if (verbose)
-		an_printf (
-		"\t %d mb temperature: %.1f K (potential temp.: %.1f K)\n",
-			(int) ndx_level, ref, theta_dry (ref, ndx_level));
+	li = ref - t_sat (theta_e_lcl, LI_PRES);
 /*
  * Done
  */
@@ -779,7 +825,6 @@ int	npts;
 {
 	int	i;
 	float	p_prev = BADVAL, t_prev = BADVAL;
-	float	ndx_level = Flg_mli ? 400.0 : 500.0;
 /*
  * Move up until we cross the desired pressure (either 400.0 or 500.0)
  */
@@ -790,7 +835,7 @@ int	npts;
 	/*
 	 * Check if we passed the index level
 	 */
-		if (p[i] <= ndx_level)
+		if (p[i] <= LI_PRES)
 			break;
 
 		p_prev = p[i];
@@ -806,7 +851,7 @@ int	npts;
 /*
  * Interpolate the temperature
  */
-	return (t_prev + (t[i] - t_prev) * (ndx_level - p_prev) /
+	return (t_prev + (t[i] - t_prev) * (LI_PRES - p_prev) /
 		(p[i] - p_prev));
 }
 
