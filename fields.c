@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.8 $ $Date: 1991-03-21 17:10:25 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1991-03-26 20:55:13 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -12,21 +12,21 @@ static struct
 	fldtype	fld;
 	char	*desc, *units;
 	char	*aliases[5];
-	float	min, max;
+	float	bot, top;
 	float	center, step;
 } Fnamelist[] =
 {
 	{f_alt, "altitude MSL", "m",
 		{"alt", "altitude", ""},
-		0.0,	20000.0,	0.0,	500.0	},
+		0.0,	16000.0,	0.0,	500.0	},
 	{f_azimuth, "balloon azimuth", "deg",
 		{"azimuth", "az", ""},
 		0.0,	360.0,	0.0,	10.0	},
 	{f_dp, "dewpoint", "deg C",
 		{"dp", "dewpoint", ""},
 		-70.0,	30.0,	-10.0,	5.0	},
-	{f_dz, "ascent rate", "m/s",
-		{"dz", "ascent", ""},
+	{f_ascent, "ascent rate", "m/s",
+		{"ascent", "dz/dt", ""},
 		0.0,	10.0,	0.0,	1.0	},
 	{f_lat, "latitude", "deg",
 		{"lat", "latitude", ""},
@@ -39,7 +39,7 @@ static struct
 		0.0,	20.0,	5.0,	1.0	},
 	{f_pres, "pressure", "mb",
 		{"pres", "press", "pressure", ""},
-		100.0,	1000.0,	1000.0,	100.0	},
+		1050.0,	100.0,	1000.0,	100.0	},
 	{f_qpres, "pressure quality", "",
 		{"qpres", ""},
 		0.0,	10.0,	0.0,	0.1	},
@@ -72,10 +72,10 @@ static struct
 		-60.0,	40.0,	0.0,	5.0	},
 	{f_theta, "potential temperature", "deg K",
 		{"theta", "pt", ""},
-		220.0,	320.0,	270.0,	2.0	},
+		300.0,	350.0,	300.0,	5.0	},
 	{f_theta_e, "equivalent potential temperature", "deg K",
 		{"theta_e", "ept", ""},
-		220.0,	320.0,	270.0,	5.0	},
+		300.0,	350.0,	300.0,	5.0	},
 	{f_time, "time from start", "s", 	
 		{"time", "seconds", ""},
 		0.0,	5000.0,	0.0,	60.0	},
@@ -186,6 +186,44 @@ fldtype	fld;
 
 
 float
+fd_bot (fld)
+fldtype fld;
+/*
+ * Return the bottom value to use for the given field
+ */
+{
+	int	i;
+
+	for (i = 0; Fnamelist[i].fld != f_null; i++)
+		if (Fnamelist[i].fld == fld)
+			return (Fnamelist[i].bot);
+
+	ui_error ("Unknown field type %d", fld);
+}
+
+
+
+
+float
+fd_top (fld)
+fldtype fld;
+/*
+ * Return the top value to use for the given field
+ */
+{
+	int	i;
+
+	for (i = 0; Fnamelist[i].fld != f_null; i++)
+		if (Fnamelist[i].fld == fld)
+			return (Fnamelist[i].top);
+
+	ui_error ("Unknown field type %d", fld);
+}
+
+
+
+
+float
 fd_center (fld)
 fldtype fld;
 /*
@@ -236,6 +274,31 @@ struct ui_command	*cmds;
 		for (j = 0; *Fnamelist[i].aliases[j]; j++)
 			if (! strcmp (fname, Fnamelist[i].aliases[j]))
 			{
+				Fnamelist[i].bot = UFLOAT (cmds[1]);
+				Fnamelist[i].top = UFLOAT (cmds[2]);
+				return;
+			}
+
+	ui_error ("Unknown field '%s'", fname);
+}
+
+
+
+
+void
+fd_set_conlimits (cmds)
+struct ui_command	*cmds;
+/*
+ * Change the plot limits for a field
+ */
+{
+	int	i, j;
+	char	*fname = UPTR (cmds[0]);
+
+	for (i = 0; Fnamelist[i].fld != f_null; i++)
+		for (j = 0; *Fnamelist[i].aliases[j]; j++)
+			if (! strcmp (fname, Fnamelist[i].aliases[j]))
+			{
 				Fnamelist[i].center = UFLOAT (cmds[1]);
 				Fnamelist[i].step = UFLOAT (cmds[2]);
 				return;
@@ -255,11 +318,13 @@ fd_show_limits ()
 {
 	int	i;
 
-	ui_nf_printf ("\n     FIELD  CENTER    STEP\n");
-	ui_nf_printf ("--------------------------\n");
+	ui_nf_printf ("\n     FIELD   BOTTOM      TOP   CENTER     STEP\n");
+	ui_nf_printf ("----------------------------------------------\n");
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
-		ui_nf_printf ("%10s %7.2f %7.2f\n", Fnamelist[i].aliases[0], 
-			Fnamelist[i].center, Fnamelist[i].step);
+		ui_nf_printf ("%10s %8.2f %8.2f %8.2f %8.2f\n", 
+			Fnamelist[i].aliases[0], Fnamelist[i].bot, 
+			Fnamelist[i].top, Fnamelist[i].center, 
+			Fnamelist[i].step);
 
 	ui_printf ("\n");
 }
