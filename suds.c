@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.14 $ $Date: 1991-03-21 15:49:25 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1991-03-26 20:58:49 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -168,6 +168,7 @@ main_cmd_init ()
 	void	ft_plot (), hd_plot (), color_change (), edit_insert ();
 	void	xs_xsect (), cvt_origin (), fd_set_limits (), edit_extend ();
 	void	nc_write_file (), main_forecast (), an_mlvw_limits ();
+	void	xy_plot (), fd_set_conlimits ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -199,6 +200,8 @@ main_cmd_init ()
 	Cmd_routine[KW_NETCDF]		= nc_write_file;
 	Cmd_routine[KW_FORECAST]	= main_forecast;
 	Cmd_routine[KW_MLVW]		= an_mlvw_limits;
+	Cmd_routine[KW_XYPLOT]		= xy_plot;
+	Cmd_routine[KW_CONLIMITS]	= fd_set_conlimits;
 }
 
 
