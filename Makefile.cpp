@@ -23,9 +23,7 @@ install: suds suds.lf
 suds:	$(OBJS)
 	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a $(XLIBRARIES) XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB) $(SUNVIEWFLAG)
 
-suds.lf: $(RDSSLIBRARIES)/suds.lf
-
-$(RDSSLIBRARIES)/suds.lf:	suds.state suds.menu keywords.h
+suds.lf:suds.state suds.menu keywords.h
 	@ cc -E suds.state | grep -v '^# [0-9]' | cat -s > suds.i
 	@ uic < make-lf
 	@ install -c suds.lf $(RDSSLIBRARIES)/suds.lf
