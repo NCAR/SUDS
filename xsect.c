@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.2 $ $Date: 1990-02-07 09:01:12 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1990-04-02 09:30:18 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -489,7 +489,7 @@ xs_background ()
 		fd_units (Fld));
 	strcpyUC (string, string);
 
-	G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, charsize, GT_CENTER, 
+	G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER, 
 		GT_BOTTOM, 0.5 * P_len, 1.10 * P_hgt, 0.0, string);
 /*
  * Horizontal limits (space or time)
@@ -524,7 +524,7 @@ xs_background ()
 		sprintf (string, "FROM (%.1f,%.1f) KM TO (%.1f,%.1f) KM", 
 			X0, Y0, X1, Y1);
 
-	G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, charsize, GT_CENTER,
+	G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 		GT_BOTTOM, 0.5 * P_len, 1.07 * P_hgt, 0.0, string);
 /*
  * Origin
@@ -535,7 +535,7 @@ xs_background ()
 		sprintf (string, 
 			"RELATIVE TO LATITUDE: %.3f\027 LONGITUDE: %.3f\027",
 			lat, lon);
-		G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, charsize, GT_CENTER,
+		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 			GT_BOTTOM, 0.5 * P_len, 1.04 * P_hgt, 0.0, string);
 	}
 /*
@@ -603,19 +603,19 @@ xs_background ()
 		if (dolabel)
 		{
 			sprintf (string, "%d", (int) tick);
-			G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, 
-				charsize, GT_CENTER, GT_TOP, 
+			G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, 
+				GT_CENTER, GT_TOP, 
 				(float) tick, -0.01 * P_hgt, 0.0, string);
 		}
 		dolabel = ! dolabel;
 	}
 
 	if (Time_height)
-		G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, charsize, GT_CENTER,
+		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 			GT_TOP, 0.5 * P_len, -0.06 * P_hgt, 0.0, 
 			"TIME FROM START (HOURS)");
 	else
-		G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, charsize, GT_CENTER,
+		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 			GT_TOP, 0.5 * P_len, -0.06 * P_hgt, 0.0, "DIST (KM)");
 /*
  * Get the lower and upper limits of the vertical axes
@@ -674,7 +674,7 @@ xs_background ()
 		if (dolabel)
 		{
 			sprintf (string, "%d", (int) tick);
-			G_write (Xs_bg_ov, C_WHITE, GTF_MINSTROKE, 
+			G_write (Xs_bg_ov, C_WHITE, GTF_DEV, 
 				charsize, GT_RIGHT, GT_CENTER,
 				-0.01 * P_len, tick - P_bot, 0.0, string);
 		}

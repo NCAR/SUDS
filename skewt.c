@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.9 $ $Date: 1990-01-23 09:26:24 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-04-02 09:29:57 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -300,7 +300,7 @@ skt_background ()
 	 * Annotate along the left side
 	 */
 		sprintf (string, "%d\0", (int) p);
-		G_write (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_RIGHT, 
+		G_write (Skewt_bg_ov, C_WHITE, GTF_DEV, 0.025, GT_RIGHT, 
 			GT_CENTER, -0.01, y[0], 0.0, string);
 	}
 /*
@@ -546,7 +546,7 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_write (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+	G_write (Skewt_ov, color, GTF_DEV, 0.025, GT_LEFT, GT_TOP, 
 		Xtxt_bot, Ytxt_bot, 0.0, string);
 /*
  * Update the location for the next annotation
@@ -590,7 +590,7 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_write (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+	G_write (Skewt_ov, color, GTF_DEV, 0.025, GT_LEFT, GT_TOP, 
 		Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
@@ -1054,9 +1054,9 @@ int	plot_ndx, nplots;
  */
 	if (plot_ndx == 0)
 	{
-		G_write (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
+		G_write (Winds_ov, C_WHITE, GTF_DEV, 0.025, GT_CENTER, 
 			GT_TOP, 0.5, -0.01, 0.0, "WINDS PROFILE");
-		G_write (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.02, GT_LEFT, 
+		G_write (Winds_ov, C_WHITE, GTF_DEV, 0.02, GT_LEFT, 
 			GT_CENTER, 0.5, -0.06, 0.0, " = 10 M/S");
 
 		xov[0] = 0.5 - (10.0 * xscale);

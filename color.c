@@ -1,7 +1,7 @@
 /*
  * Handle initialization and changing of colors
  *
- * $Revision: 1.5 $ $Date: 1990-01-23 09:03:57 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1990-04-02 09:28:38 $ $Author: burghart $
  */
 # include <stdio.h>
 # include "globals.h"
@@ -331,10 +331,10 @@ color_build_ov ()
 	 */
 		color = Colorbase + i;
 
-		G_text (C_ov, color, GTF_STROKE, 0.3, GT_CENTER, 
-			GT_CENTER, x, y + 0.16, C_current[i].ndxname);
-		G_text (C_ov, color, GTF_STROKE, 0.3, GT_CENTER, 
-			GT_CENTER, x, y - 0.16, C_current[i].colorname);
+		G_write (C_ov, color, GTF_DEV, 0.3, GT_CENTER, 
+			GT_CENTER, x, y + 0.16, 0.0, C_current[i].ndxname);
+		G_write (C_ov, color, GTF_DEV, 0.3, GT_CENTER, 
+			GT_CENTER, x, y - 0.16, 0.0, C_current[i].colorname);
 	/*
 	 * Move the text position
 	 */

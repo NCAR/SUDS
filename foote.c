@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.8 $ $Date: 1989-12-27 11:25:44 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-04-02 09:29:18 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>
@@ -264,7 +264,7 @@ ft_background ()
 		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 		sprintf (string, "%.1f", height);
-		G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+		G_write (Foote_ov, C_WHITE, GTF_DEV, 0.025, 
 			GT_CENTER, GT_TOP, x[0], -0.01, 0.0, string);
 	/*
 	 * Draw a horizontal line for this height (up to Foote_height km)
@@ -277,7 +277,7 @@ ft_background ()
 		y[0] = y[1] = height / Foote_height;
 		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
-		G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+		G_write (Foote_ov, C_WHITE, GTF_DEV, 0.025, 
 			GT_RIGHT, GT_CENTER, -0.01, y[0], 0.0, string);
 	}
 /*
@@ -304,7 +304,7 @@ ft_background ()
 		G_polyline (Foote_ov, GPLT_DOT, C_BG4, 2, x, y);
 
 		sprintf (string, "%.1f", li);
-		G_write (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_LEFT, 
+		G_write (Foote_ov, C_BG4, GTF_DEV, 0.025, GT_LEFT, 
 			GT_CENTER, 1.01, y[0], 0.0, string);
 	}
 
@@ -409,7 +409,7 @@ int     color, newline;
 /*
  * Write in the annotation
  */
-        G_write (Foote_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+        G_write (Foote_ov, color, GTF_DEV, 0.025, GT_LEFT, GT_TOP, 
 		Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
