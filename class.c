@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.3 $ $Date: 1989-08-11 10:40:00 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1989-09-25 10:16:53 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -273,10 +273,10 @@ struct snd	*sounding;
 {
 	FILE	*sfile;
 	int	i, j, year, month, day, hour, minute, second;
-	int	ndx, nflds;
+	int	ndx, nflds, altered = FALSE;
 	long	current_time;
 	float	val;
-	char	string[20], fldstring[150];
+	char	string[40], fldstring[150];
 	fldtype	fld, classfld;
 	struct snd_datum	*data[MAXFLDS];
 /*
@@ -285,12 +285,31 @@ struct snd	*sounding;
 	if ((sfile = fopen (fname, "w")) == 0)
 		ui_error ("Cannot create file '%s'", fname);
 /*
+ * Copy the site name into a string, replacing commas with spaces
+ * (since commas will cause us problems when we read it back in)
+ */
+	for (i = 0; sounding->site[i]; i++)
+	{
+		char	c = sounding->site[i];
+		if (c == ',')
+		{
+			altered = TRUE;
+			c = ' ';
+		}
+		string[i] = c;
+	}
+	string[i] = '\0';
+
+	if (altered)
+		ui_warning ("Replaced site name '%s' with '%s'", 
+			sounding->site, string);
+/*
  * Write:
  *	site name,lat,lon,altitude
  *	year,month,day,hh:mm:ss
  *	blurb,npts
  */
-	fprintf (sfile, "%s,%.5f,%.5f,%d\n", sounding->site, sounding->sitelat,
+	fprintf (sfile, "%s,%.5f,%.5f,%d\n", string, sounding->sitelat,
 		sounding->sitelon, (int) sounding->sitealt);
 
 	year = 1900 + sounding->rls_time.ds_yymmdd / 10000;
