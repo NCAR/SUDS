@@ -1,7 +1,7 @@
 /*
  * RSANAL format sounding access
  *
- * $Revision: 1.5 $ $Date: 1991-03-15 20:30:57 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1991-03-20 23:31:01 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -141,11 +141,14 @@ struct snd	*sounding;
 			if (val[i] == 999.)
 				val[i] = BAD;
 		/*
-		 * Change the units from 1000's of feet to meters for the
+		 * Change the units from 1000's of feet to meters MSL for the
 		 * altitude field
 		 */
 			if (i == 5 && val[i] != BAD)
+			{
 				val[i] *= 304.8;
+				val[i] += sounding->sitealt;
+			}
 		}
 	/*
 	 * Insert the data
