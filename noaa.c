@@ -2,12 +2,17 @@
  * NOAA format sounding access
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:15:31  burghart
+ * Initial revision
+ * 
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include "sounding.h"
 # include "derive.h"
 
+# define R_D	287.
+# define G_0	9.80665
 # define T_K	273.15
 
 # define STRSIZE	200
@@ -26,7 +31,8 @@ struct snd	*sounding;
 	int	i, year, month, day, hour, minute, second;
 	int	ndx, status = 0;
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
-	float	sfc_pres, xloc, yloc, val[9], temp, rh, dp, e;
+	float	sfc_pres, xloc, yloc, val[10], temp, rh, dp, e;
+	float	vt, vt_prev, pres, pres_prev = 9999.9, alt_prev;
 	char	string[STRSIZE], c = ' ';
 /*
  * Open the file
@@ -74,7 +80,8 @@ struct snd	*sounding;
 	sounding->fields[2] = f_temp;	sounding->fields[3] = f_rh;
 	sounding->fields[4] = f_temp;	sounding->fields[5] = f_temp;
 	sounding->fields[6] = f_wspd;	sounding->fields[7] = f_wdir;
-	sounding->fields[8] = f_dp;	sounding->fields[9] = f_null;
+	sounding->fields[8] = f_dp;	sounding->fields[9] = f_alt;
+	sounding->fields[10] = f_null;
 /*
  * Get the data
  */
@@ -86,7 +93,7 @@ struct snd	*sounding;
 		for (i = 0; i < 8 && status != EOF; i++)
 			status = fscanf (sfile, " %f ", &val[i]);
 
-		if (status == EOF)
+		if (status == EOF || status == 0)
 			break;
 	/*
 	 * Kluge: derive the dewpoint here, since it isn't supplied for
@@ -103,9 +110,38 @@ struct snd	*sounding;
 		else
 			val[8] = 9999.9;
 	/*
-	 * Put the nine data points into their respective data lists
+	 * More kluge: derive the altitude field also.  This derivation
+	 * is adapted from equation 2.24 of Wallace and
+	 * Hobbs' "Atmospheric Science" (1977) using a simple estimation
+	 * of the integral.
 	 */
-		for (i = 0; i < 9; i++)
+		dp = val[8];
+		pres = val[1];
+		if (pres < 8888. && dp < 8888. && temp < 8888.)
+		{
+			e = e_from_dp (dp + T_K);
+			vt = t_v (temp + T_K, pres, e);
+		/*
+		 * Assign the altitude (the first good point is set to
+		 * 0 km altitude
+		 */
+			if (pres_prev > 8888.)
+				val[9] = 0.0;
+			else
+				val[9] = alt_prev + R_D / G_0 * 0.5 * 
+					(vt / pres + vt_prev / pres_prev) * 
+					(pres_prev - pres);
+
+			pres_prev = pres;
+			vt_prev = vt;
+			alt_prev = val[9];
+		}
+		else
+			val[9] = 9999.9;
+	/*
+	 * Put the ten data points into their respective data lists
+	 */
+		for (i = 0; i < 10; i++)
 		{
 		/*
 		 * Don't put bad values in the list
