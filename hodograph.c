@@ -2,6 +2,9 @@
  * Hodograph plotting module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/07/11  14:51:44  burghart
+ * All annotation now uses GTF_MINSTROKE font
+ * 
  * Revision 1.1  89/06/26  09:57:56  burghart
  * Initial revision
  * 
@@ -18,7 +21,7 @@
 /*
  * Colors to use and their order
  */
-static int H_color[] = { C_RED, C_BLUE, C_GREEN, 0 };
+static int H_color[] = { C_TRACE1, C_TRACE2, C_TRACE3, 0 };
 
 /*
  * Overlays for the background and the data
@@ -246,17 +249,17 @@ hd_background ()
 	x[2] = W_scale;		y[2] = W_scale;
 	x[3] = -W_scale;	y[3] = W_scale;
 	x[4] = -W_scale;	y[4] = -W_scale;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 5, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 5, x, y);
 /*
  * Cross through 0,0
  */
 	x[0] = -W_scale;	y[0] = 0.0;
 	x[1] = W_scale;		y[1] = 0.0;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, x, y);
 
 	x[0] = 0.0;	y[0] = -W_scale;
 	x[1] = 0.0;	y[1] = W_scale;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, x, y);
 /*
  * Label the horizontal axes
  */
@@ -273,12 +276,12 @@ hd_background ()
 		x[0] = x[1] = (float) tick;
 		y[0] = -W_scale;
 		y[1] = ((tick % 5) == 0) ? -0.95 * W_scale : -0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, 
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
 			x, y);
 
 		y[0] = W_scale;
 		y[1] = ((tick % 5) == 0) ? 0.95 * W_scale : 0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, 
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
 			x, y);
 	/*
 	 * Label every fifth tick
@@ -310,12 +313,12 @@ hd_background ()
 		y[0] = y[1] = (float) tick;
 		x[0] = -W_scale;
 		x[1] = ((tick % 5) == 0) ? -0.95 * W_scale : -0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, 
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
 			x, y);
 
 		x[0] = W_scale;
 		x[1] = ((tick % 5) == 0) ? 0.95 * W_scale : 0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_DGRAY, 2, 
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
 			x, y);
 	/*
 	 * Label every fifth tick

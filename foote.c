@@ -2,6 +2,10 @@
  * Foote chart stuff
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  89/07/11  14:50:45  burghart
+ * 
+ * All annotation now uses GTF_MINSTROKE font
+ * 
  * Revision 1.3  89/06/29  16:15:01  burghart
  * Fixed problem of missing '(' in annotation and added capability to 
  * interrupt the plot
@@ -45,7 +49,7 @@ static float	Xtxt_top = 0.0, Ytxt_top = 1.19;
 /*
  * Colors to use
  */
-static int Color[] = { C_RED, C_GREEN, C_BLUE, 0 };
+static int Color[] = { C_TRACE1, C_TRACE2, C_TRACE3, 0 };
 
 /*
  * Forward declarations
@@ -274,7 +278,7 @@ ft_background ()
 		x[0] = x[1] = height / Foote_height;
 		y[0] = 0.0;
 		y[1] = 1.0;
-		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_DGRAY, 
+		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_BG2, 
 			2, x, y);
 
 		sprintf (string, "%.1f", height);
@@ -289,7 +293,7 @@ ft_background ()
 		x[0] = 0.0;
 		x[1] = 1.0;
 		y[0] = y[1] = height / Foote_height;
-		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_DGRAY, 
+		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_BG2, 
 			2, x, y);
 
 		G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025, 
@@ -320,22 +324,22 @@ ft_background ()
 	 * (The extra 0.002 makes sure we don't plot over a distance line)
 	 */
 		y[0] = y[1] = li / (2.0 * MAX_LI) + 0.5 + 0.002;
-		G_polyline (Foote_ov, GPLT_DOT, Colorbase + C_DRY, 2, x, y);
+		G_polyline (Foote_ov, GPLT_DOT, Colorbase + C_BG4, 2, x, y);
 
 		sprintf (string, "%.1f", li);
-		G_text (Foote_ov, Colorbase + C_DRY, GTF_MINSTROKE, 0.025, 
+		G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025, 
 			GT_LEFT, GT_CENTER, 1.01, y[0], string);
 	}
 
-	G_text (Foote_ov, Colorbase + C_DRY, GTF_MINSTROKE, 0.025,
+	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
 		GT_RIGHT, GT_CENTER, 1.19, 0.535, "PARCEL");
-	G_text (Foote_ov, Colorbase + C_DRY, GTF_MINSTROKE, 0.025,
+	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
 		GT_RIGHT, GT_CENTER, 1.19, 0.50, "LIFTED");
-	G_text (Foote_ov, Colorbase + C_DRY, GTF_MINSTROKE, 0.025,
+	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
 		GT_RIGHT, GT_CENTER, 1.19, 0.465, "INDEX");
 
 	sprintf (string, "(AT %d MB)", Flg_mli ? 400 : 500);
-	G_text (Foote_ov, Colorbase + C_DRY, GTF_MINSTROKE, 0.025,
+	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
 		GT_RIGHT, GT_CENTER, 1.19, 0.43, string);
 /*
  * Restore the original clipping
