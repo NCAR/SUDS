@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.9 $ $Date: 1990-02-08 15:14:31 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-03-27 10:41:35 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -47,7 +47,7 @@ snd_init ()
 	void	cls_read_file (), jaw_read_file ();
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
-	void	mist_read_file ();
+	void	mist_read_file (), gale_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -75,6 +75,9 @@ snd_init ()
 
 	Read_file[SFMT_MIST]	= mist_read_file;
 	Fmt_name[SFMT_MIST]	= "MIST";
+
+	Read_file[SFMT_GALE]	= gale_read_file;
+	Fmt_name[SFMT_GALE]	= "GALE";
 
 	Init = TRUE;
 }
