@@ -78,7 +78,7 @@ AUTOMAKE_OPTIONS = foreign
 docdir = ${datadir}/doc/suds
 doc_DATA = suds.pdf
 
-EXTRA_DIST = ${doc_DATA}
+EXTRA_DIST = suds.pdf *.tex *.sty
 
 CLEANFILES = *.aux *.dvi *.log *.ps *.toc sudsndx.dat*
 subdir = .
@@ -300,14 +300,14 @@ uninstall-am: uninstall-docDATA uninstall-info-am
 suds.pdf: suds.ps
 	ps2pdf $^ $@
 
-suds.ps: suds.dvi
-	dvips -o $@ $^
-
 suds.dvi: suds.tex
 	touch sudsndx.dats
 	latex suds.tex
 	texindex sudsndx.dat	# makes sorted file sudsndx.dats
 	latex suds.tex
+
+suds.ps: suds.dvi
+	dvips -o $@ $^
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
