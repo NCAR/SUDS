@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.24 1992-03-13 22:52:02 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.25 1992-05-05 21:04:10 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -91,8 +91,9 @@ struct ui_command	*cmds;
 {
 	float	t[BUFLEN], vt[BUFLEN], p[BUFLEN], dp[BUFLEN];
 	float	u[BUFLEN], v[BUFLEN];
-	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t_fore, vt_fore, dp_fore, ref;
-	int	i, npts, name_loc = 0, success, ndx_fore;
+	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t_fore, vt_fore, dp_fore;
+	float	t_ref, vt_ref;
+	int	i, npts, name_loc = 0, success, t_ndx_fore, vt_ndx_fore;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
@@ -174,7 +175,8 @@ struct ui_command	*cmds;
 /*
  * Print preliminaries for the surface-based analysis
  */
-	an_printf ("SURFACE-BASED ANALYSIS\n");
+	an_printf ("SURFACE-BASED ANALYSIS (using %s)\n", 
+		Flg_vt ? "virtual temperature" : "temperature");
 
 	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
 	an_printf ("\t Surface potential temperature ");
@@ -187,26 +189,30 @@ struct ui_command	*cmds;
 	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
 		w_sat (dp_sfc, p_sfc));
 
-	ref = an_li_ref (p, t, npts);
-	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, ref);
-	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
+	t_ref = an_li_ref (p, t, npts);
+	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, t_ref);
+	an_printf ("(potential temp.: %.1f K)\n", theta_dry (t_ref, LI_PRES));
 
-	ref = an_li_ref (p, vt, npts);
+	vt_ref = an_li_ref (p, vt, npts);
 	an_printf ("\t %d mb virtual temperature: %.1f K ", (int) LI_PRES, 
-		ref);
+		vt_ref);
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
-		theta_dry (ref, LI_PRES));
+		theta_dry (vt_ref, LI_PRES));
 /*
- * Do the analysis, using virtual temperature
+ * Do the analysis, using temperature or virtual temperature as requested
  */
-	an_do_analysis (vt, p, dp, npts, vt_sfc, p_sfc, dp_sfc);
+	if (Flg_vt)
+		an_do_analysis (vt, p, dp, npts, vt_sfc, p_sfc, dp_sfc);
+	else
+		an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc);
 /*
  * Preliminaries for the forecast analysis
  */
-	an_printf ("FORECAST (%.0f mb-BASED) ANALYSIS\n", Forecast_pres);
+	an_printf ("FORECAST (%.0f mb-BASED) ANALYSIS (using %s)\n", 
+		Forecast_pres, Flg_vt ? "virtual temperature" : "temperature");
 
 	success = an_forecast (t, p, dp, npts, p_sfc, dp_sfc, &t_fore, 
-		&dp_fore, &ndx_fore);
+		&dp_fore, &t_ndx_fore);
 
 	if (success)
 	{
@@ -217,7 +223,7 @@ struct ui_command	*cmds;
 	}
 
 	success = an_forecast (vt, p, dp, npts, p_sfc, dp_sfc, &vt_fore, 
-		&dp_fore, &ndx_fore);
+		&dp_fore, &vt_ndx_fore);
 
 	if (! success)
 	{
@@ -234,20 +240,26 @@ struct ui_command	*cmds;
 	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
 		w_sat (dp_sfc, p_sfc));
 
-	ref = an_li_ref (p, t, npts);
-	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, ref);
-	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
+	t_ref = an_li_ref (p, t, npts);
+	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, t_ref);
+	an_printf ("(potential temp.: %.1f K)\n", theta_dry (t_ref, LI_PRES));
 
-	ref = an_li_ref (p, vt, npts);
+	t_ref = an_li_ref (p, vt, npts);
 	an_printf ("\t %d mb virtual temperature: %.1f K ", (int) LI_PRES, 
-		ref);
+		t_ref);
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
-		theta_dry (ref, LI_PRES));
+		theta_dry (t_ref, LI_PRES));
 /*
- * Do the analysis, using virtual temperature
+ * Do the analysis, using temperature or virtual temperature as requested
  */
-	an_do_analysis (vt + ndx_fore, p + ndx_fore, dp + ndx_fore, 
-		npts - ndx_fore, vt_fore, Forecast_pres, dp_fore);
+	if (Flg_vt)
+		an_do_analysis (vt + vt_ndx_fore, p + vt_ndx_fore, 
+			dp + vt_ndx_fore, npts - vt_ndx_fore, vt_fore, 
+			Forecast_pres, dp_fore);
+	else
+		an_do_analysis (t + t_ndx_fore, p + t_ndx_fore, 
+			dp + t_ndx_fore, npts - t_ndx_fore, vt_fore, 
+			Forecast_pres, dp_fore);
 /*
  * Do the show list
  */
@@ -617,7 +629,7 @@ int	npts;
 	if (p_prev == p[i])
 	{
 		an_printf (
-			"Super-adiabatic case at %d mb, no LFC calculated\n",
+			"\tSuper-adiabatic case at %d mb, no LFC calculated\n",
 			(int) p_prev);
 		return (BADVAL);
 	}
