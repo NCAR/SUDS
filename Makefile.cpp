@@ -21,7 +21,7 @@ install: suds suds.lf
 	ranlib libsuds.a
 
 suds:	$(OBJS)
-	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs $(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB) $(SUNVIEWFLAG)
+	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a $(XLIBRARIES) XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB) $(SUNVIEWFLAG)
 
 suds.lf: $(RDSSLIBRARIES)/suds.lf
 
