@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.2 $ $Date: 1989-08-11 10:47:26 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1989-09-05 17:01:58 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -373,7 +373,7 @@ edit_draw ()
 /*
  * Do the actual drawing
  */
-	G_polyline (E_region.ov, GPLT_SOLID, Colorbase + color, npts,
+	G_polyline (E_region.ov, GPLT_SOLID, color, npts,
 		E_region.x + offset, E_region.y + offset);
 	G_update (Wkstn);
 /*
@@ -535,7 +535,15 @@ int	ovcount;
 	if (Replot)
 		return;
 /*
- * Put the info into the Lastplot structure
+ * Make the overlays from the previous plot invisible
+ */
+	if (Lastplot.ovcount)
+		for (i = 0; i < Lastplot.ovcount; i++)
+			if (G_ov_to_ws (Lastplot.ov[i]) == Wkstn)
+				G_visible (Lastplot.ov[i], FALSE);
+/*
+ * Put the new plot and coord routines and the commands into the 
+ * Lastplot structure
  */
 	Lastplot.plot = plot;
 	Lastplot.coords = coords;
@@ -544,21 +552,14 @@ int	ovcount;
 		uip_release (Lastplot.cmds);
 
 	Lastplot.cmds = uip_clone_clist (cmds);
-
-	if (ovcount > MAXOV)
-		ui_error ("(BUG) Can't handle %d overlays in edit_set_plot\n",
-			ovcount);
-/*
- * Make the overlays from the previous plot invisible
- */
-	if (Lastplot.ovcount)
-		for (i = 0; i < Lastplot.ovcount; i++)
-			if (G_ov_to_ws (Lastplot.ov[i]) == Wkstn)
-				G_visible (Lastplot.ov[i], FALSE);
 /*
  * Remember the overlays from the current plot (and make sure
  * they're visible)
  */
+	if (ovcount > MAXOV)
+		ui_error ("(BUG) Can't handle %d overlays in edit_set_plot\n",
+			ovcount);
+
 	Lastplot.ovcount = ovcount;
 	for (i = 0; i < ovcount; i++)
 	{
@@ -693,7 +694,6 @@ edit_mark ()
 
 
 void
-
 edit_cut ()
 /*
  * Cut points out of the selected field between the mark and the
@@ -867,6 +867,7 @@ struct ui_command	*cmds;
  */
 	return;
 }
+
 
 
 
@@ -1078,6 +1079,7 @@ edit_cursor ()
  */
 	G_put_target (Cursor_ov, xsc, ysc);
 }
+
 
 
 
