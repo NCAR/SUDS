@@ -2,6 +2,9 @@
  * SUDS main driver
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/06/22  15:03:20  burghart
+ * Added hodograph plotting routine the the command list
+ * 
  * Revision 1.1  89/03/16  15:15:11  burghart
  * Initial revision
  * 
@@ -300,7 +303,8 @@ main_finish ()
 
 	if (Wkstn)
 		G_close (Wkstn);
-	return;
+
+	exit (0);
 }
 
 
