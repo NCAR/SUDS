@@ -7,8 +7,10 @@ EXTRA_DIST = suds.pdf *.tex *.sty
 
 CLEANFILES = *.aux *.dvi *.log *.ps *.toc sudsndx.dat*
 
-suds.pdf: suds.ps
-	ps2pdf $^ $@
+.ps.pdf:
+	ps2pdf $<
+
+suds.pdf:
 
 suds.dvi: suds.tex
 	touch sudsndx.dats
@@ -16,5 +18,6 @@ suds.dvi: suds.tex
 	texindex sudsndx.dat	# makes sorted file sudsndx.dats
 	latex suds.tex
 
-suds.ps: suds.dvi
-	dvips -o $@ $^
+SUDS_DVI = suds.dvi
+suds.ps: ${SUDS_DVI}
+	dvips -o $@ ${SUDS_DVI}
