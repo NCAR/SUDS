@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.18 1993-08-09 17:02:00 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.19 1995-09-14 20:48:58 burghart Exp $";
 
 # include <math.h>
 # include <met_formulas.h>
@@ -816,8 +816,10 @@ edit_erase ()
 	if (erasept == E_datum)
 	{
 		edit_down_pointer (&cmd);
+# ifdef notdef	/* Allow last point erase now.  9/14/95 cb */
 		if (erasept == E_datum)
 			ui_error ("The last point cannot be erased");
+# endif
 	}
 /*
  * Move the mark to the current pointer location if it's 
@@ -1286,8 +1288,10 @@ fldtype	fld;
 {
 	int	moveptr = (pt == E_datum);
 
+# ifdef notdef	/* Allow last point removal now.  9/14/95 cb */
 	if (! pt->prev && ! pt->next)
 		ui_error ("Cannot delete the last point from a field");
+# endif
 /*
  * Change the link for the previous point.  If there is no previous point
  * then we are changing the head of the data list and must tell the sounding
@@ -1312,6 +1316,11 @@ fldtype	fld;
 		else
 			E_datum = pt->prev;
 	}
+/*
+ * If the last point was removed, we no longer have a selected edit field.
+ */
+	if (! pt->prev && ! pt->next)
+		Etrace = -1;
 /*
  * Free the point we whacked
  */
