@@ -2,6 +2,9 @@
  * SUDS main driver
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:15:11  burghart
+ * Initial revision
+ * 
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -152,7 +155,7 @@ main_cmd_init ()
 	void	edit_cut (), analyze (), main_show (), snd_write_file ();
 	void	edit_erase (), edit_newvalue (), edit_examine ();
 	void	edit_threshold (), snd_forget (), skt_wscale ();
-	void	ft_plot ();
+	void	ft_plot (), hd_plot ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -174,6 +177,7 @@ main_cmd_init ()
 	Cmd_routine[KW_FORGET]		= snd_forget;
 	Cmd_routine[KW_WSCALE]		= skt_wscale;
 	Cmd_routine[KW_FOOTE]		= ft_plot;
+	Cmd_routine[KW_HODOGRAPH]	= hd_plot;
 }
 
 
