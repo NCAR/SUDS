@@ -1,4 +1,4 @@
-MFVERSION="$Id: Imakefile,v 1.2 1993-07-27 21:59:26 case Exp $"
+MFVERSION="$Id: Imakefile,v 1.3 1994-01-10 21:57:09 case Exp $"
 /*		Copyright (C) 1987,88,89,90,91 by UCAR
  *	University Corporation for Atmospheric Research
  *		   All rights reserved
@@ -29,9 +29,6 @@ INCLUDES = $(XINCLUDES) $(NETCDFINCLUDES)
 
 EXTRA_DEFINES = -DLOADFILE=\"$(LIBDIR)/suds.lf\" -DHELPDIR=\"$(RDSSDIR)/suds/help\" $(NETCDFFLAG)
 
-#if SystemV4
-EXTRA_LOAD_FLAGS = -t
-#endif 
 
 BINSRCS = suds.c
 
