@@ -1,7 +1,8 @@
 /*
  * NWS format sounding access
  *
- * $Log: not supported by cvs2svn $
+ * $Revision: 1.2 $ $Date: 1989-08-11 10:59:50 $ $Author: burghart $
+ * 
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -40,7 +41,7 @@ struct snd	*sounding;
  */
 {
 	FILE	*sfile;
-	int	i, year, month, day, rtype, status;
+	int	i, year, month, day, rtype, status = 1;
 	int	ndx, time, did_sfc = FALSE;
 	struct snd_datum	*dptr[NFLD];
 	float	sitelat, sitelon, sfc_pres, sfc[NFLD], val[NFLD], pres;
