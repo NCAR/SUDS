@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.14 $ $Date: 1990-10-26 10:29:44 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1990-11-05 11:20:48 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -34,7 +34,7 @@ static int	Tstep;
  * Mapping functions from pres to y and from (temp,y) to x
  */
 # define YPOS(p)	(log(p/Pmax) / log(Pmin/Pmax))
-# define XPOS(t,y)	((t-Tmin)/(Tmax-Tmin) + y/SKEWSLOPE)
+# define XPOS(t,y)	(((t)-T_K-Tmin)/(Tmax-Tmin) + y/SKEWSLOPE)
 
 /*
  * Overlays for the skew-t background and the data
@@ -253,8 +253,8 @@ skt_background ()
 	/*
 	 * Draw the isotherm
 	 */
-		x[0] = XPOS (t, y[0]);
-		x[1] = XPOS (t, y[1]);
+		x[0] = XPOS (t + T_K, y[0]);
+		x[1] = XPOS (t + T_K, y[1]);
 		if (x[1] < 0.0)
 			continue;
 
@@ -354,8 +354,8 @@ skt_background ()
 	/*
 	 * The lines go from Pmax to (Pmax + Pmin) / 2
 	 */
-		x[0] = XPOS (t_mr (Pmax, mr[i]) - T_K, y[0]);
-		x[1] = XPOS (t_mr ((Pmin + Pmax) / 2.0, mr[i]) - T_K, y[1]);
+		x[0] = XPOS (t_mr (Pmax, mr[i]), y[0]);
+		x[1] = XPOS (t_mr ((Pmin + Pmax) / 2.0, mr[i]), y[1]);
 	/*
 	 * Find the angle for the annotation
 	 */
@@ -374,8 +374,8 @@ skt_background ()
  */
 	if (Flg_theta_w)
 	{
-		min = 0;
-		max = 32;
+		min = T_K;
+		max = T_K + 32;
 		step = 4;
 	}
 	else
@@ -401,7 +401,7 @@ skt_background ()
 	 * to a saturated parcel at the surface at temperature t
 	 */
 		if (Flg_theta_w)
-			ept = theta_e (t + T_K, t + T_K, 1000.);
+			ept = theta_e (t, t, 1000.);
 		else
 			ept = (float) t;
 	/*
@@ -409,7 +409,7 @@ skt_background ()
 	 */
 		for (p = Pmin + 100; p < Pmax + 15; p += 15)
 		{
-			float	temp = t_sat (ept, p) - T_K;
+			float	temp = t_sat (ept, p);
 			y[npts] = YPOS (p);
 			x[npts] = XPOS (temp, y[npts]);
 			npts++;
@@ -421,10 +421,13 @@ skt_background ()
 
 		if (x[0] > 0.0 && x[0] < 1.0)
 		{
-			slope = (y[1] - y[0]) / (x[1] - x[0]);
-			annot_angle = RAD_TO_DEG (atan (slope));
+			annot_angle = 
+				RAD_TO_DEG (atan2 (y[1] - y[0], x[1] - x[0]));
+			if (annot_angle > 0.0)
+				annot_angle -= 180.0;
 
-			sprintf (string, "%d\0", (int) t);
+			sprintf (string, "%d\0", 
+				Flg_theta_w ? (int)(t - T_K) : (int)(t));
 			G_write (Skewt_bg_ov, C_BG3, GTF_MINSTROKE, 0.02, 
 				GT_RIGHT, GT_CENTER, x[0], y[0] + 0.01,
 				annot_angle, string);
@@ -446,7 +449,7 @@ skt_background ()
 	 */
 		for (p = Pmin; p < Pmax + 15; p += 15)
 		{
-			float	temp = theta_to_t (pt + T_K, p) - T_K;
+			float	temp = theta_to_t (pt + T_K, p);
 			y[npts] = YPOS (p);
 			x[npts] = XPOS (temp, y[npts]);
 			npts++;
@@ -699,8 +702,13 @@ int	plot_ndx;
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")  ");
 	skt_top_text (string, C_WHITE, FALSE);
-	skt_top_text ("TEMP/WINDS ", C_DATA1 + 2 * plot_ndx, FALSE);
-	skt_top_text ("DEWPOINT  ", C_DATA2 + 2 * plot_ndx, FALSE);
+
+	if (Flg_vt)
+		skt_top_text ("V. TEMP/WINDS", C_DATA1 + 2 * plot_ndx, FALSE);
+	else
+		skt_top_text ("TEMP/WINDS", C_DATA1 + 2 * plot_ndx, FALSE);
+
+	skt_top_text ("  DEWPOINT  ", C_DATA2 + 2 * plot_ndx, FALSE);
 }
 
 
@@ -724,9 +732,13 @@ float	xval, yval, *x, *y;
 		return;
 	}
 /*
- * It isn't winds, so it must be temperature and pressure (the temp. may
- * be either dry bulb temp. or dewpoint)
+ * It isn't winds, so it must be temperature and pressure. The temp. may
+ * be either dry bulb temp., virtual temp., or dewpoint.  Convert dry
+ * bulb or dewpoint to K.
  */
+	if (xfld == f_dp || xfld == f_temp)
+		xval += T_K;
+
 	yval = YPOS (yval);
 	xval = XPOS (xval, yval);
 /*
@@ -814,16 +826,13 @@ float	*pres, *temp, *dp;
 	an_surface (temp, pres, dp, ndata, &t_sfc, &p_sfc, &dp_sfc);
 	an_700 (temp, pres, dp, ndata, p_sfc, dp_sfc, &t_700, &dp_700, 
 		&ndx_700);
-
-	t_sfc += T_K;	t_700 += T_K;
-	dp_sfc += T_K;	dp_700 += T_K;
 /*
  * Find the mixing ratio for our surface point
  */
 	w = w_sat (dp_sfc, p_sfc);
 /*
  * Get the potential temperature, LCL pressure and temperature, and the 
- * eqivalent potential temperature at the surface
+ * equivalent potential temperature at the surface
  */
 	pt = theta_dry (t_sfc, p_sfc);
 	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
@@ -852,7 +861,7 @@ float	*pres, *temp, *dp;
 
 	for (p = p_lcl; p >= Pmin - pstep; p -= pstep)
 	{
-		t = t_sat (ept, p) - T_K;
+		t = t_sat (ept, p);
 		y[npts] = YPOS (p);
 		x[npts] = XPOS ((float) t, y[npts]);
 		npts++;
@@ -868,7 +877,7 @@ float	*pres, *temp, *dp;
 
 		for (p = p_lcl700; p >= Pmin - pstep; p -= pstep)
 		{
-			t = t_sat (ept_700, p) - T_K;
+			t = t_sat (ept_700, p);
 			y[npts] = YPOS (p);
 			x[npts] = XPOS ((float) t, y[npts]);
 			npts++;
@@ -891,7 +900,7 @@ float	*pres, *temp, *dp;
 	/*
 	 * Get the temp corresponding to our theta at this pressure
 	 */
-		t = theta_to_t (pt, p) - T_K;
+		t = theta_to_t (pt, p);
 	/*
 	 * Translate into overlay coordinates
 	 */
@@ -918,7 +927,7 @@ float	*pres, *temp, *dp;
 		/*
 		 * Get the temp corresponding to our theta at this pressure
 		 */
-			t = theta_to_t (pt_700, p) - T_K;
+			t = theta_to_t (pt_700, p);
 		/*
 		 * Translate into overlay coordinates
 		 */
@@ -938,11 +947,11 @@ float	*pres, *temp, *dp;
 	else
 		min_lcl = p_lcl;
 
-	t = t_mr (min_lcl, w) - T_K;
+	t = t_mr (min_lcl, w);
 	y[0] = YPOS ((float) min_lcl);
 	x[0] = XPOS ((float) t, y[0]);
 
-	t = t_mr (p_sfc, w) - T_K;
+	t = t_mr (p_sfc, w);
 	y[1] = YPOS ((float) p_sfc);
 	x[1] = XPOS ((float) t, y[1]);
 
@@ -974,8 +983,28 @@ int	plot_ndx;
  * Grab the data
  */
 	npts = snd_get_data (id_name, p, BUFLEN, f_pres, BADVAL);
-	snd_get_data (id_name, t, BUFLEN, f_temp, BADVAL);
 	snd_get_data (id_name, d, BUFLEN, f_dp, BADVAL);
+/*
+ * Convert dewpoints to K
+ */
+	for (i = 0; i < npts; i++)
+		if (d[i] != BADVAL)
+			d[i] += T_K;
+/*
+ * Get temperature or virtual temperature, depending on the "vt" flag
+ */
+	if (Flg_vt)
+		snd_get_data (id_name, t, BUFLEN, f_vt, BADVAL);
+	else
+	{
+		snd_get_data (id_name, t, BUFLEN, f_temp, BADVAL);
+	/*
+	 * Convert to K
+	 */
+		for (i = 0; i < npts; i++)
+			if (t[i] != BADVAL)
+				t[i] += T_K;
+	}
 /*
  * Translate to overlay coordinates
  */
