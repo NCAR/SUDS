@@ -1,16 +1,15 @@
 /*
  * Global parameters
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  89/03/16  15:14:17  burghart
- * Initial revision
- * 
+ * $Revision: 1.3 $ $Date: 1989-08-02 14:38:41 $ $Author: burghart $ 
  */
 # include <ui.h>
 # include <graphics.h>
 
-# define TRUE	1
-# define FALSE	0
+# ifndef TRUE
+#	define TRUE	1
+#	define FALSE	0
+# endif
 
 # define BADVAL	-999.
 # define BUFLEN	1024
@@ -45,3 +44,8 @@ var int	Interrupt;
  * Wind scale value
  */
 var float	W_scale;
+
+/*
+ * MIN macro
+ */
+# define MIN(x,y)	((x) < (y) ? (x) : (y))
