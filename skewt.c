@@ -2,6 +2,9 @@
  * Skew-t plotting module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:16:17  burghart
+ * Initial revision
+ * 
  */
 # include <math.h>
 # include <ui_date.h>
@@ -50,11 +53,6 @@ static overlay	Skewt_bg_ov, Skewt_ov, Winds_ov;
  * corners at (0.0,0.0) (1.0,1.0) in world coordinates
  */
 static float	W_aspect;
-
-/*
- * Wind scaling value
- */
-static float	W_scale = 25.0;
 
 /*
  * Current text position for the bottom and top annotations
