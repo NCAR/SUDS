@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.21 $ $Date: 1991-06-10 21:32:07 $ $Author: burghart $ 
+ * $Revision: 1.22 $ $Date: 1991-06-20 15:15:44 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -158,17 +158,14 @@ struct ui_command	*cmds;
 	an_printf ("SURFACE-BASED ANALYSIS\n");
 
 	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
-	an_printf ("\t Surface potential temperature%s: %.1f K\n", 
-		Flg_mli ? " (50 mb average)" : "",
-		theta_dry (t_sfc, p_sfc));
+	an_printf ("\t Surface potential temperature ");
+	an_printf ("(50 mb average): %.1f K\n", theta_dry (t_sfc, p_sfc));
 
 	an_surface (vt, p, dp, npts, &vt_sfc, &p_sfc, &dp_sfc);
-	an_printf ("\t Surface virtual potential temperature%s: %.1f K\n", 
-		Flg_mli ? " (50 mb average)" : "",
-		theta_dry (vt_sfc, p_sfc));
+	an_printf ("\t Surface virtual potential temperature ");
+	an_printf ("(50 mb average): %.1f K\n", theta_dry (vt_sfc, p_sfc));
 
-	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
-		Flg_mli ? " (50 mb average)" : "",
+	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
 		w_sat (dp_sfc, p_sfc));
 
 	ref = an_li_ref (p, t, npts);
@@ -215,8 +212,7 @@ struct ui_command	*cmds;
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
 		theta_dry (vt_fore, Forecast_pres));
 
-	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
-		Flg_mli ? " (50 mb average)" : "",
+	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
 		w_sat (dp_sfc, p_sfc));
 
 	ref = an_li_ref (p, t, npts);
@@ -706,8 +702,7 @@ an_surface (t, p, dp, npts, t_sfc, p_sfc, dp_sfc)
 float	*t, *p, *dp, *t_sfc, *p_sfc, *dp_sfc;
 int	npts;
 /*
- * Find the surface values.  If the MLI flag is set (i.e., we're using
- * the modified lifted index), the surface dewpoint returned is actually
+ * Find the surface values.  The surface dewpoint returned is actually
  * the dewpoint corresponding to the surface pressure and the mean mixing
  * ratio for the lowest 50 mb of the sounding; the surface temperature
  * returned is the temperature corresponding to the surface pressure and
@@ -724,16 +719,9 @@ int	npts;
 		if (++i == npts)
 			ui_error ("No surface point for analysis");
 
-	*t_sfc = t[i];
 	*p_sfc = p[i];
-	*dp_sfc = dp[i];
 /*
- * If we're not using the modified lifted index, return now
- */
-	if (! Flg_mli)
-		return;
-/*
- * Using MLI.  Average the mixing ratio and theta over the lowest 50 mb
+ * Average the mixing ratio and theta over the lowest 50 mb
  */
 	p_top = *p_sfc - 50.0;
 
