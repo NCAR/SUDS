@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.6 $ $Date: 1989-12-04 09:46:32 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1989-12-19 15:20:47 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -313,8 +313,8 @@ struct snd	*sounding;
  *	year,month,day,hh:mm:ss
  *	blurb,npts
  */
-	fprintf (sfile, "%s,%.5f,%.5f,%d\n", string, sounding->sitelat,
-		sounding->sitelon, (int) sounding->sitealt);
+	fprintf (sfile, "%s,%.5f,%.5f,%d\n", string, sounding->sitelon,
+		sounding->sitelat, (int) sounding->sitealt);
 
 	year = 1900 + sounding->rls_time.ds_yymmdd / 10000;
 	month = (sounding->rls_time.ds_yymmdd / 100) % 100;
