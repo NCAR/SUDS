@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.28 1993-05-10 20:17:37 burghart Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.29 1997-06-20 19:48:01 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -112,7 +112,8 @@ struct ui_command	*cmds;
 		 */
 			cmds[0].uc_ctype = UTT_VALUE;
 			cmds[0].uc_vptype = SYMT_STRING;
-			cmds[0].uc_v.us_v_ptr = "pres";
+			cmds[0].uc_v.us_v_ptr = (char *) malloc (5);
+			strcpy (cmds[0].uc_v.us_v_ptr, "pres");
 			fd_set_limits (cmds);
 			return;
 		case KW_TLIMITS:
