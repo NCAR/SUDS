@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.7 1993-04-08 21:45:07 burghart Exp $
+ * $Id: suds.state,v 1.8 1993-04-28 16:25:08 carson Exp $
  */
 
 # include "keywords.h"
@@ -138,6 +138,15 @@ define state suds-initial
 	endinput
 	input 'mixdepth' KW_MIXDEPTH
 		next ust$final_real
+	endinput
+	input 'interpolate' KW_INTERPOLATE
+		next interp-fld
+	endinput
+	input 'ilimits' KW_ILIMITS
+		next ilimits-fld
+	endinput
+	input 'windstep' KW_WINDSTEP
+		next windstep-num
 	endinput
 
 	input 'copyright' KW_COPYRIGHT
@@ -340,7 +349,7 @@ define state skt-what
 		next skt-opt-tmin
 	endinput
 	input 'barbres' KW_BARBRES
-		next skt-wres
+		next skt-real
 	endinput
 	input 'step' KW_STEP
 		next skt-real
@@ -351,6 +360,13 @@ define state skt-what
 	endinput
 	input EOS
 		done
+	endinput
+enddef
+
+define state skt-real
+	helpfile 'skewt'
+	input real
+		next skt-what
 	endinput
 enddef
 
@@ -418,18 +434,6 @@ define state skt-opt-tmax
 		ignore
 		next ust$final_real
 	endinput
-	input real
-		next ust$no_more
-	endinput
-enddef
-define state skt-real
-	helpfile 'skewt'
-	input real
-		next skt-what
-	endinput
-enddef
-define state skt-wres
-	helpfile 'skewt'
 	input real
 		next ust$no_more
 	endinput
@@ -828,6 +832,12 @@ define state thr-criterion
 	input '<=' THR_LE
 		next thr-value
 	endinput
+	input 'increasing' THR_INCREASE
+		next thr-next-or-sounding
+	endinput
+	input 'decreasing' THR_DECREASE
+		next thr-next-or-sounding 
+	endinput
 enddef
 
 define state thr-value
@@ -1122,6 +1132,9 @@ define state xs-what
 	input 'time-height' KW_TIMHGT
 		next ust$final_string
 	endinput
+	input 'barbres' KW_BARBRES
+		next xs-barb-res
+	endinput
 	input string
 		lowercase
 		next ust$no_more
@@ -1288,6 +1301,13 @@ define state xs-toplim
 	endinput
 enddef
 
+define state xs-barb-res
+	helpfile 'xsect'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
 !
 ! Extend command
 !
@@ -1359,4 +1379,76 @@ define state xy-snd-id
 		done
 	endinput
 enddef
+
+!
+! interpolation
+!
+define state interp-fld
+        helpfile 'interpolate'
+        input string
+                lowercase
+                next interp-snd-id
+        endinput
+enddef
+
+define state interp-snd-id
+        helpfile 'interpolate'
+        input string
+                lowercase
+                next interp-snd-id
+        endinput
+        input EOS
+                done
+        endinput
+enddef
+
+!
+! ILimits command
+!
+define state ilimits-fld
+        helpfile 'limits'
+        input string
+                lowercase
+                next ilimits-bot 
+        endinput
+enddef
+
+define state ilimits-bot 
+        helpfile 'limits'
+        input real
+                next ilimits-top
+        endinput
+enddef
+
+define state ilimits-top 
+        helpfile 'limits'
+        input real
+                next ilimits-step
+        endinput
+enddef
+
+define state ilimits-step
+        helpfile 'limits'
+        input real
+                next ilimits-gap
+        endinput
+enddef
+
+define state ilimits-gap
+        helpfile 'limits'
+        input real
+                next ust$no_more
+        endinput
+enddef
+
+!
+! Windstep command
+!
+define state windstep-num
+	helpfile 'windstep'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
 
