@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.14 $ $Date: 1991-01-16 21:55:10 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1991-03-21 17:23:51 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -358,8 +358,9 @@ fldtype fld, *chain;
 	int		i, d, fndx, ic, gotfld;
 	struct snd	sounding;
 	struct snd_datum	*datum;
+	float		s_alt;
 	fldtype		*dfld, *dchain;
-	int		fpos, npts = 0, ndflds, dchainlen;
+	int		fpos, npts = 0, ndflds, dchainlen, pt;
 	float		*dbufs[5];	/* Up to 5 fields in a derivation */
 	void		(* dfunc)();
 
@@ -458,6 +459,18 @@ fldtype fld, *chain;
 				for (fndx = 0; fndx < ndflds; fndx++)
 					free (dbufs[fndx]);
 				free (dchain);
+			/*
+			 * KLUGE: altitude derivation returns AGL data,
+			 * and we need MSL, so convert altitudes now
+			 */
+				if (fld == f_alt)
+				{
+					s_alt = sounding.sitealt;
+
+					for (pt = 0; pt < npts; pt++)
+						if (buf[pt] != badval)
+							buf[pt] += s_alt;
+				}
 
 				return (npts);
 			}
