@@ -298,7 +298,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subdirs_all="$ac_subdirs_all help"
+ac_subdirs_all="$ac_subdirs_all doc help"
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -5128,7 +5128,7 @@ done
 
 
 
-subdirs="$subdirs help"
+subdirs="$subdirs doc help"
 
 ac_config_files="$ac_config_files Makefile"
 

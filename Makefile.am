@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = help
+SUBDIRS = doc help
 
 bin_PROGRAMS = suds
 

@@ -76,6 +76,6 @@ AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([floor pow putenv sqrt strrchr])
 
-AC_CONFIG_SUBDIRS([help])
+AC_CONFIG_SUBDIRS([doc help])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
