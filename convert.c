@@ -1,7 +1,7 @@
 /*
  * lat,lon <-> x,y conversion utilities
  *
- * $Revision: 1.1 $ $Date: 1989-11-08 11:19:25 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-01-23 09:11:51 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui.h>
@@ -21,6 +21,7 @@ static float	Origin_lat = -99.0, Origin_lon = -99.0;
 
 
 
+void
 cvt_to_xy (lat, lon, x, y)
 float	lat, lon, *x, *y;
 /* 
@@ -32,13 +33,13 @@ float	lat, lon, *x, *y;
 /*
  * Make sure we have an origin
  */
-	if (Origin_lat < -90.0 || Origin_lon < -90.0)
+	if (Origin_lat < -2*PI || Origin_lon < -2*PI)
 	{
 		ui_printf ("Enter the origin to use for conversions\n");
 		Origin_lat = ui_float_prompt ("   Latitude (decimal degrees)",
-			0, -90.0, 90.0, 0.0);
+			0, -90.0, 90.0, 0.0) * PI / 180.0;
 		Origin_lon = ui_float_prompt ("   Longitude (decimal degrees)",
-			0, -180.0, 180.0, 0.0);
+			0, -180.0, 180.0, 0.0) * PI / 180.0;
 	}
 /*
  * Convert the lat,lon to x,y
@@ -56,6 +57,7 @@ float	lat, lon, *x, *y;
 
 
 
+void
 cvt_to_latlon (x, y, lat, lon)
 float	x, y, *lat, *lon;
 /*
@@ -66,13 +68,13 @@ float	x, y, *lat, *lon;
 /*
  * Make sure we have an origin
  */
-	if (Origin_lat < -90.0 || Origin_lon < -90.0)
+	if (Origin_lat < -2*PI || Origin_lon < -2*PI)
 	{
 		ui_printf ("Enter the origin to use for conversions\n");
 		Origin_lat = ui_float_prompt ("   Latitude (decimal degrees)",
-			0, -90.0, 90.0, 0.0);
+			0, -90.0, 90.0, 0.0) * PI / 180.0;
 		Origin_lon = ui_float_prompt ("   Longitude (decimal degrees)",
-			0, -180.0, 180.0, 0.0);
+			0, -180.0, 180.0, 0.0) * PI / 180.0;
 	}
 /*
  * Convert the x,y to lat,lon
@@ -92,6 +94,35 @@ float	x, y, *lat, *lon;
 
 
 
+void
+cvt_get_origin (lat, lon)
+float	*lat, *lon;
+/*
+ * Return the current origin values (in degrees)
+ */
+{
+/*
+ * Make sure we have an origin
+ */
+	if (Origin_lat < -2*PI || Origin_lon < -2*PI)
+	{
+		ui_printf ("Enter the origin to use for conversions\n");
+		Origin_lat = ui_float_prompt ("   Latitude (decimal degrees)",
+			0, -90.0, 90.0, 0.0) * PI / 180.0;
+		Origin_lon = ui_float_prompt ("   Longitude (decimal degrees)",
+			0, -180.0, 180.0, 0.0) * PI / 180.0;
+	}
+/*
+ * Return the current origin in degrees
+ */
+	*lat = Origin_lat / PI * 180.0;
+	*lon = Origin_lon / PI * 180.0;
+}
+
+
+
+
+void
 cvt_origin (cmds)
 struct ui_command	*cmds;
 /*
@@ -101,11 +132,37 @@ struct ui_command	*cmds;
 {
 	float	lat, lon;
 
-	Origin_lat = UFLOAT (cmds[0]);
-	Origin_lon = UFLOAT (cmds[1]);
+	lat = UFLOAT (cmds[0]);
+	lon = UFLOAT (cmds[1]);
+/*
+ * Test that the values are in range
+ */
+	if (lat > 90.0 || lat < -90.0)
+		ui_error ("Latitude out of range (-90.0 to 90.0)");
+	if (lon > 180.0 || lon < -180.0)
+		ui_error ("Longitude out of range (-180.0 to 180.0)");
 /*
  * Store the values in radians
  */
-	Origin_lat *= PI / 180.0;
-	Origin_lon *= PI / 180.0;
+	Origin_lat = lat * PI / 180.0;
+	Origin_lon = lon * PI / 180.0;
+}
+
+
+
+void
+cvt_show_origin ()
+/*
+ * Print out the current origin
+ */
+{
+	if (Origin_lat < -90.0 || Origin_lon < -90.0)
+	{
+		ui_printf ("\n    No current origin\n\n");
+		return;
+	}
+
+	ui_printf ("\n    Current origin latitude: %.4f, longitude: %.4f\n\n",
+		Origin_lat * 180.0 / PI, Origin_lon * 180.0 / PI);
+	return;
 }
