@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.15 1993-03-12 18:41:36 burghart Exp $";
+static char *rcsid = "$Id: fields.c,v 1.16 1993-04-08 21:42:07 burghart Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -38,7 +38,7 @@ static struct
 		{"alt", "altitude", ""},
 		0.0,	16000.0,	0.0,	500.0	},
 	{f_ascent, "ascent rate", "m/s",
-		{"ascent", "dz/dt", ""},
+		{"ascent", "dz/dt", "dz", ""},
 		0.0,	10.0,	0.0,	1.0	},
 	{f_azimuth, "balloon azimuth", "deg",
 		{"azimuth", "az", ""},
@@ -76,8 +76,13 @@ static struct
 	{f_qwind, "wind quality", "",
 		{"qwind", "qdz", ""},
 		0.0, 	10.0,	0.0,	0.1	},
+/*
+ * "elev" doesn't belong here as a synonym for range, but it works as a
+ * temporary kluge to deal with STORM Project Office "pseudo-new-CLASS" format
+ * soundings
+ */
 	{f_range, "balloon range", "km",
-		{"range", ""},
+		{"range", "elev", ""},
 		0.0,	10000.0,	0.0,	1.0	},
 	{f_rh, "relative humidity", "percent",
 		{"rh", ""},
@@ -104,13 +109,13 @@ static struct
 		{"u_prime", ""},
 		-30.0,	30.0,	0.0,	5.0	},
 	{f_u_wind, "u wind component", "m/s",
-		{"u_wind", ""},
+		{"u_wind", "ucmp", ""},
 		-30.0,	30.0,	0.0,	5.0	},
 	{f_v_prime, "v' wind component", "m/s",
 		{"v_prime", ""},
 		-30.0,	30.0,	0.0,	5.0	},
 	{f_v_wind, "v wind component", "m/s",
-		{"v_wind", ""},
+		{"v_wind", "vcmp", ""},
 		-30.0,	30.0,	0.0,	5.0	},
 	{f_vt, "virtual temperature", "K",
 		{"vt", "t_v", ""},
