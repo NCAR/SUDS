@@ -1,17 +1,12 @@
 /*
  * NOAA format sounding access
  *
- * $Revision: 1.4 $ $Date: 1989-09-19 16:08:30 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1989-12-18 15:38:46 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include "sounding.h"
-# include "derive.h"
-
-# define R_D	287.
-# define G_0	9.80665
-# define T_K	273.15
 
 # define STRSIZE	200
 
@@ -28,9 +23,8 @@ struct snd	*sounding;
 	FILE	*sfile;
 	int	i, year, month, day, hour, minute, second;
 	int	ndx, status = 0;
-	struct snd_datum	*dptr[MAXFLDS], *prevpt;
-	float	sfc_pres, xloc, yloc, val[10], temp, rh, dp, e;
-	float	vt, vt_prev, pres, pres_prev = 9999.9, alt_prev;
+	struct snd_datum	*dptr[MAXFLDS], *head[MAXFLDS], *prevpt;
+	float	sfc_pres, xloc, yloc, val[8];
 	char	string[STRSIZE], c = ' ';
 /*
  * Open the file
@@ -38,7 +32,7 @@ struct snd	*sounding;
 	if ((sfile = fopen (fname, "r")) == 0)
 		ui_error ("Cannot open NOAA file '%s'", fname);
 /*
- * Read the sounding number and location (?)
+ * Read the sounding number and x,y location in statute miles
  */
 	fscanf (sfile, "%s", string);
 	fscanf (sfile, "%f%f", &xloc, &yloc);
@@ -46,6 +40,12 @@ struct snd	*sounding;
 	sounding->site = (char *) malloc (10 * sizeof (char));
 	sounding->site[9] = 0;
 	sprintf (sounding->site, "%.1f %.1f", xloc, yloc);
+/*
+ * Convert the x,y to kilometers and then to lat,lon
+ */
+	xloc *= 1.609344;
+	yloc *= 1.609344;
+	cvt_to_latlon (xloc, yloc, &sounding->sitelat, &sounding->sitelon);
 /*
  * Finish off the line
  */
@@ -71,15 +71,11 @@ struct snd	*sounding;
 		dptr[i] = 0;
 /*
  * Assign the fields (hard-wired)
- * (Kluge: the dewpoint field is not in the data but we derive it and treat
- *	it like part of the original data)
  */
 	sounding->fields[0] = f_time;	sounding->fields[1] = f_pres;
 	sounding->fields[2] = f_temp;	sounding->fields[3] = f_rh;
-	sounding->fields[4] = f_temp;	sounding->fields[5] = f_temp;
-	sounding->fields[6] = f_wspd;	sounding->fields[7] = f_wdir;
-	sounding->fields[8] = f_dp;	sounding->fields[9] = f_alt;
-	sounding->fields[10] = f_null;
+	sounding->fields[4] = f_wspd;	sounding->fields[5] = f_wdir;
+	sounding->fields[6] = f_null;
 /*
  * Get the data
  */
@@ -94,53 +90,15 @@ struct snd	*sounding;
 		if (status == EOF || status == 0)
 			break;
 	/*
-	 * Kluge: derive the dewpoint here, since it isn't supplied for
-	 *  us and field derivation isn't available yet.
+	 * Put the eight data points into their respective data lists
 	 */
-		temp = val[2];
-		rh = val[3];
-		if (temp < 8888. && rh < 8888.)
+		for (i = 0; i < 8; i++)
 		{
-			e = rh / 100.0 * e_w (temp + T_K);
-			dp = dewpoint (e) - T_K;
-			val[8] = dp;
-		}
-		else
-			val[8] = 9999.9;
-	/*
-	 * More kluge: derive the altitude field also.  This derivation
-	 * is adapted from equation 2.24 of Wallace and
-	 * Hobbs' "Atmospheric Science" (1977) using a simple estimation
-	 * of the integral.
-	 */
-		dp = val[8];
-		pres = val[1];
-		if (pres < 8888. && dp < 8888. && temp < 8888.)
-		{
-			e = e_from_dp (dp + T_K);
-			vt = t_v (temp + T_K, pres, e);
 		/*
-		 * Assign the altitude (the first good point is set to
-		 * 0 km altitude
+		 * We don't use fields 4 and 5 from the file
 		 */
-			if (pres_prev > 8888.)
-				val[9] = 0.0;
-			else
-				val[9] = alt_prev + R_D / G_0 * 0.5 * 
-					(vt / pres + vt_prev / pres_prev) * 
-					(pres_prev - pres);
-
-			pres_prev = pres;
-			vt_prev = vt;
-			alt_prev = val[9];
-		}
-		else
-			val[9] = 9999.9;
-	/*
-	 * Put the ten data points into their respective data lists
-	 */
-		for (i = 0; i < 10; i++)
-		{
+			if (i == 4 || i == 5)
+				continue;
 		/*
 		 * Don't put bad values in the list
 		 */
@@ -166,9 +124,20 @@ struct snd	*sounding;
 				dptr[i]->prev = prevpt;
 			}
 			else
-				sounding->dlists[i] = dptr[i];
+				head[i] = dptr[i];
 		}
 	}
+/*
+ * Assign the sounding datalists.  We don't use fields 4 and 5
+ * from the file (azimuth and elevation), since winds are already
+ * derived for us.
+ */
+	sounding->dlists[0] = head[0];
+	sounding->dlists[1] = head[1];
+	sounding->dlists[2] = head[2];
+	sounding->dlists[3] = head[3];
+	sounding->dlists[4] = head[6];
+	sounding->dlists[5] = head[7];
 /*
  * Set the max index number for the sounding
  */
