@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.18 $ $Date: 1991-01-16 21:40:48 $ $Author: burghart $
+ * $Revision: 1.19 $ $Date: 1991-03-21 15:48:07 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -813,18 +813,18 @@ float	*pres, *temp, *dp;
  * and dp data
  */
 {
-	int	npts, ndx_700, do_700;
+	int	npts, ndx_fore, do_fore;
 	float	x[200], y[200];
 	float	p_lcl, t_lcl, pt, w, t_sfc, p_sfc, dp_sfc, ept;
-	float	t_700, dp_700, p_lcl700, t_lcl700, ept_700, pt_700;
+	float	t_fore, dp_fore, p_lcl_fore, t_lcl_fore, ept_fore, pt_fore;
 	float	p, pstep = 10, t, min_lcl;
 	void	an_surface ();
 /*
  * Find the first good point and use it as the surface point
  */
 	an_surface (temp, pres, dp, ndata, &t_sfc, &p_sfc, &dp_sfc);
-	an_700 (temp, pres, dp, ndata, p_sfc, dp_sfc, &t_700, &dp_700, 
-		&ndx_700);
+	an_forecast (temp, pres, dp, ndata, p_sfc, dp_sfc, &t_fore, &dp_fore, 
+		&ndx_fore);
 /*
  * Find the mixing ratio for our surface point
  */
@@ -838,19 +838,19 @@ float	*pres, *temp, *dp;
 	t_lcl = lcl_temp (t_sfc, dp_sfc);
 	ept = theta_e (t_lcl, t_lcl, p_lcl);
 /*
- * Get the forecasted (700 mb) LCL pressure, temp, and ept
+ * Get the forecast LCL pressure, temp, and ept
  */
-	if (t_700 > dp_700)
+	if (t_fore > dp_fore)
 	{
-		pt_700 = theta_dry (t_700, 700.0);
-		p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
-		t_lcl700 = lcl_temp (t_700, dp_700);
-		ept_700 = theta_e (t_lcl700, t_lcl700, p_lcl700);
-		do_700 = TRUE;
+		pt_fore = theta_dry (t_fore, Forecast_pres);
+		p_lcl_fore = lcl_pres (t_fore, dp_fore, Forecast_pres);
+		t_lcl_fore = lcl_temp (t_fore, dp_fore);
+		ept_fore = theta_e (t_lcl_fore, t_lcl_fore, p_lcl_fore);
+		do_fore = TRUE;
 	}
 	else
 	{
-		do_700 = FALSE;
+		do_fore = FALSE;
 		ui_warning ("Unable to calculate forecasted lifted parcel");
 	}
 /*
@@ -870,13 +870,13 @@ float	*pres, *temp, *dp;
 /*
  * Draw the saturated adiabat from the forecasted LCL up
  */
-	if (do_700)
+	if (do_fore)
 	{
 		npts = 0;
 
-		for (p = p_lcl700; p >= Pmin - pstep; p -= pstep)
+		for (p = p_lcl_fore; p >= Pmin - pstep; p -= pstep)
 		{
-			t = t_sat (ept_700, p);
+			t = t_sat (ept_fore, p);
 			y[npts] = YPOS (p);
 			x[npts] = XPOS ((float) t, y[npts]);
 			npts++;
@@ -912,21 +912,21 @@ float	*pres, *temp, *dp;
 /*
  * Draw the dry adiabat from the forecasted LCL down
  */
-	if (do_700)
+	if (do_fore)
 	{
 		npts = 0;
 
-		for (p = p_lcl700; p < 700.0 + pstep; p += pstep)
+		for (p = p_lcl_fore; p < Forecast_pres + pstep; p += pstep)
 		{
 		/*
-		 * Stop at 700 mb
+		 * Stop at the forecast pressure level
 		 */
-			if (p > 700.0)
-				p = 700.0;
+			if (p > Forecast_pres)
+				p = Forecast_pres;
 		/*
 		 * Get the temp corresponding to our theta at this pressure
 		 */
-			t = theta_to_t (pt_700, p);
+			t = theta_to_t (pt_fore, p);
 		/*
 		 * Translate into overlay coordinates
 		 */
@@ -941,8 +941,8 @@ float	*pres, *temp, *dp;
  * Draw the saturation mixing ratio line from the surface up to the LCL
  * with the lower pressure
  */
-	if (do_700)
-		min_lcl = (p_lcl < p_lcl700 ? p_lcl : p_lcl700);
+	if (do_fore)
+		min_lcl = (p_lcl < p_lcl_fore ? p_lcl : p_lcl_fore);
 	else
 		min_lcl = p_lcl;
 
