@@ -2,6 +2,11 @@
  * Foote chart stuff
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/05/30  15:05:38  burghart
+ * Change in the altitude calculation of ft_alt() to use 
+ * 1/2 * (vt_1 / pres_1 + vt_0 / pres_0) instead of
+ * (vt_1 + vt_0) / (pres_1 + pres_0).
+ * 
  * Revision 1.1  89/03/16  15:14:08  burghart
  * Initial revision
  * 
@@ -41,7 +46,7 @@ static int Color[] = { C_RED, C_GREEN, C_BLUE, 0 };
 /*
  * Forward declarations
  */
-void	ft_background (), ft_annotate (), ft_top_text ();
+void	ft_background (), ft_annotate (), ft_top_text (), ft_abort ();
 float	ft_alt ();
 
 
@@ -130,6 +135,11 @@ struct ui_command *cmds;
 
 		for (i = 0; i < maxpts; i++)
 		{
+		/*
+		 * Check for an interrupt
+		 */
+			if (Interrupt)
+				ft_abort ();
 		/*
 		 * Don't use bad points
 		 */
@@ -229,8 +239,8 @@ char	*id_name;
  * ID name
  */
 	strcpy (string, "   (");
-	strcpyUC (string + 3, id_name);
-	strcat (string, ")  ");
+	strcpyUC (string + 4, id_name);
+	strcat (string, ")");
 	ft_top_text (string, Color[plot_ndx], FALSE);
 }
 
@@ -430,4 +440,19 @@ int     color, newline;
  * Reset the clipping
  */
         G_clip_window (Foote_ov, 0.0, 0.0, 1.0, 1.0);
+}
+
+
+
+
+void
+ft_abort ()
+/*
+ * Abort the plot for an interrupt.  Make the overlays invisible, turn
+ * off the interrupt flag, and bail out.
+ */
+{
+	G_visible (Foote_ov, FALSE);
+	Interrupt = FALSE;
+	ui_bailout ("Foote chart aborted");
 }
