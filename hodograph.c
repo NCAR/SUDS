@@ -1,7 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.11 $ $Date: 1991-01-16 21:39:47 $ $Author: burghart $
+ * $Revision: 1.12 $ $Date: 1991-03-21 17:13:28 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -173,8 +173,8 @@ int	plot_ndx;
  */
 {
 	float	u[BUFLEN], v[BUFLEN], ustep[BUFLEN], vstep[BUFLEN];
-	float	alt[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
-	float	frac, xmark, ymark;
+	float	alt[BUFLEN], mark_alt, prev_alt = 0.0;
+	float	site_alt, frac, xmark, ymark;
 	float	snd_s_alt ();
 	int	i, npts, steppts, ndx;
 	int	color = C_DATA1 + plot_ndx;
@@ -198,7 +198,7 @@ int	plot_ndx;
 
 		u[ndx] = u[i];
 		v[ndx] = v[i];
-		alt[ndx] = alt[i] + site_alt;	/* Convert to MSL, too */
+		alt[ndx] = alt[i];
 		ndx++;
 	}
 
