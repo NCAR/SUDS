@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.6 $ $Date: 1989-09-21 16:18:47 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1989-09-27 13:19:49 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -46,7 +46,7 @@ snd_init ()
 {
 	void	cls_read_file (), jaw_read_file ();
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
-	void	rsn_read_file (), ef_read_file ();
+	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -55,7 +55,7 @@ snd_init ()
 	Fmt_name[SFMT_JAWS]	= "JAWS";
 
 	Read_file[SFMT_NOAA]	= noa_read_file;
-	Fmt_name[SFMT_NOAA]	= "NOAA";
+	Fmt_name[SFMT_NOAA]	= "NOAA mobile";
 
 	Read_file[SFMT_NWS]	= nws_read_file;
 	Fmt_name[SFMT_NWS]	= "NWS";
@@ -68,6 +68,9 @@ snd_init ()
 
 	Read_file[SFMT_EFMT]	= ef_read_file;
 	Fmt_name[SFMT_EFMT]	= "E-format";
+
+	Read_file[SFMT_NCAR]	= ncar_read_file;
+	Fmt_name[SFMT_NCAR]	= "NCAR mobile";
 
 	Init = TRUE;
 }
