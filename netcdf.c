@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.17 1997-06-17 15:34:03 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.18 1997-11-19 21:38:15 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -105,9 +105,12 @@ struct snd	*sounding;
 	if ((Sfile = ncopen (fname, NC_NOWRITE)) == -1)
 		ui_error ("Cannot open netCDF file '%s'", fname);
 /*
- * Get 'platform' or 'site_name' attribute
+ * Get the site name attribute in any of four forms: "zebra_platform", 
+ * "zeb_platform", "platform", or "site_name".
  */
-	if ((ncattget (Sfile, NC_GLOBAL, "zeb_platform", 
+	if ((ncattget (Sfile, NC_GLOBAL, "zebra_platform",
+		       (void *) string) == -1) &&
+	    (ncattget (Sfile, NC_GLOBAL, "zeb_platform", 
 		       (void *) string) == -1) &&
 	    (ncattget (Sfile, NC_GLOBAL, "platform", (void *) string) == -1) &&
 	    (ncattget (Sfile, NC_GLOBAL, "site_name", (void *) string) == -1))
