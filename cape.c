@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: cape.c,v 1.1 1991-10-21 21:30:45 burghart Exp $";
+static char *rcsid = "$Id: cape.c,v 1.2 1991-12-10 23:39:30 case Exp $";
 
 # include <stdio.h>
 # include <ui_param.h>
@@ -78,7 +78,7 @@ struct snd	*sounding;
  */
 {
 	FILE	*sfile;
-	int	i, m, npts, ndx, line = 0, time, date, year;
+	int	i, m, npts, ndx, line = 0, time, day, year;
 	struct snd_datum	*dptr[NFLD], *prevpt;
 	float	dummy, *dp, *rawdata;
 	char	string[STRSIZE], month[4];
@@ -124,13 +124,13 @@ struct snd	*sounding;
 /*
  * Read the time and date from the next line
  */
-	fscanf (sfile, "%dZ %d %s %d", &time, &date, month, &year);
+	fscanf (sfile, "%dZ %d %s %d", &time, &day, month, &year);
 	fgets (string, STRSIZE - 1, sfile);	/* Read past the newline */
 
 	for (m = 0; Mnames[m] && strcmp (month, Mnames[m]); m++)
 
 	sounding->rls_time.ds_hhmmss = time * 100;
-	sounding->rls_time.ds_yymmdd = year * 10000 + m * 100 + date;
+	sounding->rls_time.ds_yymmdd = year * 10000 + m * 100 + day;
 /*
  * Allocate the raw data array
  */
