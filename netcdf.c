@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.9 1992-11-04 23:34:24 case Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.10 1993-02-18 17:21:20 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -85,7 +85,7 @@ struct snd	*sounding;
 	int	len, status, ndx, npts, fld, nflds, id;
 	int	v_id[MAXFLDS], zero = 0;
 	long	basetime;
-	float	val, flag[MAXFLDS], *data;
+	float	v, flag[MAXFLDS], *data;
 	char	string[80];
 	struct tm		*t;
 	struct snd_datum	*pt, *prevpt;
@@ -100,11 +100,11 @@ struct snd	*sounding;
 	if ((Sfile = ncopen (fname, NC_NOWRITE)) == -1)
 		ui_error ("Cannot open netCDF file '%s'", fname);
 /*
- * Get the site name
+ * Get 'platform' or 'site_name' attribute
  */
-	status = ncattget (Sfile, NC_GLOBAL, "site_name", (void *) string);
-	if (status == -1)
-		ui_error ("NetCDF error %d getting 'site_name'!", ncerr);
+	if ((ncattget (Sfile, NC_GLOBAL, "platform", (void *) string) == -1) &&
+	    (ncattget (Sfile, NC_GLOBAL, "site_name", (void *) string) == -1))
+		ui_error ("Can't find 'platform' or 'site_name'!", ncerr);
 
 	sounding->site = (char *) 
 		malloc ((1 + strlen (string)) * sizeof (char));
@@ -112,25 +112,25 @@ struct snd	*sounding;
 /*
  * Site lat, lon, alt
  */
-	status = ncvarget1 (Sfile, ncvarid (Sfile, "site_lat"), 0, &val);
-	if (status == -1)
-		ui_error ("NetCDF error %d getting 'site_lat'!", ncerr);
-	sounding->sitelat = val;
+	if ((ncvarget1 (Sfile, ncvarid (Sfile, "site_lat"), &zero, &v) == -1)&&
+		(ncvarget1 (Sfile, ncvarid (Sfile, "lat"), &zero, &v) == -1))
+		ui_error ("Can't find 'site_lat' or 'lat'!", ncerr);
+	sounding->sitelat = v;
 
-	status = ncvarget1 (Sfile, ncvarid (Sfile, "site_lon"), 0, &val);
-	if (status == -1)
-		ui_error ("NetCDF error %d getting 'site_lon'!", ncerr);
-	sounding->sitelon = val;
+	if ((ncvarget1 (Sfile, ncvarid (Sfile, "site_lon"), &zero, &v) == -1)&&
+		(ncvarget1 (Sfile, ncvarid (Sfile, "lon"), &zero, &v) == -1))
+		ui_error ("Can't find 'site_lon' or 'lon'!", ncerr);
+	sounding->sitelon = v;
 
-	status = ncvarget1 (Sfile, ncvarid (Sfile, "site_alt"), 0, &val);
-	if (status == -1)
-		ui_error ("NetCDF error %d getting 'site_alt'!", ncerr);
-	sounding->sitealt = val;
+	if ((ncvarget1 (Sfile, ncvarid (Sfile, "site_alt"), &zero, &v) == -1)&&
+		(ncvarget1 (Sfile, ncvarid (Sfile, "alt"), &zero, &v) == -1))
+		ui_error ("Can't find 'site_alt' or 'alt'!", ncerr);
+	sounding->sitealt = v;
 /*
  * Sounding release date and time
  */
-	status = ncvarget1 (Sfile, ncvarid (Sfile, "base_time"), 0, &basetime);
-	if (status == -1)
+	if (ncvarget1 (Sfile, ncvarid (Sfile, "base_time"), &zero, 
+		&basetime) == -1)
 		ui_error ("NetCDF error %d getting 'base_time'!", ncerr);
 
 	t = gmtime (&basetime);
@@ -142,8 +142,7 @@ struct snd	*sounding;
 /*
  * Number of points
  */
-	status = ncdiminq (Sfile, ncdimid (Sfile, "time"), (char *) 0, &npts);
-	if (status == -1)
+	if (ncdiminq (Sfile, ncdimid (Sfile, "time"), (char *) 0, &npts) == -1)
 		ui_error ("Unable to get number of points in file!");
 /*
  * Sounding fields (We can't just ask what fields are available, we have 
