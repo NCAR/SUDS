@@ -44,11 +44,16 @@
 # define KW_EXTEND	40
 # define KW_CENTER	41
 # define KW_NETCDF	42
+# define KW_ADD_ALT	43
+# define KW_FORECAST	44
+# define KW_MLVW	45
+# define KW_XYPLOT	46
+# define KW_CONLIMITS	47
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	42
+# define MAXKW	47
 
 /*
  * Threshold criteria keywords
@@ -86,4 +91,4 @@
 # define SHOW_COLORS	2
 # define SHOW_ORIGIN	3
 # define SHOW_LIMITS	4
-
+# define SHOW_FORECAST	5
