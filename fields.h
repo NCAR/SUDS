@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: fields.h,v 1.9 1991-10-30 21:33:27 burghart Exp $
+ * $Id: fields.h,v 1.10 1992-07-30 20:24:31 burghart Exp $
  */
 
 typedef enum
@@ -29,7 +29,7 @@ typedef enum
 /* 10 */	f_wdir, f_u_wind, f_v_wind, f_theta, f_theta_e,
 /* 15 */	f_mr, f_qpres, f_qtemp, f_qrh, f_qu,
 /* 20 */	f_qv, f_qwind, f_rtype, f_range, f_azimuth,
-/* 25 */	f_u_prime, f_v_prime, f_ascent, f_vt
+/* 25 */	f_u_prime, f_v_prime, f_ascent, f_vt, f_theta_v
 } fldtype;
 
 # define TOTAL_FLDS 29
