@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.14 $ $Date: 1991-01-16 21:33:04 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1991-03-21 17:25:04 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -300,17 +300,14 @@ xs_put_data ()
 		if (Use_alt)
 		{
 		/*
-		 * Get the altitude and convert to km MSL
+		 * Get the altitude and convert to km
 		 */
 			npts = snd_get_data (S_id[snd], zpos, BUFLEN, f_alt, 
 				BADVAL);
 			site_alt = snd_s_alt (S_id[snd]);
 			for (pt = 0; pt < npts; pt++)
 				if (zpos[pt] != BADVAL)
-				{
-					zpos[pt] += site_alt;
 					zpos[pt] *= 0.001;
-				}
 		}
 		else
 		/*
