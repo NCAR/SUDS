@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: sounding.c,v 1.17 1991-10-21 21:56:43 burghart Exp $";
+static char *rcsid = "$Id: sounding.c,v 1.18 1992-09-02 16:53:27 burghart Exp $";
 
 # include <ui_param.h>
 # include <ui_date.h>		/* for date formatting stuff */
@@ -67,7 +67,7 @@ snd_init ()
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
 	void	mist_read_file (), gale_read_file (), nmc_read_file ();
-	void	nc_read_file (), cape_read_file ();
+	void	nc_read_file (), cape_read_file (), nssl_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -107,6 +107,9 @@ snd_init ()
 
 	Read_file[SFMT_CAPE]	= cape_read_file;
 	Fmt_name[SFMT_CAPE]	= "CaPE";
+
+	Read_file[SFMT_NSSL]	= nssl_read_file;
+	Fmt_name[SFMT_NSSL]	= "NSSL";
 
 	Init = TRUE;
 }
