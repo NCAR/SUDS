@@ -1,15 +1,7 @@
 /*
  * RSANAL format sounding access
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.2  89/05/19  15:48:25  burghart
- * Changed from stdio (fopen, fgets, fclose) to Jon's file I/O stuff
- * (dview, dget, dclose) to get around problems with fixed length
- * record files on the VAX.  Also changed (start == 5) to (start == 4) so
- * it reads the whole file instead of just half of it.
- * 
- * Revision 1.1  89/03/16  15:16:06  burghart
- * Initial revision
+ * $Revision: 1.4 $ $Date: 1989-12-20 14:08:02 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -43,7 +35,7 @@ struct snd	*sounding;
 {
 	int	sfile, ndx, i, status, start = 0;
 	struct snd_datum	*dptr[NFLD];
-	float	sitelat, sitelon, val[NFLD];
+	float	site_x, site_y, val[NFLD];
 	char	string[STRSIZE], site[27];
 	void	rsn_insert_data ();
 /*
@@ -78,13 +70,26 @@ struct snd	*sounding;
  */
 	sounding->sitealt = (float) rsn_int_extract (string, 45, 4);
 
-	status = sscanf (string + 62, "%f", &sitelat);
+	status = sscanf (string + 62, "%f", &sounding->sitelon);
 	if (status == EOF)
 		ui_error ("Bad formatted read -- Is this a RSANAL file?");
 
-	status = sscanf (string + 73, "%f", &sitelon);
+	status = sscanf (string + 73, "%f", &sounding->sitelat);
 	if (status == EOF)
 		ui_error ("Bad formatted read -- Is this a RSANAL file?");
+/*
+ * Kluge:  See if the lat and lon are really x and y; assume they are
+ * x,y if the "lon" is greater than -60.0 (i.e., not in the U.S.).  This
+ * assumption may cause some problems somewhere along the way, but it's 
+ * the most obvious automatic solution for now.
+ */
+	if (sounding->sitelon > -60.0)
+	{
+		site_x = sounding->sitelon * 1.609344; /* miles to km */
+		site_y = sounding->sitelat * 1.609344;
+		cvt_to_latlon (site_x, site_y, &sounding->sitelat, 
+			&sounding->sitelon);
+	}
 /*
  * Initialize the data pointers
  */
