@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.5 $ $Date: 1990-05-07 10:10:01 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1990-06-14 10:28:11 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -93,6 +93,9 @@ static struct
 	{f_v_prime, "v' wind component", "m/s",
 		{"v_prime", ""},
 		0.0,	5.0	},
+	{f_dz, "ascent rate", "m/s",
+		{"dz", "ascent", ""},
+		0.0, 1.0	},
 	{f_null, "null field", "",
 		{""},
 		0.0,	0.0	}
