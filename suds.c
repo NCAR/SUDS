@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.15 $ $Date: 1991-03-26 20:58:49 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1991-04-12 21:48:33 $ $Author: corbet $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -78,6 +78,7 @@ char	**argv;
 			loadfile = "/locallib/suds.lf";
 # endif
 		ui_init (loadfile, ! argc, TRUE);
+		ui_setup ("suds", &argc, argv, (char *) 0);
 		init_globals ();
 		main_cmd_init ();
 	/*
