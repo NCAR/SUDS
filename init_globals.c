@@ -1,7 +1,7 @@
 /*
  * Initialize the global data
  *
- * $Revision: 1.3 $ $Date: 1989-08-02 14:39:57 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1991-03-21 15:47:15 $ $Author: burghart $
  */
 # ifdef VMS
 #	define var	globaldef
@@ -21,6 +21,7 @@ init_globals ()
 	Wkstn = 0;
 	Interrupt = FALSE;
 	W_scale = 25.0;
+	Forecast_pres = 700.0;
 /*
  * Set the flags and initialize the skew-t package
  */
