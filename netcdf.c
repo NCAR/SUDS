@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.8 1992-06-05 19:29:54 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.9 1992-11-04 23:34:24 case Exp $";
 
 # ifdef NETCDF
 
@@ -62,6 +62,7 @@ struct fldmatch
 	{f_mr,		"mr"		},
 	{f_azimuth,	"azim"		},
 	{f_range,	"range"		},
+        {f_vt,		"vt"		},
 	{f_null, 	""		}
 };
 
@@ -355,9 +356,8 @@ struct ui_command	*cmds;
 	/*
 	 * Search the netCDF fields table for a match
 	 */
-		for (j = 0; Netcdf_tbl[j].fld != f_null; j++)
+		for (j = 0; (nc_fld = Netcdf_tbl[j].fld) != f_null; j++)
 		{
-			nc_fld = Netcdf_tbl[j].fld;
 			if (nc_fld == fld)
 				break;
 		}
