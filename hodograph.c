@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: hodograph.c,v 1.15 1992-03-31 16:16:19 burghart Exp $";
+static char *rcsid = "$Id: hodograph.c,v 1.16 1992-08-05 19:06:11 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -30,6 +30,7 @@ static char *rcsid = "$Id: hodograph.c,v 1.15 1992-03-31 16:16:19 burghart Exp $
 # include "color.h"
 # include "fields.h"
 # include "keywords.h"
+# include "flags.h"
 
 # define DEG_TO_RAD(x)	((x) * .017453292)
 
@@ -222,6 +223,12 @@ int	plot_ndx;
 
 	npts = ndx;
 /*
+ * Convert altitudes to AGL if necessary
+ */
+	if (! Flg_hodo_msl)
+		for (i = 0; i < npts; i++)
+			alt[i] -= site_alt;
+/*
  * If we're doing a stepped plot, start out with the surface winds
  */
 	if (Stepping)
@@ -233,7 +240,10 @@ int	plot_ndx;
 /*
  * Find the first mark altitude
  */
-	mark_alt = (float)(Mark_inc) * ((int) site_alt / Mark_inc + 1);
+	if (Flg_hodo_msl)
+		mark_alt = (float)(Mark_inc) * ((int) site_alt / Mark_inc + 1);
+	else
+		mark_alt = 0.0;
 /*
  * Put in the altitude marks, and find the plot points if we're doing
  * a stepped plot
@@ -565,7 +575,10 @@ int	color;
 /*
  * Top annotation
  */
-	hd_top_text ("HODOGRAPH", C_WHITE, TRUE);
+	hd_top_text ("HODOGRAPH ", C_WHITE, TRUE);
+	hd_top_text (
+		Flg_hodo_msl ? "(ALTITUDES KM MSL)" : "(ALTITUDES KM AGL)", 
+		C_WHITE, FALSE);
 	hd_top_text ("SITE: ", C_WHITE, TRUE);
 	site = snd_site (id_name);
 	hd_top_text (site, C_WHITE, FALSE);
