@@ -1,5 +1,26 @@
-To install under /usr/local, if RDSS utilities are also installed under
-/usr/local:
+Installation of SUDS
+====================
+
+RDSS Libraries
+--------------
+
+SUDS requires that the RDSS Libraries package has already been
+installed.  It is available at:
+
+	ftp://ftp.atd.ucar.edu/pub/archive/rdpdist
+
+Look for a file named rdsslibs-<version>.tar.gz.
+
+SUDS Installation
+-----------------
+First, unpack the archive and go to the directory which is
+created:
+
+	$ zcat suds-<version>.tar.gz | tar xvf -
+	$ cd suds-<version>
+	
+To install under /usr/local, and assuming RDSS libraries are also installed 
+under /usr/local:
 
 	$ ./configure
 	$ make
@@ -11,5 +32,6 @@ options:
 	--prefix=<dir>	change the installation location for SUDS.  The 
 			default is "/usr/local".
 
-	--with-rdss=<dir>	tells where the RDSS utilities can be found.  
-			The default is the installation directory for SUDS.
+	--with-rdss=<dir>	tell where the RDSS utilities can be found.  
+			By default, the installation directory for SUDS
+			is assumed.
