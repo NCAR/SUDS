@@ -20,13 +20,13 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: hodograph.c,v 1.13 1991-10-21 21:47:47 burghart Exp $";
+static char *rcsid = "$Id: hodograph.c,v 1.14 1992-03-13 22:55:40 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
 # include <ui_date.h>
+# include <met_formulas.h>
 # include "globals.h"
-# include "met_formulas.h"
 # include "color.h"
 # include "fields.h"
 # include "keywords.h"

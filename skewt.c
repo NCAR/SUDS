@@ -20,13 +20,13 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.21 1991-10-21 21:56:02 burghart Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.22 1992-03-13 22:57:19 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
 # include <ui_date.h>
+# include <met_formulas.h>
 # include "globals.h"
-# include "met_formulas.h"
 # include "color.h"
 # include "fields.h"
 # include "keywords.h"

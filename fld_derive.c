@@ -20,12 +20,12 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.10 1991-12-13 16:43:12 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.11 1992-03-13 22:54:30 burghart Exp $";
 
 # include <math.h>
 # include <varargs.h>
+# include <met_formulas.h>
 # include "fields.h"
-# include "met_formulas.h"
 
 # define TRUE	1
 # define FALSE	0

@@ -20,18 +20,18 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.23 1991-10-21 21:29:04 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.24 1992-03-13 22:52:02 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
 # include <ui_error.h>
 # include <ui_param.h>
 # include <ui_date.h>
+# include <met_formulas.h>
 # include "globals.h"
 # include "fields.h"
 # include "flags.h"
 # include "keywords.h"
-# include "met_formulas.h"
 
 # define R_D	287.
 

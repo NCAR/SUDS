@@ -20,12 +20,12 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.14 1992-03-05 21:10:49 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.15 1992-03-13 22:53:47 burghart Exp $";
 
 # include <math.h>
+# include <met_formulas.h>
 # include "globals.h"
 # include "keywords.h"
-# include "met_formulas.h"
 # include "color.h"
 # include "sounding.h"
 

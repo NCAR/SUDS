@@ -20,13 +20,13 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: ncar.c,v 1.6 1991-10-21 21:50:21 burghart Exp $";
+static char *rcsid = "$Id: ncar.c,v 1.7 1992-03-13 22:56:44 burghart Exp $";
 
 # include <stdio.h>
 # include <math.h>
 # include <ui_param.h>
+# include <met_formulas.h>
 # include "sounding.h"
-# include "met_formulas.h"
 
 # define R_D	287.
 # define G_0	9.80665

@@ -20,12 +20,12 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: jaws.c,v 1.6 1991-10-21 21:48:43 burghart Exp $";
+static char *rcsid = "$Id: jaws.c,v 1.7 1992-03-13 22:56:20 burghart Exp $";
 
 # include <stdio.h>
 # include <ui_param.h>
+# include <met_formulas.h>
 # include "sounding.h"
-# include "met_formulas.h"
 
 # define T_K	273.15
 
