@@ -1,0 +1,375 @@
+!
+! Menu definitions for SUDS
+!
+define menu top
+	title "SUDS -- main menu"
+	choice 'Exit program'
+		helpfile 'exit.help'
+		command 'exit'
+	endchoice
+	default choice 'Load sounding(s)'
+		push 'load-soundings'
+		newdefault 2 
+	endchoice
+	choice 'Open output device'
+		command 'suds$output'
+		newdefault 3
+	endchoice
+	choice 'Skew-T plots'
+		push 'handle-skewt'
+	endchoice
+	choice 'Hodographs'
+		command 'suds$hodograph'
+	endchoice
+	choice 'Foote charts'
+		command 'suds$foote'
+	endchoice
+!	choice 'Edit a sounding'
+!		push 'edit'
+!	endchoice
+	choice 'Analyze a sounding'
+		push 'analyze'
+	endchoice
+	choice 'Show soundings'
+		command 'show soundings'
+		newdefault 3
+	endchoice
+	choice 'Other options'
+		push 'other-options'
+		newdefault 3
+	endchoice
+enddef
+
+!
+! Load soundings
+!
+define menu load-soundings
+	title 'Load soundings'
+	choice 'Return to previous menu'
+		newdefault 1 
+		return
+	endchoice
+	choice 'Read sounding file'
+		command 'suds$snd_file'
+		newdefault 0
+	endchoice
+	default choice 'Set sounding format [&]' def_fmt
+		push 'sounding-format'
+		newdefault 1
+	endchoice
+	choice 'Show currently loaded soundings'
+		command 'show soundings'
+		newdefault 1
+	endchoice
+enddef
+
+procedure suds$snd_file
+	if (not defined ("def_fmt"))
+		message ""
+		message "You need to set a file format"
+		message ""
+		return
+	endif
+	prompt file string "File name"
+	prompt id string "Call it (ID name)"
+	file #file #def_fmt #id
+	message ""
+	message "Loaded & format file '&' under the name '&'" def_fmt file id
+endprocedure
+
+define menu sounding-format
+	title 'Set sounding format'
+	choice 'Return to previous menu'
+		return
+	endchoice
+	default choice 'CLASS'
+		command 'set def_fmt "CLASS"'
+		return
+	endchoice
+	choice 'National Weather Service'
+		command 'set def_fmt "NWS"'
+		return
+	endchoice
+	choice 'NOAA mobile'
+		command 'set def_fmt "NOAA"'
+		return
+	endchoice
+	choice 'RSANAL input format'
+		command 'set def_fmt "RSANAL"'
+		return
+	endchoice
+	choice 'FGGE'
+		command 'set def_fmt "FGGE"'
+		return
+	endchoice
+	choice 'JAWS'
+		command 'set def_fmt "JAWS"'
+		return
+	endchoice
+	choice 'NCAR mobile (circa CINDE)'
+		command 'set def_fmt "NCAR"'
+		return
+	endchoice
+	choice 'MIST'
+		command 'set def_fmt "MIST"'
+		return
+	endchoice
+	choice 'GALE'
+		command 'set def_fmt "GALE"'
+		return
+	endchoice
+	choice 'NMC'
+		command 'set def_fmt "NMC"'
+		return
+	endchoice
+	choice 'NetCDF'
+		command 'set def_fmt "NETCDF"'
+		return
+	endchoice
+	choice 'CAPE'
+		command 'set def_fmt "CAPE"'
+		return
+	endchoice
+enddef
+
+!
+! Open output device
+!
+procedure suds$output
+	prompt out_dev string "Device" default out_dev
+	prompt dev_type string "Type" default dev_type
+	output #out_dev #dev_type
+endprocedure
+
+!
+! Skew-t plots
+!
+define menu handle-skewt
+	title 'Skew-t plots'
+	choice 'Return to previous menu'
+		newdefault 1
+		return
+	endchoice
+	default choice 'Do the plot'
+		command 'suds$skewt'
+		newdefault 0
+	endchoice
+	choice 'Change skew-t pressure limits'
+		command 'suds$pres-limits'
+		newdefault 1
+	endchoice
+	choice 'Change skew-t temperature limits'
+		command 'suds$temp-limits'
+		newdefault 1
+	endchoice
+	choice 'Change skew-t wind barb resolution'
+		command 'suds$barb-res'
+		newdefault 1
+	endchoice
+	choice 'Set/Reset flags'
+		push 'handle-flags'
+		newdefault 1
+	endchoice
+enddef
+
+procedure suds$skewt
+	if (def_snd = "")
+		prompt s string "Sounding(s) to be plotted"
+	else
+		prompt s string "Sounding(s) to be plotted" default def_snd
+	endif
+        prompt mrk int "Wind mark interval " default skewt_mark
+	skewt step mrk #s
+endprocedure
+
+procedure suds$pres-limits
+	prompt max real "Maximum pressure" default skewt_pmax
+	prompt min real "Minimum pressure" default skewt_pmin
+
+	while (max < min)
+		message ""
+		message "The min must be less than the max"
+		message ""
+		prompt max real "Maximum pressure" default skewt_pmax
+		prompt min real "Minimum pressure" default skewt_pmin
+	endwhile
+
+	vset skewt_pmax max
+	vset skewt_pmin min
+endprocedure
+
+procedure suds$temp-limits		
+	prompt min real "Minimum temperature" default skewt_tmin
+	prompt max real "Maximum temperature" default skewt_tmax
+
+	while (max < min)
+		message ""
+		message "The min must be less than the max"
+		message ""
+		prompt min real "Minimum temperature" default skewt_tmin
+		prompt max real "Maximum temperature" default skewt_tmax
+	endwhile
+
+	vset skewt_tmax max
+	vset skewt_tmin min
+endprocedure
+
+procedure suds$barb-res		
+	prompt res real "Wind barb resolution" default skewt_wres
+	vset skewt_wres res
+endprocedure
+
+
+define menu handle-flags
+	title "Toggle flags"
+	default choice "Return to previous menu"
+		return
+	endchoice
+	choice "LIFT -- display lifted surface parcel (#)" lift
+		command 'suds$toggle_flag lift'
+		newdefault 0
+	endchoice
+	choice "MLI -- use modified lifted index instead of lifted index (#)" mli
+		command 'suds$toggle_flag mli'
+		newdefault 0
+	endchoice
+	choice "THETA_W -- theta_w on saturated adiabats in skew-t plots (#)" theta_w
+		command 'suds$toggle_flag theta_w'
+		newdefault 0
+	endchoice
+	choice "VT -- virtual temp. instead of temp. in skew-t plots (#)" vt
+		command 'suds$toggle_flag vt'
+		newdefault 0
+	endchoice
+	choice "WINDS -- display winds (#)" winds
+		command 'suds$toggle_flag winds'
+		newdefault 0
+	endchoice
+	choice "WBARB -- display wind barbs in skew-t plots (#)" wbarb
+		command 'suds$toggle_flag wbarb'
+		newdefault 0
+	endchoice
+	choice "LOGP -- display log(pres) for xy-plot and xsect (#)" logp
+		command 'suds$toggle_flag logp'
+		newdefault 0
+	endchoice
+enddef
+
+procedure suds$toggle_flag fname string
+	vset temporary #fname
+	vset #fname (not temporary)
+endprocedure
+
+!
+! Hodographs
+!
+procedure suds$hodograph
+	if (def_snd = "")
+		prompt s string "Sounding(s) to use"
+	else
+		prompt s string "Sounding(s) to use" default def_snd
+	endif
+	hodograph #s
+endprocedure
+
+!
+! Foote charts
+!
+procedure suds$foote
+	if (def_snd = "")
+		prompt s string "Sounding(s) to be charted"
+	else
+		prompt s string "Sounding(s) to be charted" default def_snd
+	endif
+	foote #s
+endprocedure
+
+!
+! Analysis
+!
+define menu analyze
+	title 'Sounding analysis'
+	choice 'Return to previous menu'
+		newdefault 1
+		return
+	endchoice
+	default choice 'Do the analysis'
+		command 'suds$analyze'
+		newdefault 0
+	endchoice
+	choice "MLI -- use modified lifted index instead of lifted index (#)" mli
+		command 'suds$toggle_flag mli'
+		newdefault 1
+	endchoice
+enddef
+
+procedure suds$analyze
+	if (def_snd = "")
+		prompt s string "Sounding to be analyzed"
+	else
+		prompt s string "Sounding to be analyzed" default def_snd
+	endif
+	analyze #s
+endprocedure
+
+!
+! Other options
+!
+define menu other-options
+	title "Other options"	
+	default choice 'Return to previous menu'
+		return
+	endchoice
+	choice	"Write a sounding to a file"
+		command 'suds$write-sounding'
+		newdefault 0
+	endchoice
+	choice "Make a copy of a sounding"
+		command 'suds$copy-sounding'
+		newdefault 0
+	endchoice
+	choice "Remove a sounding from the list"
+		command 'suds$forget-sounding'
+		newdefault 0
+	endchoice
+	choice "Program flags"
+		push 'handle-flags'
+		newdefault 0
+	endchoice
+enddef
+
+!
+! Write a sounding to a file
+!
+procedure suds$write-sounding
+	if (def_snd = "")
+		prompt s string "Sounding to be written"
+	else
+		prompt s string "Sounding to be written" default def_snd
+	endif
+	prompt name string "Write to file"
+	write file #name from #s
+endprocedure
+
+!
+! Make a copy of a sounding
+!
+procedure suds$copy-sounding
+	if (def_snd = "")
+		prompt s string "Sounding to be copied"
+	else
+		prompt s string "Sounding to be copied" default def_snd
+	endif
+	prompt name string "Name for new sounding"
+	create sounding #name from #s
+endprocedure
+
+!
+! Forget a sounding
+!
+procedure suds$forget-sounding
+	prompt s string "Sounding to remove"
+	forget #s
+endprocedure
+
+
