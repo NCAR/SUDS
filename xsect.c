@@ -1,9 +1,10 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.8 $ $Date: 1990-05-29 10:25:55 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-10-26 11:05:14 $ $Author: burghart $
  */
 # include <math.h>
+# include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
 # include "keywords.h"
@@ -76,7 +77,7 @@ void	xs_abort (), xs_ov_check (), xs_background (), xs_side_text ();
 void	xs_reset_annot (), xs_plot (), xs_vscale ();
 void	xs_from_to (), xs_pos (), xs_timepos (), xs_time_height ();
 void	xs_spatial (), xs_special_data (), xs_extend_trace ();
-void	xs_draw_trace ();
+void	xs_draw_trace (), xs_center_angle ();
 
 
 
@@ -124,6 +125,9 @@ struct ui_command	*cmds;
 		break;
 	    case KW_FROM:
 		xs_from_to (cmds);
+		break;
+	    case KW_CENTER:
+		xs_center_angle (cmds);
 		break;
 	    case KW_VSCALE:
 		xs_vscale (cmds);
@@ -332,7 +336,10 @@ xs_put_data ()
 				x = xpos[pt];
 				y = ypos[pt];
 
-				pt_ang = atan2 (y, x) - plane_ang;
+				if (x != 0.0 || y != 0.0)
+					pt_ang = atan2 (y, x) - plane_ang;
+				else
+					pt_ang = 0.0;
 
 				hlen = hypot (x, y) * cos (pt_ang);
 				dis = fabs (hypot (x, y) * sin (pt_ang));
@@ -623,25 +630,30 @@ xs_background ()
 /*
  * Figure out where to put ticks on horizontal axes
  */
-	tickinc = pow (10.0, floor (log10 (P_len)));
+	if (Time_height)
+	{
+		tickinc = pow (10.0, floor (log10 (P_len)));
 
-	if ((P_len / tickinc) < 1.5)
-		tickinc *= 0.1;
-	else if ((P_len / tickinc) < 3.0)
-		tickinc *= 0.2;
-	else if ((P_len / tickinc) < 8.0)
-		tickinc *= 0.5;
-/*
- * Kluge: don't make tick increment finer than 1/2 hour on time-height plots
- */
-	if (Time_height && tickinc < 0.5)
-		tickinc = 0.5;
+		if ((P_len / tickinc) < 1.5)
+			tickinc *= 0.1;
+		else if ((P_len / tickinc) < 3.0)
+			tickinc *= 0.2;
+		else if ((P_len / tickinc) < 8.0)
+			tickinc *= 0.5;
+	/*
+	 * Don't make tick increment finer than 1/2 hour
+	 */
+		if (Time_height && tickinc < 0.5)
+			tickinc = 0.5;
+	}
+	else
+		tickinc = P_len / 8.0;
 /*
  * Label the horizontal axes
  */
 	dolabel = TRUE;
 
-	for (tick = 0.0; tick <= P_len; tick += tickinc)
+	for (tick = 0.0; tick <= 1.005 * P_len; tick += tickinc)
 	{
 	/*
 	 * Check for an interrupt
@@ -664,10 +676,16 @@ xs_background ()
 	 */
 		if (dolabel)
 		{
-			sprintf (string, "%d", (int) tick);
+			if (Time_height)
+				sprintf (string, "%d", (int) tick);
+			else
+				sprintf (string, "(%.1f,%.1f)", 
+					X0 + tick / P_len * (X1 - X0),
+					Y0 + tick / P_len * (Y1 - Y0));
+
 			G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, 
-				GT_CENTER, GT_TOP, 
-				(float) tick, -0.01 * P_hgt, 0.0, string);
+				GT_CENTER, GT_TOP, (float) tick, 
+				-0.01 * P_hgt, 0.0, string);
 		}
 		dolabel = ! dolabel;
 	}
@@ -678,7 +696,7 @@ xs_background ()
 			"TIME FROM START (HOURS)");
 	else
 		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
-			GT_TOP, 0.5 * P_len, -0.06 * P_hgt, 0.0, "DIST (KM)");
+			GT_TOP, 0.5 * P_len, -0.06 * P_hgt, 0.0, "POS (KM)");
 /*
  * Get the lower and upper limits of the vertical axes
  */
@@ -831,13 +849,74 @@ struct ui_command	*cmds;
  * Set the endpoints of the cross-section plane
  */
 {
-	X0 = UFLOAT (cmds[0]);
-	Y0 = UFLOAT (cmds[1]);
-	X1 = UFLOAT (cmds[2]);
-	Y1 = UFLOAT (cmds[3]);
-
+	float	lat0, lon0, lat1, lon1;
+	int	cnum = 0;
+	float	snd_s_lat (), snd_s_lon ();
+/*
+ * First endpoint.  Look for a sounding name first, otherwise get x and y
+ */
+	if (cmds[cnum].uc_vptype == SYMT_STRING)
+	{
+		lat0 = snd_s_lat (UPTR (cmds[cnum]));
+		lon0 = snd_s_lon (UPTR (cmds[cnum]));
+		cvt_to_xy (lat0, lon0, &X0, &Y0);
+		cnum++;
+	}
+	else
+	{
+		X0 = UFLOAT (cmds[cnum++]);
+		Y0 = UFLOAT (cmds[cnum++]);
+	}
+/*
+ * Second endpoint.  Same deal.
+ */
+	if (cmds[cnum].uc_vptype == SYMT_STRING)
+	{
+		lat1 = snd_s_lat (UPTR (cmds[cnum]));
+		lon1 = snd_s_lon (UPTR (cmds[cnum]));
+		cvt_to_xy (lat1, lon1, &X1, &Y1);
+		cnum++;
+	}
+	else
+	{
+		X1 = UFLOAT (cmds[cnum++]);
+		Y1 = UFLOAT (cmds[cnum++]);
+	}
+/*
+ * Sanity check
+ */
 	if (X0 == X1 && Y0 == Y1)
 		ui_error ("The endpoints must be different!");
+}
+
+
+
+
+void
+xs_center_angle (cmds)
+struct ui_command	*cmds;
+/*
+ * Locate the cross section plane with a center, angle, and length
+ */
+{
+	float	xc, yc, angle, length;
+
+	xc = UFLOAT (cmds[0]);
+	yc = UFLOAT (cmds[1]);
+	angle = DEG_TO_RAD (90.0 - UFLOAT (cmds[2]));
+	length = UFLOAT (cmds[3]);
+
+	ui_printf ("center (%.1f,%.1f), angle %.1f, length %.1f", xc, yc,
+		UFLOAT (cmds[2]), length);
+
+	if (length == 0.0)
+		ui_error ("The length must be greater than zero!");
+
+	X0 = xc - length / 2 * cos (angle);
+	X1 = xc + length / 2 * cos (angle);
+
+	Y0 = yc - length / 2 * sin (angle);
+	Y1 = yc + length / 2 * sin (angle);
 }
 
 
