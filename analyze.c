@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.28 1992-08-07 17:38:19 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.29 1992-08-10 16:09:56 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -94,6 +94,7 @@ struct ui_command	*cmds;
 	float	t_sfc, vt_sfc, p_sfc, dp_sfc, t_fore, vt_fore, dp_fore;
 	float	t_ref, vt_ref;
 	int	i, npts, name_loc = 0, success, t_ndx_fore, vt_ndx_fore;
+	long	curtime;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
@@ -171,6 +172,9 @@ struct ui_command	*cmds;
 
 	an_printf ("\nAnalysis for sounding '%s'\n", Id_name);
 	an_printf ("Time: %s, Site: %s\n", string, snd_site (Id_name));
+ 	time (&curtime);
+	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
+	an_printf ("(analysis generated %s)\n", string);
 	an_printf ("-----------------------------------------------\n");
 /*
  * Print preliminaries for the surface-based analysis
