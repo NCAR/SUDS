@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.29 1992-08-10 16:09:56 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.30 1993-04-08 21:38:52 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -48,6 +48,11 @@ static char *rcsid = "$Id: analyze.c,v 1.29 1992-08-10 16:09:56 burghart Exp $";
  * Mean Layer Vector Wind pressure bounds
  */
 float	Mlvw_bot = 1000.0, Mlvw_top = 700.0;
+
+/*
+ * Depth of surface layer mixing to use for analysis
+ */
+float	Mix_depth = 50.0;
 
 /*
  * List of extra stuff to show in analysis
@@ -184,14 +189,16 @@ struct ui_command	*cmds;
 
 	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
 	an_printf ("\t Surface potential temperature ");
-	an_printf ("(50 mb average): %.1f K\n", theta_dry (t_sfc, p_sfc));
+	an_printf ("(%.0f mb average): %.1f K\n", Mix_depth, 
+		theta_dry (t_sfc, p_sfc));
 
 	an_surface (vt, p, dp, npts, &vt_sfc, &p_sfc, &dp_sfc);
 	an_printf ("\t Surface virtual potential temperature ");
-	an_printf ("(50 mb average): %.1f K\n", theta_dry (vt_sfc, p_sfc));
+	an_printf ("(%.0f mb average): %.1f K\n", Mix_depth, 
+		theta_dry (vt_sfc, p_sfc));
 
-	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
-		w_sat (dp_sfc, p_sfc));
+	an_printf ("\t Surface mixing ratio (%.0f mb average): %.1f g/kg \n", 
+		Mix_depth, w_sat (dp_sfc, p_sfc));
 
 	t_ref = an_li_ref (p, t, npts);
 	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, t_ref);
@@ -241,8 +248,8 @@ struct ui_command	*cmds;
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
 		theta_dry (vt_fore, Forecast_pres));
 
-	an_printf ("\t Surface mixing ratio (50 mb average): %.1f g/kg \n", 
-		w_sat (dp_sfc, p_sfc));
+	an_printf ("\t Surface mixing ratio (%.0f mb average): %.1f g/kg \n", 
+		Mix_depth, w_sat (dp_sfc, p_sfc));
 
 	t_ref = an_li_ref (p, t, npts);
 	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, t_ref);
@@ -739,9 +746,10 @@ int	npts;
 /*
  * Find the surface values.  The surface dewpoint returned is actually
  * the dewpoint corresponding to the surface pressure and the mean mixing
- * ratio for the lowest 50 mb of the sounding; the surface temperature
- * returned is the temperature corresponding to the surface pressure and
- * the mean potential temperature for the lowest 50 mb of the sounding.
+ * ratio for the portion of the sounding defined the currently selected
+ * mixing depth (50mb by default); the surface temperature returned is the 
+ * temperature corresponding to the surface pressure and the mean potential 
+ * temperature through the mixing depth.
  */
 {
 	int	i = 0;
@@ -757,10 +765,21 @@ int	npts;
 
 	*p_sfc = p[i];
 /*
- * Numeric integration to average mixing ratio and theta over the lowest 50 mb
+ * Short cut if the mixing depth is zero
  */
-	p_top = p[i] - 50.0;
+	if (Mix_depth == 0)
+	{
+		*dp_sfc = dp[i];
+		*t_sfc = t[i];
+		return;
+	}
+/*
+ * Numeric integration to average mixing ratio and theta from the surface
+ * through Mix_depth mb.
+ */
+	p_top = p[i] - Mix_depth;
 
+	pres = p[i];
 	pres_prev = p[i];
 	theta_prev = theta_dry (t[i], p[i]);
 	mr_prev = w_sat (dp[i], p[i]);
@@ -810,10 +829,10 @@ int	npts;
 	mr = mr_sum / (pres - *p_sfc);
 	theta = theta_sum / (pres - *p_sfc);
 /*
- * Make sure we spanned 50 mb
+ * Make sure we spanned Mix_depth
  */
 	if (i == npts)
-		ui_warning ("The sounding does not span 50 mb");
+		ui_warning ("The sounding does not span %.0f mb", Mix_depth);
 /*
  * Get the dewpoint corresponding to the mean mixing ratio and the
  * temperature corresponding to the mean potential temperature.
@@ -1195,8 +1214,27 @@ struct ui_command	*cmds;
 {
 	Mlvw_bot = UFLOAT (cmds[0]);
 	Mlvw_top = UFLOAT (cmds[1]);
+	ui_printf ("MLVW will be calculated between %.0f and %.0f mb.\n",
+		Mlvw_bot, Mlvw_top);
 }
 
+
+void
+an_mix_depth (cmds)
+struct ui_command	*cmds;
+/*
+ * Change the surface mixing depth to be used in analysis calculations
+ */
+{
+	float	depth = UFLOAT (cmds[0]);
+
+	if (depth < 0)
+		ui_error ("Mixing depth must be >= 0");
+
+	Mix_depth = depth;
+	ui_printf ("A %.0f mb mixed layer will be used for analyses.\n",
+		Mix_depth);
+}
 
 
 
