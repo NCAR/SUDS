@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.13 1992-08-14 22:03:25 case Exp $";
+static char *rcsid = "$Id: fields.c,v 1.14 1993-03-12 18:26:23 burghart Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -59,7 +59,7 @@ static struct
 		{"pres", "press", "pressure", ""},
 		1050.0,	100.0,	1000.0,	100.0	},
 	{f_qpres, "pressure quality", "",
-		{"qpres", ""},
+		{"qpres", "qp", ""},
 		0.0,	10.0,	0.0,	0.1	},
 	{f_qrh, "RH quality", "",
 		{"qrh", ""},
@@ -74,7 +74,7 @@ static struct
 		{"qv", ""},
 		0.0,	10.0,	0.0,	0.1	},
 	{f_qwind, "wind quality", "",
-		{"qwind", ""},
+		{"qwind", "qdz", ""},
 		0.0, 	10.0,	0.0,	0.1	},
 	{f_range, "balloon range", "km",
 		{"range", ""},
@@ -119,6 +119,9 @@ static struct
 		{"wdir", ""},
 		0.0,	360.0,	180.0,	10.0	},
 	{f_wspd, "wind speed", "m/s",
+		{"wspd", ""},
+		0.0,	50.0,	0.0,	5.0	},
+	{f_qrh, "wind speed", "m/s",
 		{"wspd", ""},
 		0.0,	50.0,	0.0,	5.0	},
 	{f_null, "null field", "",
