@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.4 $ $Date: 1990-02-08 16:12:16 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1990-05-07 10:10:01 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -77,16 +77,22 @@ static struct
 		0.0,	60.0	},
 	{f_u_wind, "u wind component", "m/s",
 		{"u_wind", ""},
-		0.0,	2.0	},
+		0.0,	5.0	},
 	{f_v_wind, "v wind component", "m/s",
 		{"v_wind", ""},
-		0.0,	2.0	},
+		0.0,	5.0	},
 	{f_wdir, "wind direction", "deg",
 		{"wdir", ""},
 		180.0,	10.0	},
 	{f_wspd, "wind speed", "m/s",
 		{"wspd", ""},
-		0.0,	1.0	},
+		0.0,	5.0	},
+	{f_u_prime, "u' wind component", "m/s",
+		{"u_prime", ""},
+		0.0,	5.0	},
+	{f_v_prime, "v' wind component", "m/s",
+		{"v_prime", ""},
+		0.0,	5.0	},
 	{f_null, "null field", "",
 		{""},
 		0.0,	0.0	}
