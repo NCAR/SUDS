@@ -4,7 +4,7 @@ LOCALCFLAGS = -Bstatic $(XINCLUDE) $(NETCDFINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	convert.o edit.o eformat.o \
 	fgge.o fields.o flags.o fld_derive.o foote.o gale.o hodograph.o \
-	init_globals.o jaws.o met_formulas.o mist.o ncar.o netcdf.o nmc.o \
+	init_globals.o jaws.o mist.o ncar.o netcdf.o nmc.o \
 	noaa.o nws.o output.o rsanal.o skewt.o sounding.o util.o xsect.o \
 	xyplot.o
 
