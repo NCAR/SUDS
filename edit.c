@@ -1,12 +1,13 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.8 $ $Date: 1990-04-13 15:33:31 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-09-12 10:31:09 $ $Author: burghart $
  * 
  */
 # include <math.h>
 # include "globals.h"
 # include "keywords.h"
+# include "derive.h"
 # include "color.h"
 # include "sounding.h"
 
@@ -1123,8 +1124,8 @@ struct ui_command	*cmds;
 /*
  * Get pointers to the data linked lists for the threshold and target fields
  */
-	thresh = (struct snd_datum *) snd_data_ptr (id_name, threshfld);
-	target = (struct snd_datum *) snd_data_ptr (id_name, targetfld);
+	thresh = snd_data_ptr (id_name, threshfld);
+	target = snd_data_ptr (id_name, targetfld);
 /*
  * Apply the thresholding
  */
@@ -1359,7 +1360,7 @@ struct ui_command	*cmds;
 	/*
 	 * Get the data pointer for this field
 	 */
-		datum = (struct snd_datum *) snd_data_ptr (Eid, flds[i]);
+		datum = snd_data_ptr (Eid, flds[i]);
 	/*
 	 * Find the points to insert between
 	 */
@@ -1388,6 +1389,117 @@ struct ui_command	*cmds;
 
 		if (datum)
 			datum->prev = new;
+	}
+/*
+ * Redraw the last plot if necessary
+ */
+	if (Etrace >= 0)
+	{
+		Replot = TRUE;
+		(*Lastplot.plot) (Lastplot.cmds);
+		Replot = FALSE;
+	}
+}
+
+
+
+
+void
+edit_extend (cmds)
+struct ui_command	*cmds;
+/*
+ * Handle the EXTEND command
+ *
+ * This editing will change points between the current point and the
+ * surface based on the selected field:
+ *	temperature:	generate a dry adiabat
+ *	dewpoint:	generate points with constant mixing ratio
+ *	other fields:	do nothing (inform that we don't "extend" this field)
+ */
+{
+	struct snd_datum	*pres, *p, *e, *newpt, *snd_data_ptr ();
+	float	theta, mr, ref_pres, val;
+	int	ndx;
+/*
+ * Get pointers to the beginning of the pressure list and the edit
+ * field list
+ */
+	pres = snd_data_ptr (Eid, f_pres);
+	e = snd_data_ptr (Eid, Efld);
+/*
+ * Find the pressure corresponding to the current point
+ */
+	p = pres;
+	while (p->index < E_datum->index && p->next)
+		p = p->next;
+
+	if (p->index != E_datum->index)
+	    ui_error ("The chosen point must have a corresponding pressure.");
+	else
+		ref_pres = p->value;
+/*
+ * Get a reference value based on the field we're editing
+ * (theta to extend temperature or mixing ratio to extend dewpoint)
+ */
+	switch (Efld)
+	{
+	    case f_temp:
+		theta = theta_dry (E_datum->value + T_K, ref_pres);
+		break;
+	    case f_dp:
+		mr = w_sat (E_datum->value + T_K, ref_pres);
+		break;
+	    default:
+		ui_error ("Extend cannot be used for %s.", fd_name (Efld));
+	}
+/*
+ * For each good pressure value below the edit point, put a new
+ * value into the edit field
+ */
+	for (; pres->index < E_datum->index; pres = pres->next)
+	{
+	/*
+	 * Skip edit field points without a corresponding pressure
+	 */
+		while (e->index < pres->index)
+			e = e->next;
+	/*
+	 * If we have a pressure without a corresponding edit field point,
+	 * add a point to the edit field
+	 */
+		if (e->index != pres->index)
+		{
+		/*
+		 * Get the new point and assign its index
+		 */
+			newpt = (struct snd_datum *) 
+				malloc (sizeof (struct snd_datum));
+			newpt->index = pres->index;
+		/*
+		 * Link it into the list
+		 */
+			newpt->prev = e;
+			newpt->next = e->next;
+			newpt->next->prev = newpt;
+			e->next = newpt;
+			e = newpt;
+		}
+	/*
+	 * Find the appropriate value for the edit field at this pressure
+	 */
+		switch (Efld)
+		{
+		    case f_temp:
+			val = theta_to_t (theta, pres->value) - T_K;
+			break;
+		    case f_dp:
+			val = t_mr (pres->value, mr) - T_K;
+			break;
+		    default:
+			ui_error ("*BUG* Undetected bad field in extend");
+		}
+
+		e->value = val;
 	}
 /*
  * Redraw the last plot if necessary
