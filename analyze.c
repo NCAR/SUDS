@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.14 $ $Date: 1990-10-30 16:00:18 $ $Author: burghart $ 
+ * $Revision: 1.15 $ $Date: 1990-11-01 13:23:03 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -511,11 +511,11 @@ int	npts;
  * The LFC is between p_prev and p[i], calculate its pressure and temperature.
  * (Assume that the moist adiabat is straight between these two pressures)
  */
-	dt_bot = t_prev + T_K - t_sat (theta_e_lcl, p_prev);
-	dt_top = t[i] + T_K - t_sat (theta_e_lcl, p[i]);
+	dt_bot = (t_prev + T_K) - t_sat (theta_e_lcl, p_prev);
+	dt_top = t_sat (theta_e_lcl, p[i]) - (t[i] + T_K);
 
-	ln_p_lfc = (dt_bot * log (p[i]) - dt_top * log (p_prev)) / 
-		(dt_bot - dt_top);
+	ln_p_lfc = (dt_bot * log (p[i]) + dt_top * log (p_prev)) / 
+		(dt_bot + dt_top);
 	return ((float) (exp (ln_p_lfc)));
 }
 
