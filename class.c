@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.8 $ $Date: 1990-01-23 09:02:24 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-04-13 15:32:57 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -42,9 +42,10 @@ struct snd	*sounding;
 {
 	FILE	*sfile;
 	int	i, j, year, month, day, hour, minute, second;
-	int	ndx, npts, n_fld, n_sfc_fld, status, pos;
+	int	ndx, npts, n_fld, n_sfc_fld, status, pos, fndx;
 	int	end_of_file = FALSE;
 	fldtype	sfc_fld[MAXFLDS];
+	int	sfc_fndx[MAXFLDS];
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
 	float	val;
 	char	string[STRSIZE], character;
@@ -178,11 +179,6 @@ struct snd	*sounding;
 	 */
 		sounding->fields[i] = F_match_tbl[j].fld;
 	/*
-	 * Make sure the sounding and surface fields match
-	 */
-		if (sounding->fields[i] != sfc_fld[i] && i < n_sfc_fld)
-			ui_error ("*BUG* Sounding fld/surface fld mismatch");
-	/*
 	 * Read past the units
 	 */
 		fscanf (sfile, "%[^,\n]", string);
@@ -193,6 +189,20 @@ struct snd	*sounding;
  */
 	n_fld = i;
 	sounding->fields[n_fld] = f_null;
+/*
+ * Find the sounding field corresponding to each surface field
+ */
+	for (i = 0; i < n_sfc_fld; i++)
+	{
+		for (fndx = 0; fndx < n_fld; fndx++)
+			if (sounding->fields[fndx] == sfc_fld[i])
+				break;
+
+		if (fndx == n_fld)
+			ui_error ("*BUG* Sounding fld/surface fld mismatch");
+		else
+			sfc_fndx[i] = fndx;
+	}
 /*
  * Skip ahead 4 lines
  */
@@ -208,14 +218,21 @@ struct snd	*sounding;
  */
 	for (ndx = 0; ndx < npts; ndx++)
 	{
-		int	maxfld = (ndx == 0) ? n_sfc_fld : n_fld;
+		int	surface = (ndx == 0);
+		int	maxfld = surface ? n_sfc_fld : n_fld;
 	/*
 	 * Loop through the values in this data line
 	 */
 		for (i = 0; i < maxfld; i++)
 		{
-			fldtype	fld = sounding->fields[i];
+			fldtype	fld;
+			int	fndx;
 			float	badthresh = 999.0;
+		/*
+		 * Get the current field and field index
+		 */
+			fld = surface ? sfc_fld[i] : sounding->fields[i];
+			fndx = surface ? sfc_fndx[i] : i;
 		/*
 		 * Higher threshold for some fields
 		 */
@@ -248,24 +265,24 @@ struct snd	*sounding;
 			/*
 			 * Get a new point
 			 */
-				prevpt = dptr[i];
-				dptr[i] = (struct snd_datum *)
+				prevpt = dptr[fndx];
+				dptr[fndx] = (struct snd_datum *)
 					calloc (1, sizeof (struct snd_datum));
 			/*
 			 * Link it into the list or make it the head
 			 */
 				if (prevpt)
 				{
-					prevpt->next = dptr[i];
-					dptr[i]->prev = prevpt;
+					prevpt->next = dptr[fndx];
+					dptr[fndx]->prev = prevpt;
 				}
 				else
-					sounding->dlists[i] = dptr[i];
+					sounding->dlists[fndx] = dptr[fndx];
 			/*
 			 * Assign the value and index
 			 */
-				dptr[i]->value = val;
-				dptr[i]->index = ndx;
+				dptr[fndx]->value = val;
+				dptr[fndx]->index = ndx;
 			}
 		}
 	/*
