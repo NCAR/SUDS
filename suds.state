@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.2 1991-12-11 16:02:32 burghart Exp $
+ * $Id: suds.state,v 1.3 1991-12-19 19:46:09 burghart Exp $
  */
 
 # include "keywords.h"
@@ -766,9 +766,12 @@ enddef
 define state thr-criterion
 	helpfile 'threshold'
 	input 'bad' THR_BAD
-		next thr-opt-sounding
+		next thr-next-or-sounding
 	endinput
 	input '=' THR_EQ
+		next thr-value
+	endinput
+	input '<>' THR_NE
 		next thr-value
 	endinput
 	input '>' THR_GT
@@ -788,22 +791,25 @@ enddef
 define state thr-value
 	helpfile 'threshold'
 	input real
-		next thr-opt-sounding
+		next thr-next-or-sounding
 	endinput
 enddef
 
-define state thr-opt-sounding
+define state thr-next-or-sounding
 	helpfile 'threshold'
-	input 'sounding' KW_SUGAR
-		ignore
-		next thr-snd-name
-	endinput
 	input EOS
 		done
 	endinput
+	input 'and' KW_SUGAR
+		ignore
+		next thr-threshfld
+	endinput
 	input string
 		lowercase
-		next ust$no_more
+		next thr-criterion
+	endinput
+	input 'sounding' KW_SOUNDING
+		next thr-snd-name
 	endinput
 enddef
 
