@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: keywords.h,v 1.18 1991-10-21 22:18:56 burghart Exp $
+ * $Id: keywords.h,v 1.19 1991-12-19 19:44:29 burghart Exp $
  */
 
 # define KW_SUGAR	0
@@ -86,6 +86,7 @@
 # define THR_GT		4
 # define THR_LE		5
 # define THR_GE		6
+# define THR_NE		7
 
 /*
  * Sounding format keywords
