@@ -1,7 +1,7 @@
 /*
  * Contour a rectangular array
  *
- * $Revision: 1.1 $ $Date: 1989-11-08 11:18:18 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-01-23 09:07:45 $ $Author: burghart $
  */
 # include <errno.h>
 # include <math.h>
@@ -114,6 +114,12 @@ static int	C_color, Linestyle;
 static char	Label[16];
 
 /*
+ * Toggle so labels on adjacent contours are slightly offset from each
+ * other
+ */
+static int	Ltoggle = FALSE;
+
+/*
  * Our overlay
  */
 static overlay	C_ov;
@@ -172,8 +178,8 @@ overlay	ov;
 /*
  * Loop through the contour values
  */
-	cndx_min = (int)((min - ccenter) / cstep);
-	cndx_max = (int)((max - ccenter) / cstep);
+	cndx_min = (int) ceil ((min - ccenter) / cstep);
+	cndx_max = (int) floor ((max - ccenter) / cstep);
 
 	for (cndx = cndx_min; cndx <= cndx_max; cndx++)
 	{
@@ -181,7 +187,10 @@ overlay	ov;
 	/*
 	 * Assign the line style and color
 	 */
+# ifdef notdef
 		Linestyle = (cval < 0) ? GPLT_DOT : GPLT_SOLID;
+# endif
+		Linestyle = GPLT_SOLID;
 
 		if (ABS (cndx) > (Ncolor - 1) / 2)
 			C_color = Color_outrange;
@@ -203,6 +212,11 @@ overlay	ov;
 		sprintf (testlabel, " %.*E ", prec, cval);
 		if (strlen (testlabel) < strlen (Label))
 			strcpy (Label, testlabel);
+	/*
+	 * Alternate the toggle so that adjacent contours have slightly
+	 * offset labels
+	 */
+		Ltoggle = ! Ltoggle;
 	/*
 	 * Initialize the Did_tri array to all FALSE
 	 */
@@ -685,7 +699,9 @@ con_draw_contour ()
  */
 {
 	int	prev, start, i, label_now, count, vjust;
-	float	angle, charsize, len, del_x, del_y, x0, y0, x1, y1;
+	float	width = ((Nx - 1) * Xstep);
+	float	height = ((Ny - 1) * Ystep);
+	float	angle, charsize, dist, del_x, del_y, x0, y0, x1, y1;
 	float	test1, test2, fudge;
 
 	if (Npt <= 1)
@@ -696,12 +712,16 @@ con_draw_contour ()
 /*
  * Set the character size
  */
-	charsize = 0.02 * (Ny - 1) * Ystep;
+	charsize = 0.025 * height;
+/*
+ * Set things up as if we've gone some distance through a contour, so 
+ * we get the first label quickly
+ */
+	dist = Ltoggle ? 0.445 : 0.495;
 /*
  * Run through the points of the contour, drawing polylines and inserting
  * labels where appropriate 
  */
-	len = 0.4 * (Nx - 1) * Xstep;
 	start = 0;
 	count = 1;
 	label_now = FALSE;
@@ -720,9 +740,9 @@ con_draw_contour ()
 			del_x = Xpt[i] - Xpt[prev];
 			del_y = Ypt[i] - Ypt[prev];
 
-			len += hypot (del_x, del_y);
+			dist += hypot (del_x / width, del_y / height);
 
-			if (len > (0.5 * (Nx - 1) * Xstep))
+			if (dist > 0.5)
 			{
 			/*
 			 * We're far enough for the next label, draw 
@@ -733,7 +753,7 @@ con_draw_contour ()
 				G_polyline (C_ov, Linestyle, C_color, count, 
 					Xpt + start, Ypt + start);
 
-				len = 0.0;
+				dist = 0.0;
 				start = i;
 				count = 1;
 			}
@@ -750,7 +770,7 @@ con_draw_contour ()
 			if (del_x == 0.0 && del_y == 0.0)
 				continue;
 
-			angle = atan2 (del_y, del_x);
+			angle = atan2 (del_y / height, del_x / width);
 
 			if (angle > PI/2)
 			{
@@ -777,11 +797,13 @@ con_draw_contour ()
 		 * We use the fudge factor in the test because G_wr_box returns
 		 * values which are rounded to the nearest pixel location
 		 */
-			test1 = atan2 (Ypt[i] - y0, Xpt[i] - x0) - angle;
+			test1 = atan2 ((Ypt[i] - y0) / height, 
+				(Xpt[i] - x0) / width) - angle;
 			while (test1 < 0.0)
 				test1 += 2 * PI;
 
-			test2 = atan2 (Ypt[i] - y1, Xpt[i] - x1) - angle - PI;
+			test2 = atan2 ((Ypt[i] - y1) / height, 
+				(Xpt[i] - x1) / width) - angle - PI;
 			while (test2 < 0.0)
 				test2 += 2 * PI;
 
@@ -798,13 +820,15 @@ con_draw_contour ()
 
 			if (vjust == GT_LEFT)
 			{
-				Xpt[i-1] = x1 + charsize / 2 * sin (angle);
-				Ypt[i-1] = y1 - charsize / 2 * cos (angle);
+				Xpt[i-1] = x1 + 0.5 * charsize * sin (angle) *
+					width / height;
+				Ypt[i-1] = y1 - 0.5 * charsize * cos (angle);
 			}
 			else
 			{
-				Xpt[i-1] = x0 - charsize / 2 * sin (angle);
-				Ypt[i-1] = y0 + charsize / 2 * cos (angle);
+				Xpt[i-1] = x0 - 0.5 * charsize * sin (angle) * 
+					width / height;
+				Ypt[i-1] = y0 + 0.5 * charsize * cos (angle);
 			}
 
 
