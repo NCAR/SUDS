@@ -1,15 +1,12 @@
 /*
  * NWS format sounding access
  *
- * $Revision: 1.6 $ $Date: 1991-03-20 23:25:19 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1991-03-21 21:30:35 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include "sounding.h"
-
-# define TRUE	1
-# define FALSE	0
 
 /*
  * 7 fields in NWS data
