@@ -66,8 +66,9 @@
 # define SFMT_RSANAL	5
 # define SFMT_EFMT	6
 # define SFMT_NCAR	7
+# define SFMT_MIST	8
 
-# define MAXFMT		7  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		8  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show
