@@ -1,16 +1,13 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.5 $ $Date: 1989-10-20 14:57:36 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-12-04 09:46:32 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include <time.h>
 # include "sounding.h"
-
-# define TRUE	1
-# define FALSE	0
 
 # define STRSIZE	200
 
@@ -44,6 +41,7 @@ struct snd	*sounding;
 	FILE	*sfile;
 	int	i, j, year, month, day, hour, minute, second;
 	int	ndx, npts, n_fld, n_sfc_fld, status, pos;
+	int	end_of_file = FALSE;
 	fldtype	sfc_fld[MAXFLDS];
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
 	float	val;
@@ -86,9 +84,10 @@ struct snd	*sounding;
 	sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
 	sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
 /*
- * Comment
+ * Comment and number of points
  */
 	fscanf (sfile, "%[^,],%d\n", string, &npts);
+	npts++;		/* Add one for the surface point */
 /*
  * Surface fields
  */
@@ -182,7 +181,7 @@ struct snd	*sounding;
 /*
  * Loop through the data lines
  */
-	for (ndx = 0; ndx <= npts; ndx++)
+	for (ndx = 0; ndx < npts; ndx++)
 	{
 		int	maxfld = (ndx == 0) ? n_sfc_fld : n_fld;
 	/*
@@ -208,13 +207,13 @@ struct snd	*sounding;
 		 * Read the value
 		 */
 			status = fscanf (sfile, "%f", &val);
-			if (status == EOF)
-				ui_error (
-				"Bad data read -- Is this a CLASS file?");
+			end_of_file = (status == EOF);
+			if (end_of_file && ndx < 1)
+			   ui_error ("Bad data read -- Is this a CLASS file?");
 		/*
 		 * Test the value and assign it if it's good
 		 */
-			if (val < badthresh)
+			if (val < badthresh && ! end_of_file)
 			{
 			/*
 			 * Change altitude to ground relative
@@ -245,11 +244,14 @@ struct snd	*sounding;
 			}
 		}
 	/*
+	 * See if we ran out of data early
+	 */
+		if (end_of_file)
+			break;
+	/*
 	 * Read the line terminator
 	 */
-		status = fscanf (sfile, "\n");
-		if (status == EOF)
-			break;
+		fscanf (sfile, "\n");
 	}
 /*
  * Set the max index for these data
