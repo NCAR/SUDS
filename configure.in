@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(SUDS, 20020823, rdp-support@atd.ucar.edu)
+AC_INIT(SUDS, [20020827], rdp-support@atd.ucar.edu)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([suds.c])
 
@@ -27,14 +27,30 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 
-# Find X libraries/headers
-LIBS="$LIBS -lXaw -lXt -lXmu -lX11"
-AC_PATH_X
+#
+# Math and termcap libraries
+#
+AC_CHECK_LIB([m], [pow], , [echo "Cannot find math library"; exit 1])
+AC_CHECK_LIB([termcap], [tgetstr], ,
+	[echo "Cannot find termcap library"; exit 1])
+#
+# Link to libnsl and libsocket if we can find them (i.e., on Solaris systems),
+# otherwise we probably get the necessary stuff from libc (i.e., under Linux)
+#
+AC_CHECK_LIB([nsl], [gethostbyname])
+AC_CHECK_LIB([socket], [socket])
 
+# Find X libraries/headers
+LIBS="-lXt -lX11 $LIBS"
+AC_PATH_X
 if test "$no_x" = "yes"; then
 	echo "X11 is required for SUDS"; exit 1
 fi
 
+#
+# Add to LDFLAGS and INCLUDES if X files are not in locations
+# searched by default.
+#
 if test x$x_libraries != x; then 
 	LDFLAGS="$LDFLAGS -L$x_libraries"
 fi
@@ -42,16 +58,21 @@ fi
 if test x$x_includes != x; then 
 	CPPFLAGS="$CPPFLAGS -I$x_includes"
 fi
+
 #
-# Checks for libraries.
+# HPUX may not have libXaw, libXext, and libXmu, so check explicitly and
+# complain if one is missing
 #
-AC_CHECK_LIB([m], [pow], , [echo "Cannot find math library"; exit 1])
-AC_CHECK_LIB([termcap], [tgetstr], ,
-	[echo "Cannot find termcap library"; exit 1])
-# Link to libnsl and libsocket if we can find them (i.e., on Solaris systems),
-# otherwise we probably get the necessary stuff from libc (i.e., under Linux)
-AC_CHECK_LIB([nsl], [gethostbyname])
-AC_CHECK_LIB([socket], [socket])
+AC_CHECK_LIB([Xmu], [XmuMakeAtom], ,
+	[echo "Cannot find X11 library libXmu"; exit 1])
+AC_CHECK_LIB([Xext], [XextCreateExtension], ,
+	[echo "Cannot find X11 extension library libXext"; exit 1])
+AC_CHECK_LIB([Xaw], [XawInitializeWidgetSet], ,
+	[echo "Cannot find Athena widget library libXaw"; exit 1])
+
+#
+# netCDF, rdssutil, rdssui, and rdssgraph libraries
+#
 AC_CHECK_LIB([netcdf], [ncopen], , 
 	[echo "NetCDF library not found.  NetCDF use is disabled."])
 AC_CHECK_LIB([rdssutil], [fixdir], , 
