@@ -42,11 +42,12 @@
 # define KW_STEP	38
 # define KW_TOP		39
 # define KW_EXTEND	40
+# define KW_CENTER	41
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	40
+# define MAXKW	41
 
 /*
  * Threshold criteria keywords
