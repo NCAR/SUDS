@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.12 $ $Date: 1990-10-26 10:29:18 $ $Author: burghart $
+ * $Revision: 1.13 $ $Date: 1990-11-01 13:40:59 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -25,7 +25,7 @@ static overlay	Foote_ov = 0;
 /*
  * How high are we going?
  */
-static float	Foote_height = 3.0;
+static float	Foote_height = 4.0;
 
 /*
  * Current text position for top annotation
@@ -52,7 +52,7 @@ struct ui_command *cmds;
 	float	x[200], yli[200], ydist[200];
 	float	pres[BUFLEN], temp[BUFLEN], dp[BUFLEN], alt[BUFLEN];
 	float	li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
-	float	an_li (), snd_s_alt (), an_lfc_calc ();
+	float	an_li (), an_lfc_calc ();
 	char	*snd_default ();
 	void	ft_reset_annot ();
 /*
@@ -167,11 +167,11 @@ struct ui_command *cmds;
 				temp[i], pres[i], dp[i], 350.0);
 
 			if (lfc_pres != BADVAL)
-				ydist[i] = (ft_alt (lfc_pres, temp, pres, dp, 
+				ydist[pt] = (ft_alt (lfc_pres, temp, pres, dp, 
 					alt, maxpts) - 
 					alt[i]) / (Foote_height * 1000.0);
 			else
-				ydist[i] = 1.0;
+				ydist[pt] = 1.0;
 		/*
 		 * Increment the number of plot points
 		 */
@@ -339,7 +339,7 @@ int	npts;
 		pres[i] == BADVAL || dp[i] == BADVAL || 
 		alt[i] == BADVAL)
 		if (++i == npts)
-			ui_error ("*BUG* Ceil error in ft_height");
+			ui_error ("*BUG* Ceil error in ft_alt");
 
 	ceil = i;
 /*
@@ -357,13 +357,14 @@ int	npts;
  */
 	e_ceil = e_from_dp (dp[ceil] + T_3);
 	e_floor = e_from_dp (dp[floor] + T_3);
-	vt_ceil = t_v (temp[ceil], pres[ceil], e_ceil);
-	vt_floor = t_v (temp[floor], pres[floor], e_floor);
+	vt_ceil = t_v (temp[ceil] + T_3, pres[ceil], e_ceil);
+	vt_floor = t_v (temp[floor] + T_3, pres[floor], e_floor);
 /*
  * Interpolate to get the virtual temperature at the LFC
  */
 	vt_lfc = vt_floor + (vt_ceil - vt_floor) * 
-		(lfc_pres - pres[floor]) / (pres[ceil] - pres[floor]);
+		(log (lfc_pres) - log (pres[floor])) / 
+		(log (pres[ceil]) - log (pres[floor]));
 /*
  * Calculate the thickness of the layer from the floor to the LFC and add 
  * it to the floor altitude
