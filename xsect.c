@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.23 1994-02-23 17:04:06 case Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.24 1996-04-18 18:33:01 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -956,7 +956,11 @@ xs_background ()
 	 */
 		if (dolabel)
 		{
-			sprintf (string, "%d", (int) tick);
+			if (tickinc < 1.0)
+				sprintf (string, "%.2f", tick);
+			else
+				sprintf (string, "%d", (int) tick);
+
 			G_write (Xs_bg_ov, C_WHITE, GTF_DEV, 
 				charsize, GT_RIGHT, GT_CENTER,
 				-0.01 * P_len, tick - P_bot, 0.0, string);
