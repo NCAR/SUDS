@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.7 $ $Date: 1990-01-23 09:24:55 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-02-08 16:13:17 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -36,8 +36,10 @@ main (argc, argv)
 int	argc;
 char	**argv;
 {
+	char	*loadfile;
 	void	main_finish (), main_interrupt (), main_cmd_init();
 	int	main_dispatch ();
+	char	*getenv ();
 	int	status, read_init = TRUE;
 	union usy_value	helpdir;
 
@@ -66,11 +68,14 @@ char	**argv;
 	/*
 	 * Initialize
 	 */
+		loadfile = getenv ("SUDS_LF");
+		if (! loadfile)
 # ifdef VMS
-		ui_init ("ds:[burghart.suds]suds.lf", ! argc, TRUE);
+			loadfile = "ds:[burghart.suds]suds.lf";
 # else
-		ui_init ("/localbin/suds.lf", ! argc, TRUE);
+			loadfile = "/localbin/suds.lf";
 # endif
+		ui_init (loadfile, ! argc, TRUE);
 		init_globals ();
 		main_cmd_init ();
 	/*
@@ -80,10 +85,12 @@ char	**argv;
 	/*
 	 * Establish the help directory
 	 */
+		helpdir.us_v_ptr = getenv ("SUDS_HELPDIR");
+		if (! helpdir.us_v_ptr)
 # ifdef VMS
-		helpdir.us_v_ptr = "ds:[burghart.suds.help]";
+			helpdir.us_v_ptr = "ds:[burghart.suds.help]";
 # else
-		helpdir.us_v_ptr = "/rdss/suds/help/";
+			helpdir.us_v_ptr = "/rdss/suds/help/";
 # endif
 		usy_s_symbol (usy_g_stbl ("ui$variable_table"),
 			"ui$helpdir", SYMT_STRING, &helpdir);
@@ -110,7 +117,7 @@ char	**argv;
 	 */
 		if (read_init)
 		{
-			char	initfile[80], *getenv ();
+			char	initfile[80];
 
 			strcpy (initfile, getenv ("HOME"));
 # ifndef VMS
