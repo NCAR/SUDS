@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.23 1992-08-10 15:28:46 burghart Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.24 1992-08-14 22:04:58 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -183,8 +183,8 @@ struct ui_command	*cmds;
 /*
  * Get our pressure limits
  */
-	pmin = fd_top (f_pres);
-	pmax = fd_bot (f_pres);
+	pmin = (float) fd_top (f_pres);
+	pmax = (float) fd_bot (f_pres);
 
 	Redraw = Redraw || (pmin != Pmin) || (pmax != Pmax);
 
