@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: keywords.h,v 1.23 1993-04-08 21:44:38 burghart Exp $
+ * $Id: keywords.h,v 1.24 1993-04-28 16:21:23 carson Exp $
  */
 
 # define KW_SUGAR	0
@@ -73,11 +73,14 @@
 # define KW_TO		48
 # define KW_BARBRES     49
 # define KW_MIXDEPTH	50
+# define KW_INTERPOLATE 51
+# define KW_ILIMITS     52
+# define KW_WINDSTEP    53
  
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	50
+# define MAXKW	53
 
 /*
  * Threshold criteria keywords
@@ -89,6 +92,8 @@
 # define THR_LE		5
 # define THR_GE		6
 # define THR_NE		7
+# define THR_DECREASE   8
+# define THR_INCREASE   9
 
 /*
  * Sounding format keywords

@@ -4,9 +4,9 @@ LOCALCFLAGS = $(XINCLUDE) $(NETCDFINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o convert.o \
         drexel.o edit.o \
 	eformat.o fgge.o fields.o flags.o fld_derive.o foote.o gale.o \
-	hodograph.o init_globals.o jaws.o mist.o ncar.o netcdf.o nmc.o \
+	hodograph.o init_globals.o interpolate.o jaws.o mist.o ncar.o netcdf.o nmc.o \
 	noaa.o nssl.o nws.o output.o rsanal.o skewt.o sounding.o util.o \
-	xsect.o xyplot.o
+	windstep.o xsect.o xyplot.o
 
 all:	suds suds.lf
 

@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: sounding.c,v 1.19 1993-01-15 18:08:52 case Exp $";
+static char *rcsid = "$Id: sounding.c,v 1.20 1993-04-28 16:21:23 carson Exp $";
 
 # include <ui_param.h>
 # include <ui_date.h>		/* for date formatting stuff */
@@ -53,6 +53,8 @@ static int	Init = FALSE;
  */
 struct snd	snd_find_sounding ();
 void	snd_load_file (), snd_set_default ();
+int	interp();
+double	fd_ibot(), fd_itop(), fd_istep(), fd_igap();
 
 
 
@@ -970,3 +972,41 @@ int	newindex;
 
 	sounding->maxndx++;
 }
+
+
+
+struct snd *
+snd_get_new (id_name)
+char    *id_name;
+/*
+ * Create a new sounding and add it to the list
+ */
+{
+        int     i;
+        struct snd      *sounding = Snd_list, *prev = 0;
+/*
+ * Find the end of the list, looking for name collisions on the way
+ */
+        while (sounding)
+        {
+                if (! strcmp (sounding->name, id_name))
+                        ui_error ("Sounding name '%s' is already used",
+                                id_name);
+                prev = sounding;
+                sounding = sounding->next;
+        }
+/*
+ * Get a new sounding structure
+ */
+        sounding = (struct snd *) calloc (1, sizeof (struct snd));
+/*
+ * Link it to the end of the list or make it the head of the list
+ */
+        if (prev)
+                prev->next = sounding;
+        else     
+                Snd_list = sounding;
+
+	return (sounding);
+}
+
