@@ -1,9 +1,10 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.11 $ $Date: 1990-05-11 14:34:12 $ $Author: burghart $
+ * $Revision: 1.12 $ $Date: 1990-10-26 10:29:18 $ $Author: burghart $
  * 
  */
+# include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
 # include "derive.h"

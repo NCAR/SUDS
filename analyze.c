@@ -1,11 +1,12 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.12 $ $Date: 1990-05-11 14:33:09 $ $Author: burghart $ 
+ * $Revision: 1.13 $ $Date: 1990-10-26 10:28:14 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
 # include <ui_error.h>
+# include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
 # include "fields.h"

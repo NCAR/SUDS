@@ -1,9 +1,10 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.10 $ $Date: 1990-03-27 10:41:35 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-10-26 10:29:54 $ $Author: burghart $
  * 
  */
+# include <ui_param.h>
 # include <ui_date.h>		/* for date formatting stuff */
 # include "globals.h"
 # include "sounding.h"

@@ -1,11 +1,12 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.9 $ $Date: 1990-09-12 09:25:45 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-10-26 10:29:10 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
 # endif
+# include <ui_param.h>
 # include <ui_date.h>
 # include <ui_error.h>
 # include "globals.h"

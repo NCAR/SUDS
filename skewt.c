@@ -1,9 +1,10 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.13 $ $Date: 1990-05-11 14:34:25 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1990-10-26 10:29:44 $ $Author: burghart $
  */
 # include <math.h>
+# include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
 # include "derive.h"
