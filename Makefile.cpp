@@ -1,8 +1,9 @@
-CFLAGS = -I/rdss/include -g -Bstatic
-XLIBS = -lXaw -lXmu -lXt -lXext -lX11 -lsuntool -lsunwindow -lpixrect
+CFLAGS = -I/rdss/include -g -Bstatic -O
+XLIBS = -lXaw -lXmu -lXt -lXext -lX11
 CC = gcc
 
-OBJS =	suds.o analyze.o class.o color.o contour.o convert.o edit.o eformat.o \
+OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
+	convert.o edit.o eformat.o \
 	fgge.o fields.o flags.o fld_derive.o foote.o gale.o hodograph.o \
 	init_globals.o jaws.o met_formulas.o mist.o ncar.o netcdf.o nmc.o \
 	noaa.o nws.o output.o rsanal.o skewt.o sounding.o util.o xsect.o \
@@ -11,6 +12,11 @@ OBJS =	suds.o analyze.o class.o color.o contour.o convert.o edit.o eformat.o \
 all:	suds /locallib/suds.lf
 
 test:	sudstest /locallib/suds.lf
+
+xsaber:	$(OBJS)
+	# load $(CFLAGS) $(OBJS) -lrdss -lnetcdf $(XLIBS) -ltermcap -lm
+	# link
+	
 
 install: suds
 	install -c suds /localbin/suds
