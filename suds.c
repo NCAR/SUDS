@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.26 1993-07-19 17:01:42 case Exp $";
+static char *rcsid = "$Id: suds.c,v 1.27 1994-04-06 23:47:15 burghart Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -179,13 +179,13 @@ char	**argv;
 	 */
 		if (! getenv ("NIX_COPYRIGHT"))
 			main_copyright ();
+	/*
+	 * GO!  Read commands until there aren't any more
+	 */
+		ui_get_command ("suds-initial", "->", main_dispatch, 0);
 	ON_ERROR
 		main_finish ();
 	ENDCATCH
-/*
- * GO!  Read commands until there aren't any more
- */
-	ui_get_command ("suds-initial", "->", main_dispatch, 0);
 /*
  * We're done, the exit handler declared above will execute 
  * main_finish now
