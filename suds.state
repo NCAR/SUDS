@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.3 1991-12-19 19:46:09 burghart Exp $
+ * $Id: suds.state,v 1.4 1992-09-02 16:57:11 burghart Exp $
  */
 
 # include "keywords.h"
@@ -212,6 +212,9 @@ define state file-opt-type
 	input 'cape' SFMT_CAPE
 		next file-opt-id
 	endinput
+	input 'nssl' SFMT_NSSL
+		next file-opt-id
+	endinput
 enddef
 
 define state file-type
@@ -244,6 +247,18 @@ define state file-type
 		next file-opt-id
 	endinput
 	input 'gale' SFMT_GALE
+		next file-opt-id
+	endinput
+	input 'nmc' SFMT_NMC
+		next file-opt-id
+	endinput
+	input 'netcdf' SFMT_NETCDF
+		next file-opt-id
+	endinput
+	input 'cape' SFMT_CAPE
+		next file-opt-id
+	endinput
+	input 'nssl' SFMT_NSSL
 		next file-opt-id
 	endinput
 enddef
