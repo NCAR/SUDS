@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.21 1993-04-28 16:24:20 carson Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.22 1993-05-11 20:45:59 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -1603,13 +1603,12 @@ int sndx;
 /*
  * Calculate the x starting position and the x and y scaling factors
  */
-	xscale = 25.0*P_len / (W_scale *Nsnd) ;
-	if ( Nsnd == 2 ) xscale = xscale/1.5;
+	xscale = 0.1 * P_len / W_scale;
 	yscale = W_aspect * xscale;
 /*
  * Set size parameters for wind barbs
  */
-        size = 0.2 * xscale ;
+        size = 15.0 * xscale;
         blen = size * 0.4;
         tlen = size * 1.0;
         sp   = size * 0.15;
