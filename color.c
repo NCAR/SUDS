@@ -1,7 +1,7 @@
 /*
  * Handle initialization and changing of colors
  *
- * $Revision: 1.3 $ $Date: 1989-08-23 10:48:22 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1989-09-05 17:02:41 $ $Author: burghart $
  */
 # include <stdio.h>
 # include "globals.h"
@@ -11,7 +11,7 @@
 /*
  * Overlay for the color list plot
  */
-static overlay	C_ov;
+static overlay	C_ov = 0;
 
 /*
  * The current color values in RGB and a table of index names with
@@ -103,8 +103,8 @@ struct ui_command	*cmds;
 		{
 			color_build_ov ();
 			G_visible (C_ov, TRUE);
+			G_update (Wkstn);
 		}
-		G_update (Wkstn);
 	}
 }
 
@@ -217,12 +217,11 @@ color_list ()
 	 */
 		color_build_ov ();
 	/*
-	 * Make the overlay visible, and declare this plot (necessary to 
-	 * remove the previous plot)
+	 * Declare this plot (necessary to remove the previous plot)
 	 */
-		G_visible (C_ov, TRUE);
 		dummy.uc_ctype = UTT_END;
 		edit_set_plot (color_list, (void (*)) 0, &dummy, &C_ov, 1);
+
 		G_update (Wkstn);
 	}
 }
@@ -235,14 +234,13 @@ color_build_ov ()
  * Build the graphics overlay which shows the current colors
  */
 {
-	int	i, j, color, npixels;
-	int	ix0, ix1, iy0, iy1;
-	float	x, y, x0, x1, y0, y1;
-	char	string[10], *pixdata;
+	int	i, j, color, npoints;
+	float	x, y, x0, x1, y0, y1, pl_x[200], pl_y[200];
+	char	string[10];
 /*
  * Get the overlay if necessary
  */
-	if (! C_ov)
+	if (! C_ov || G_ov_to_ws (C_ov) != Wkstn)
 	{
 		C_ov = G_new_overlay (Wkstn, 0);
 		G_set_coords (C_ov, 0.0, 0.0, 2.0, 8.0);
@@ -274,26 +272,33 @@ color_build_ov ()
 		{
 		/*
 		 * White rectangle for the index name
+		 *
+		 * Build a dense polyline, drawing back and forth to cover 
+		 * the rectangle.  (we do this as a polyline instead of the 
+		 * more sensible pixmap because the polyline is much faster 
+		 * on most devices)
 		 */
 			G_tx_box (C_ov, GTF_STROKE, 0.3, GT_CENTER, 
 				GT_CENTER, x, y + 0.16, C_current[i].ndxname,
 				&x0, &y0, &x1, &y1);
 
-			G_wc_to_px (C_ov, x0, y0, &ix0, &iy0);
-			G_wc_to_px (C_ov, x1, y1, &ix1, &iy1);
+			x0 -= 0.02; y0 -= 0.02;
+			x1 += 0.02; y1 += 0.02;
+			npoints = 0;
 
-			npixels = (ix1 - ix0 + 3) * (iy1 - iy0 + 3);
+			for (; y0 < y1; y0 += 0.01)
+			{
+				pl_x[npoints] = x0;
+				pl_y[npoints] = y0;
+				npoints++;
 
-			pixdata = (char *) malloc (npixels * sizeof (char));
+				pl_x[npoints] = x1;
+				pl_y[npoints] = y0;
+				npoints++;
+			}
 
-			for (j = 0; j < npixels; j++)
-				pixdata[j] = C_WHITE;
-
-			G_pixel_fill (C_ov, pixdata, ix0 - 1, iy0 - 1, 
-				ix1 - ix0 + 3, iy1 - iy0 + 3, GP_BYTE,
-				GPM_OVERWRITE);
-
-			free (pixdata);
+			G_polyline (C_ov, GPLT_SOLID, C_WHITE, npoints, pl_x, 
+				pl_y);
 		/*
 		 * White rectangle for the color name
 		 */
@@ -301,21 +306,22 @@ color_build_ov ()
 				GT_CENTER, x, y - 0.16, C_current[i].colorname,
 				&x0, &y0, &x1, &y1);
 
-			G_wc_to_px (C_ov, x0, y0, &ix0, &iy0);
-			G_wc_to_px (C_ov, x1, y1, &ix1, &iy1);
+			x0 -= 0.02; y0 -= 0.02;
+			x1 += 0.02; y1 += 0.02;
+			npoints = 0;
+			for (; y0 < y1; y0 += 0.01)
+			{
+				pl_x[npoints] = x0;
+				pl_y[npoints] = y0;
+				npoints++;
 
-			npixels = (ix1 - ix0 + 3) * (iy1 - iy0 + 3);
+				pl_x[npoints] = x1;
+				pl_y[npoints] = y0;
+				npoints++;
+			}
 
-			pixdata = (char *) malloc (npixels * sizeof (char));
-
-			for (j = 0; j < npixels; j++)
-				pixdata[j] = C_WHITE;
-
-			G_pixel_fill (C_ov, pixdata, ix0 - 1, iy0 - 1, 
-				ix1 - ix0 + 3, iy1 - iy0 + 3, GP_BYTE,
-				GPM_OVERWRITE);
-
-			free (pixdata);
+			G_polyline (C_ov, GPLT_SOLID, C_WHITE, npoints, pl_x, 
+				pl_y);
 		}
 	/*
 	 * Print the index name and color name on the screen
