@@ -20,17 +20,18 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.20 1991-11-13 21:46:01 burghart Exp $";
+static char *rcsid = "$Id: suds.c,v 1.21 1991-12-19 22:55:42 burghart Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
 # endif
+# include <string.h>
 # include <ui_param.h>
 # include <ui_date.h>
 # include <ui_error.h>
 # include "globals.h"
 # include "keywords.h"
-# include <string.h>
+# include "version.h"
 
 /*
  * Pointers to routines to handle each command (stored by keyword number)
@@ -162,6 +163,10 @@ char	**argv;
 			strcat (initfile, "suds.ini");
 			ut_open_file (initfile, FALSE);
 		}
+	/*
+	 * Welcome!
+	 */
+		ui_printf ("\nWelcome to SUDS, Version 1.%03d\n\n", VERSION);
 	/*
 	 * (Bleep)ing copyright message
 	 */
