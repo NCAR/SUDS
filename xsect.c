@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.11 $ $Date: 1990-11-15 14:50:58 $ $Author: burghart $
+ * $Revision: 1.12 $ $Date: 1990-11-27 15:12:12 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -25,6 +25,13 @@ static float	*Plane, *P_wgt, P_len, P_hgt = 12.0, P_bot = 0.0;
 
 # define PLANE(i,j)	(Plane[((i)*VDIM)+(j)])
 # define P_WGT(i,j)	(P_wgt[((i)*VDIM)+(j)])
+
+/*
+ * Floor and ceiling arrays and their associated weight arrays, so we 
+ * know where data should not be placed
+ */
+static float	*Floor, *Ceiling;
+static float	*F_wgt, *C_wgt;
 
 /*
  * The endpoints of the plane for a spatial cross-section, and the starting
@@ -79,6 +86,7 @@ void	xs_reset_annot (), xs_plot (), xs_vscale ();
 void	xs_from_to (), xs_pos (), xs_timepos (), xs_time_height ();
 void	xs_spatial (), xs_special_data (), xs_extend_trace ();
 void	xs_draw_trace (), xs_center_angle (), xs_add_to_level ();
+void	xs_build_limits ();
 
 
 
@@ -186,6 +194,13 @@ struct ui_command	*cmds;
 	Plane = (float *) malloc (HDIM * VDIM * sizeof (float));
 	P_wgt = (float *) malloc (HDIM * VDIM * sizeof (float));
 /*
+ * Get the floor and ceiling arrays and their associated weight arrays
+ */
+	Floor = (float *) malloc (HDIM * sizeof (float));
+	F_wgt = (float *) malloc (HDIM * sizeof (float));
+	Ceiling = (float *) malloc (HDIM * sizeof (float));
+	C_wgt = (float *) malloc (HDIM * sizeof (float));
+/*
  * Get the overlays ready and draw the background
  */
 	G_clear (Xs_ov);
@@ -195,16 +210,25 @@ struct ui_command	*cmds;
 
 	xs_background ();
 /*
- * Fill the plane with BADVALs and set the weights to zero, then put the 
- * real data in
+ * Fill the plane with BADVALs and set the weights to zero.
+ * Initialize the floor and ceiling arrays also.
  */
 	for (i = 0; i < HDIM; i++)
+	{
 		for (j = 0; j < VDIM; j++)
 		{
 			PLANE (i, j) = BADVAL;
 			P_WGT (i, j) = 0.0;
 		}
 
+		Floor[i] = BADVAL;
+		F_wgt[i] = 0.0;
+		Ceiling[i] = BADVAL;
+		C_wgt[i] = 0.0;
+	}
+/*
+ * Fill the data plane
+ */
 	xs_put_data ();
 /*
  * Draw the contours
@@ -221,6 +245,10 @@ struct ui_command	*cmds;
  */
 	free (Plane);
 	free (P_wgt);
+	free (Floor);
+	free (F_wgt);
+	free (Ceiling);
+	free (C_wgt);
 	return;
 }
 
@@ -232,9 +260,10 @@ xs_put_data ()
  * Fill the cross-section array with data from the chosen soundings
  */
 {
-	int	i, j, snd, pt, npts, iz, zndx, zndx_prev;
+	int	snd, pt, npts, iz, zndx, zndx_prev, ih, iv;
 	float	val, x, y, z, t, val_prev, x_prev, y_prev, z_prev, t_prev;
 	float	zstep, site_alt, hlen, frac;
+	float	xhighest, yhighest, zhighest;
 	float	*fdata, *xpos, *ypos, *zpos, *tpos;
 	float	snd_s_alt ();
 /*
@@ -258,6 +287,13 @@ xs_put_data ()
 	 */
 		if (Interrupt)
 			xs_abort ();
+	/*
+	 * Initialize for keeping track of the highest point
+	 */
+		if (Use_alt)
+			zhighest = -9999.0;
+		else
+			zhighest = 9999.0;
 	/*
 	 * Get the vertical (altitude or pressure) data
 	 */
@@ -320,11 +356,23 @@ xs_put_data ()
 			if (fdata[pt] == BADVAL || zpos[pt] == BADVAL)
 				continue;
 		/*
-		 * Make sure we have a good previous point before we
-		 * get any further
+		 * Update the ceiling if this point is higher
+		 */
+			if ((Use_alt && zpos[pt] > zhighest) ||
+				(!Use_alt && zpos[pt] < zhighest))
+			{
+				xhighest = xpos[pt];
+				yhighest = ypos[pt];
+				zhighest = zpos[pt];
+			}
+		/*
+		 * Special treatment for the first good point
 		 */
 			if (val_prev == BADVAL)
 			{
+			/*
+			 * Assign the previous point values
+			 */
 				val_prev = fdata[pt];
 				z_prev = zpos[pt];
 				zndx_prev = xs_zindex (zpos[pt]);
@@ -336,7 +384,14 @@ xs_put_data ()
 					x_prev = xpos[pt];
 					y_prev = ypos[pt];
 				}
-				
+			/*
+			 * Use the point to help build the floor array
+			 */
+				xs_build_limits (TRUE, xpos[pt], ypos[pt], 
+					zpos[pt]);
+			/*
+			 * Go on to the next point
+			 */
 				continue;
 			}
 		/*
@@ -411,9 +466,25 @@ xs_put_data ()
 			}
 		}
 	/*
+	 * Use the highest point of this sounding to help build the 
+	 * ceiling array
+	 */
+		xs_build_limits (FALSE, xhighest, yhighest, zhighest);
+	/*
 	 * Draw the trace for this sounding
 	 */
 		xs_draw_trace (snd);
+	}
+/*
+ * Remove data below the floor and above the ceiling
+ */
+	for (ih = 0; ih < HDIM; ih++)
+	{
+		for (iv = 0; iv < xs_zindex (Floor[ih]); iv++)
+			PLANE(ih,iv) = BADVAL;
+
+		for (iv = xs_zindex (Ceiling[ih]); iv < VDIM; iv++)
+			PLANE(ih,iv) = BADVAL;
 	}
 /*
  * The plane array is populated, free the allocated memory and return
@@ -504,6 +575,68 @@ float	vdat, xdat, ydat;
 		PLANE(ih,iz) = (PLANE(ih,iz) * P_WGT(ih,iz) + vdat * wgt) /
 			(P_WGT(ih,iz) + wgt);
 		P_WGT(ih,iz) = P_WGT(ih,iz) + wgt;
+	}
+}
+
+
+
+
+void
+xs_build_limits (dofloor, xdat, ydat, zdat)
+bool	dofloor;
+float	xdat, ydat, zdat;
+/*
+ * Use the given point to help build either the ceiling or floor array
+ * (Chosen by the boolean "dofloor").  For time-height plots, xdat should
+ * be the time position and ydat should be zero.
+ */
+{
+	int	ih;
+	float	x, y, d, xstep, ystep, tstep, wgt;
+	float	*array, *weight;
+
+	array = dofloor ? Floor : Ceiling;
+	weight = dofloor ? F_wgt : C_wgt;
+/*
+ * Step through the array and use a distance weighting scheme to apply 
+ * the given point
+ */
+	if (Time_height)
+		tstep = P_len / (HDIM - 1);
+	else
+	{
+		xstep = (X1 - X0) / (HDIM - 1);
+		ystep = (Y1 - Y0) / (HDIM - 1);
+	}
+
+
+	for (ih = 0; ih < HDIM; ih++)
+	{
+		if (Time_height)
+		{
+			x = ih * tstep;
+			y = 0.0;
+		}
+		else
+		{
+			x = X0 + ih * xstep;
+			y = Y0 + ih * ystep;
+		}
+
+		d = sqrt ((xdat - x) * (xdat - x) + (ydat - y) * (ydat - y));
+	/*
+	 * Use a 1/d^2 weighting scheme, truncated at a weight of 100
+	 */
+		if (d < 0.1)
+			wgt = 100;
+		else
+			wgt = 1.0 / (d * d);
+	/*
+	 * Apply the point
+	 */
+		array[ih] = (array[ih] * weight[ih] + zdat * wgt) /
+			(weight[ih] + wgt);
+		weight[ih] = weight[ih] + wgt;
 	}
 }
 
