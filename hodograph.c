@@ -1,7 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.7 $ $Date: 1990-01-23 09:20:29 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-04-02 09:52:07 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -186,7 +186,7 @@ int	plot_ndx;
 				GT_CENTER, GT_CENTER, xmark, ymark, 0.0, "+");
 
 			sprintf (string, "%.1f", mark_alt / 1000.0);
-			G_write (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
+			G_write (Hodo_ov, color, GTF_DEV, 0.05 * W_scale,
 				GT_LEFT, GT_CENTER, xmark + 0.02 * W_scale, 
 				ymark, 0.0, string);
 		/*
@@ -282,7 +282,7 @@ hd_background ()
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", (int) tick);
-			G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+			G_write (Hodo_bg_ov, C_WHITE, GTF_DEV, 
 				0.05 * W_scale, GT_CENTER, GT_TOP, 
 				(float) tick, -1.02 * W_scale, 0.0, string);
 		}
@@ -317,7 +317,7 @@ hd_background ()
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", tick);
-			G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+			G_write (Hodo_bg_ov, C_WHITE, GTF_DEV, 
 				0.05 * W_scale, GT_RIGHT, GT_CENTER, 
 				-1.02 * W_scale, (float) tick, 0.0, string);
 		}
@@ -381,7 +381,7 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_write (Hodo_ov, color, GTF_MINSTROKE, 0.025 * 2 * W_scale, GT_LEFT, 
+	G_write (Hodo_ov, color, GTF_DEV, 0.025 * 2 * W_scale, GT_LEFT, 
 		GT_TOP, Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
