@@ -1,7 +1,12 @@
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:11:33  burghart
+ * Initial revision
+ * 
  */
 # include <math.h>
+# include <stdio.h>
+# include <ui_date.h>
 # include "globals.h"
 # include "fields.h"
 # include "flags.h"
@@ -14,8 +19,14 @@
  * Forward declarations
  */
 float	an_lfc_calc (), an_area (), an_li (), an_fmli ();
-void	an_surface ();
+void	an_surface (), an_printf ();
 
+/*
+ * Output file info
+ */
+static char	Outfile_name[80] = "";
+static FILE	*Outfile = (FILE *) 0;
+static int	Write_to_file = FALSE;
 
 
 analyze (cmds)
@@ -25,17 +36,42 @@ struct ui_command	*cmds;
  */
 {
 	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN];
-	float	t_sfc, p_sfc, dp_sfc, li;
+	float	t_sfc, p_sfc, dp_sfc, li, fmli;
 	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
 	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
 	float	area_below = 0.0, area_pos = 0.0, area_neg = 0.0;
-	int	sfc = 0, i, npts, trop = 0;
-	char	*snd_default (), *id_name;
+	int	sfc = 0, i, npts, trop = 0, name_loc = 0;
+	char	*snd_default (), *snd_site (), *id_name, string[80];
+	date	sdate, snd_time ();
+/*
+ * See if we're writing to a file
+ */
+	if (cmds[0].uc_ctype == UTT_KW)
+	{
+	/*
+	 * Set the output flag and make sure we look for the sounding name
+	 * in the right place
+	 */
+		name_loc = 2;
+		Write_to_file = TRUE;
+	/*
+	 * Open a new file if necessary
+	 */
+		if (strcmp (Outfile_name, UPTR (cmds[1])))
+		{
+			if (Outfile)
+				fclose (Outfile);
+			strcpy (Outfile_name, UPTR (cmds[1]));
+			Outfile = fopen (Outfile_name, "w");
+		}
+	}
+	else
+		Write_to_file = FALSE;
 /*
  * Get the sounding name (or the default)
  */
-	if (cmds[0].uc_ctype != UTT_END)
-		id_name = UPTR (cmds[0]);
+	if (cmds[name_loc].uc_ctype != UTT_END)
+		id_name = UPTR (cmds[name_loc]);
 	else
 		id_name = snd_default ();
 /*
@@ -48,12 +84,18 @@ struct ui_command	*cmds;
  * Get our surface points
  */
 	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
+/*
+ * Begin printing info
+ */
+	sdate = snd_time (id_name);
+	ud_format_date (string, &sdate, UDF_FULL);
 
-	ui_printf ("\nAnalysis for sounding '%s'\n", id_name);
-	ui_printf ("-----------------------------------------------\n");
-	ui_printf ("Surface potential temperature: %.1f K\n", 
+	an_printf ("\nAnalysis for sounding '%s'\n", id_name);
+	an_printf ("Time: %s, Site: %s\n", string, snd_site (id_name));
+	an_printf ("-----------------------------------------------\n");
+	an_printf ("Surface potential temperature: %.1f K\n", 
 		theta_dry (t_sfc + T_K, p_sfc));
-	ui_printf ("Surface mixing ratio%s: %.1f g/kg \n", 
+	an_printf ("Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
 		w_sat (dp_sfc + T_K, p_sfc));
 /*
@@ -62,7 +104,7 @@ struct ui_command	*cmds;
  */
 	p_lcl = lcl_pres (t_sfc + T_K, dp_sfc + T_K, p_sfc);
 	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
-	ui_printf ("LCL pressure: %.1f mb\n", p_lcl);
+	an_printf ("LCL pressure: %.1f mb\n", p_lcl);
 	theta_lcl = theta_dry (t_lcl, p_lcl);
 	theta_e_lcl = theta_w (t_lcl, p_lcl);
 /*
@@ -108,27 +150,24 @@ struct ui_command	*cmds;
 
 	if (Flg_mli)
 	{
-		ui_printf ("The modified lifted index is %.2f\n", li);
+		an_printf ("The modified lifted index is %.2f\n", li);
 	/*
 	 * Get the forecasted modified lifted index, too
 	 */
-		li = an_fmli (p, t, npts, p_sfc, dp_sfc);
-		ui_printf ("The forecasted modified lifted index is %.2f\n", 
-			li);
+		fmli = an_fmli (p, t, npts, p_sfc, dp_sfc);
+		an_printf ("The forecasted modified lifted index is %.2f\n", 
+			fmli);
 	}
 	else
-	{
-		ui_printf ("The lifted index is %.2f\n", li);
-	}
-
+		an_printf ("The lifted index is %.2f\n", li);
 /*
  * Integrate the area (energy) from the LCL to the LFC
  */
 	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0);
 	if (p_lfc != BADVAL)
-		ui_printf ("LFC pressure: %.1f mb\n", p_lfc);
+		an_printf ("LFC pressure: %.1f mb\n", p_lfc);
 	else
-		ui_printf ("No LFC\n");
+		an_printf ("No LFC\n");
 
 	for (i--; p_lower > p_lfc && i < npts; i++)
 	{
@@ -160,7 +199,7 @@ struct ui_command	*cmds;
 		p_lower = p_upper;
 		t_lower = t_upper;
 	}
-	ui_printf ("The area below the LFC is %.0f J/kg\n", area_below * R_D);
+	an_printf ("The area below the LFC is %.0f J/kg\n", area_below * R_D);
 /*
  * Now integrate up to the tropopause, separating positive and negative area
  */
@@ -239,11 +278,11 @@ struct ui_command	*cmds;
 		t_lower = t_upper;
 		dt_lower = dt_upper;
 	}
-	ui_printf ("The positive area above the LFC is %.0f J/kg\n", 
+	an_printf ("The positive area above the LFC is %.0f J/kg\n", 
 		area_pos * R_D);
-	ui_printf ("The negative area above the LFC is %.0f J/kg\n", 
+	an_printf ("The negative area above the LFC is %.0f J/kg\n", 
 		area_neg * R_D);
-	ui_printf ("\n");
+	an_printf ("\n");
 }
 
 
@@ -316,7 +355,7 @@ int	npts;
  */
 	if (p_prev == p[i])
 	{
-		ui_printf (
+		an_printf (
 			"Super-adiabatic case at %d mb, no LFC calculated\n",
 			(int) p_sfc);
 		return (BADVAL);
@@ -533,7 +572,7 @@ int	npts, verbose;
  */
 	if (p_prev == BADVAL)
 	{
-		ui_printf ("Cannot calculate lifted index\n");
+		an_printf ("Cannot calculate lifted index\n");
 		return (BADVAL);
 	}
 /*
@@ -546,7 +585,7 @@ int	npts, verbose;
  * Be verbose (if requested)
  */
 	if (verbose)
-		ui_printf (
+		an_printf (
 		"%d mb temperature: %.1f K (potential temp.: %.1f K)\n",
 			(int) ndx_level, temp, theta_dry (temp, ndx_level));
 /*
@@ -588,7 +627,7 @@ int	npts;
  */
 	if (p_prev == BADVAL)
 	{
-		ui_printf ("Unable to find 700 mb temperature\n");
+		an_printf ("Unable to find 700 mb temperature\n");
 		return (BADVAL);
 	}
 /*
@@ -597,7 +636,7 @@ int	npts;
  */
 	temp700 = t_prev + (700.0 - p_prev) / (p[i] - p_prev) * 
 		(t[i] - t_prev) + T_K;
-	ui_printf (
+	an_printf (
 		"700 mb temperature: %.1f K (potential temp.: %.1f K)\n",
 		temp700, theta_dry (temp700, 700.0));
 /*
@@ -616,5 +655,32 @@ int	npts;
  * Actually find the forecasted lifted index
  */
 	return (an_li (p, t, npts, theta_e_lcl, FALSE));
+}
+
+
+
+void
+an_printf (fmt, ARGS)
+char	*fmt;
+int	ARGS;	/* ARGS is defined in ui_param.h */
+/*
+ * printf-like interface to write to the screen and also to an output
+ * file if requested
+ */
+{
+	char	buf[1000];
+/*
+ * Encode the output (SPRINTARGS is defined in ui_param.h)
+ */
+	sprintrmt (buf, fmt, SPRINTARGS);
+/*
+ * ui_printf the buffer
+ */
+	ui_printf (buf);
+/*
+ * write to the output file if requested
+ */
+	if (Write_to_file)
+		fprintf (Outfile, buf);
 }
 
