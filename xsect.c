@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.17 1991-10-21 21:58:47 burghart Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.18 1991-12-10 23:42:57 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -1230,7 +1230,7 @@ float	*xpos, *ypos;
  */
 {
 	float	*lat, *lon, *wspd, *wdir, *time, *dummy;
-	float	ws, wd, t, dt, site_x, site_y, x, y;
+	float	spd, dir, t, dt, site_x, site_y, x, y;
 	int	pt, npts;
 	float	snd_s_lat (), snd_s_lon ();
 /*
@@ -1284,14 +1284,14 @@ float	*xpos, *ypos;
 		xpos[0] = site_x;
 		ypos[0] = site_y;
 
-		ws = wd = t = dt = 0.0;
+		spd = dir = t = dt = 0.0;
 
 		for (pt = 0; pt < npts - 1; pt++)
 		{
 			if (wspd[pt] != BADVAL && wdir[pt] != BADVAL)
 			{
-				ws = wspd[pt] * 0.001;	/* km/s */
-				wd = wdir[pt];
+				spd = wspd[pt] * 0.001;	/* km/s */
+				dir = wdir[pt];
 			}
 
 			if (time[pt] != BADVAL)
@@ -1302,10 +1302,10 @@ float	*xpos, *ypos;
 			else
 				dt = 0.0;
 
-			xpos[pt+1] = xpos[pt] + dt * ws * 
-				cos (DEG_TO_RAD (-90.0 - wd));
-			ypos[pt+1] = ypos[pt] + dt * ws *
-				sin (DEG_TO_RAD (-90.0 - wd));
+			xpos[pt+1] = xpos[pt] + dt * spd * 
+				cos (DEG_TO_RAD (-90.0 - dir));
+			ypos[pt+1] = ypos[pt] + dt * spd *
+				sin (DEG_TO_RAD (-90.0 - dir));
 		}
 	/*
 	 * Free our data arrays
