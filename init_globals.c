@@ -2,6 +2,9 @@
  * Initialize the global data
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:14:28  burghart
+ * Initial revision
+ * 
  */
 # ifdef VMS
 #	define var	globaldef
@@ -20,6 +23,7 @@ init_globals ()
 
 	Wkstn = 0;
 	Interrupt = FALSE;
+	W_scale = 25.0;
 /*
  * Set the flags and initialize the skew-t package
  */
