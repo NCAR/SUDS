@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.6 $ $Date: 1989-09-21 13:39:14 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1990-01-23 09:24:55 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -83,7 +83,7 @@ char	**argv;
 # ifdef VMS
 		helpdir.us_v_ptr = "ds:[burghart.suds.help]";
 # else
-		helpdir.us_v_ptr = "/home/burghart/suds/help/";
+		helpdir.us_v_ptr = "/rdss/suds/help/";
 # endif
 		usy_s_symbol (usy_g_stbl ("ui$variable_table"),
 			"ui$helpdir", SYMT_STRING, &helpdir);
@@ -152,6 +152,7 @@ main_cmd_init ()
 	void	edit_erase (), edit_newvalue (), edit_examine ();
 	void	edit_threshold (), snd_forget (), skt_wscale ();
 	void	ft_plot (), hd_plot (), color_change (), edit_insert ();
+	void	xs_xsect (), cvt_origin (), fd_set_limits ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -176,6 +177,9 @@ main_cmd_init ()
 	Cmd_routine[KW_HODOGRAPH]	= hd_plot;
 	Cmd_routine[KW_COLOR]		= color_change;
 	Cmd_routine[KW_INSERT]		= edit_insert;
+	Cmd_routine[KW_XSECT]		= xs_xsect;
+	Cmd_routine[KW_ORIGIN]		= cvt_origin;
+	Cmd_routine[KW_LIMITS]		= fd_set_limits;
 }
 
 
@@ -323,7 +327,7 @@ main_copyright ()
  */
 {
 ui_printf (
-"		Copyright (C) 1988 by UCAR\n\
+"		Copyright (C) 1990 by UCAR\n\
 	University Corporation for Atmospheric Research\n\
 		   All rights reserved\n\
 \n\
@@ -362,6 +366,15 @@ struct ui_command	*cmds;
 		return;
 	case SHOW_FLAGS:
 		flg_list ();
+		return;
+	case SHOW_COLORS:
+		color_list ();
+		return;
+	case SHOW_ORIGIN:
+		cvt_show_origin ();
+		return;
+	case SHOW_LIMITS:
+		fd_show_limits ();
 		return;
 	default:
 		for (;; cmds++)
