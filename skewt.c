@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.6 $ $Date: 1989-08-14 15:08:54 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1989-08-23 10:49:35 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -33,12 +33,6 @@ static int	Tstep;
  */
 # define YPOS(p)	(log(p/Pmax) / log(Pmin/Pmax))
 # define XPOS(t,y)	((t-Tmin)/(Tmax-Tmin) + y/SKEWSLOPE)
-
-/*
- * Colors to use for temperature and dewpoint and their order
- */
-static int Temp_color[] = { C_TRACE1, C_TRACE3, C_TRACE5, 0 };
-static int Dp_color[] = { C_TRACE2, C_TRACE4, C_TRACE6, 0 };
 
 /*
  * Overlays for the skew-t background and the data
@@ -230,7 +224,7 @@ skt_background ()
 	x[2] = 1.0; y[2] = 1.0;
 	x[3] = 0.0; y[3] = 1.0;
 	x[4] = 0.0; y[4] = 0.0;
-	G_polyline (Skewt_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 5, x, y);
+	G_polyline (Skewt_bg_ov, GPLT_SOLID, C_BG2, 5, x, y);
 /*
  * Isotherms
  */
@@ -251,8 +245,7 @@ skt_background ()
 		if (x[1] < 0.0)
 			continue;
 
-		G_polyline (Skewt_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 
-			2, x, y);
+		G_polyline (Skewt_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 	/*
 	 * Unclip so we can annotate outside the border
 	 */
@@ -265,16 +258,15 @@ skt_background ()
 		sprintf (string, "%d\0", (int) t);
 
 		if (x[1] <= 1.0)
-			G_text (Skewt_bg_ov, Colorbase + C_WHITE, 
-				GTF_MINSTROKE, 0.025, GT_CENTER, GT_BOTTOM, 
-				x[1], 1.01, string);
+			G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+				GT_CENTER, GT_BOTTOM, x[1], 1.01, string);
 		else
 		{
 			float	intercept = SKEWSLOPE * (1.0 - x[0]);
 			if (intercept > 0.0)
-				G_text (Skewt_bg_ov, Colorbase + C_WHITE, 
-					GTF_MINSTROKE, 0.025, GT_LEFT, 
-					GT_CENTER, 1.01, intercept, string);
+				G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 
+					0.025, GT_LEFT, GT_CENTER, 1.01, 
+					intercept, string);
 		}
 		G_clip_window (Skewt_bg_ov, 0.0, 0.0, 1.0, 1.0);
 	}
@@ -298,14 +290,13 @@ skt_background ()
 	 */
 		y[0] = y[1] = YPOS (p);
 
-		G_polyline (Skewt_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 
-			2, x, y);
+		G_polyline (Skewt_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 	/*
 	 * Annotate along the left side
 	 */
 		sprintf (string, "%d\0", (int) p);
-		G_text (Skewt_bg_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 
-			0.025, GT_RIGHT, GT_CENTER, -0.01, y[0], string);
+		G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_RIGHT, 
+			GT_CENTER, -0.01, y[0], string);
 	}
 /*
  * Saturation mixing ratio lines
@@ -328,11 +319,10 @@ skt_background ()
 	/*
 	 * Plot the line and annotate just above the top of the line
 	 */
-		G_polyline (Skewt_bg_ov, GPLT_DASH, Colorbase + C_BG2, 
-			2, x, y);
+		G_polyline (Skewt_bg_ov, GPLT_DASH, C_BG2, 2, x, y);
 		sprintf (string, "%03.1f\0", mr[i]);
-		G_text (Skewt_bg_ov, Colorbase + C_BG2, GTF_MINSTROKE, 
-			0.02, GT_CENTER, GT_BOTTOM, x[1], y[1] + 0.01, string);
+		G_text (Skewt_bg_ov, C_BG2, GTF_MINSTROKE, 0.02, GT_CENTER, 
+			GT_BOTTOM, x[1], y[1] + 0.01, string);
 	}
 /*
  * Saturated adiabats
@@ -364,14 +354,13 @@ skt_background ()
 	/*
 	 * Plot the curve and annotate just above the (Pmin + 100) isobar
 	 */
-		G_polyline (Skewt_bg_ov, GPLT_DOT, Colorbase + C_BG3, 
-			npts, x, y);
+		G_polyline (Skewt_bg_ov, GPLT_DOT, C_BG3, npts, x, y);
 
 		if (x[0] > 0.0 && x[0] < 1.0)
 		{
 			sprintf (string, "%d\0", (int) t);
-			G_text (Skewt_bg_ov, Colorbase + C_BG3, GTF_MINSTROKE, 
-				0.02, GT_CENTER, GT_BOTTOM, x[0], y[0] + 0.01,
+			G_text (Skewt_bg_ov, C_BG3, GTF_MINSTROKE, 0.02, 
+				GT_CENTER, GT_BOTTOM, x[0], y[0] + 0.01,
 				string);
 		}
 	}
@@ -400,14 +389,12 @@ skt_background ()
 	 * Plot the curve and annotate just inside either the left or top
 	 * boundary
 	 */
-		G_polyline (Skewt_bg_ov, GPLT_DOT, Colorbase + C_BG4, npts, 
-			x, y);
+		G_polyline (Skewt_bg_ov, GPLT_DOT, C_BG4, npts, x, y);
 
 		sprintf (string, "%d\0", (int) pt);
 		if (x[0] > 0.0 && x[0] <= 1.0)
-			G_text (Skewt_bg_ov, Colorbase + C_BG4, GTF_MINSTROKE, 
-				0.02, GT_LEFT, GT_TOP, x[0], y[0] - 0.01, 
-				string);
+			G_text (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 0.02, 
+				GT_LEFT, GT_TOP, x[0], y[0] - 0.01, string);
 		else if (x[0] <= 0.0)
 		{
 			float	slope, intercept;
@@ -420,11 +407,9 @@ skt_background ()
 			{
 				slope = (y[i] - y[i-1]) / (x[i] - x[i-1]);
 				intercept = y[i] - slope * x[i];
-				G_text (Skewt_bg_ov, Colorbase + C_BG4, 
-					GTF_MINSTROKE, 0.02, GT_LEFT, 
-					GT_CENTER, 0.01, 
-					intercept + 0.01 * slope,
-					string);
+				G_text (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 
+					0.02, GT_LEFT, GT_CENTER, 0.01, 
+					intercept + 0.01 * slope, string);
 			}
 		}
 	}
@@ -520,8 +505,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, Colorbase + color, GTF_MINSTROKE, 0.025, GT_LEFT,
-		GT_TOP, Xtxt_bot, Ytxt_bot, string);
+	G_text (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_bot, Ytxt_bot, string);
 /*
  * Update the location for the next annotation
  */
@@ -564,8 +549,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, Colorbase + color, GTF_MINSTROKE, 0.025, GT_LEFT, 
-		GT_TOP, Xtxt_top, Ytxt_top, string);
+	G_text (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_top, Ytxt_top, string);
 /*
  * Update the location for the next annotation
  */
@@ -617,8 +602,8 @@ int	plot_ndx;
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")  ");
 	skt_top_text (string, C_WHITE, FALSE);
-	skt_top_text ("TEMP/WINDS ", Temp_color[plot_ndx], FALSE);
-	skt_top_text ("DEWPOINT  ", Dp_color[plot_ndx], FALSE);
+	skt_top_text ("TEMP/WINDS ", C_TRACE1 + 2 * plot_ndx, FALSE);
+	skt_top_text ("DEWPOINT  ", C_TRACE2 + 2 * plot_ndx, FALSE);
 }
 
 
@@ -776,7 +761,7 @@ float	*pres, *temp, *dp;
 		npts++;
 	}
 
-	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+	G_polyline (Skewt_ov, GPLT_DOT, C_BG1, npts, x, y);
 /*
  * Draw the saturated adiabat from the forecasted LCL up
  */
@@ -792,7 +777,7 @@ float	*pres, *temp, *dp;
 			npts++;
 		}
 
-		G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+		G_polyline (Skewt_ov, GPLT_DOT, C_BG1, npts, x, y);
 	}
 /*
  * Draw the dry adiabat from the LCL down
@@ -818,7 +803,7 @@ float	*pres, *temp, *dp;
 		npts++;
 	}
 
-	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+	G_polyline (Skewt_ov, GPLT_DOT, C_BG1, npts, x, y);
 /*
  * Draw the dry adiabat from the forecasted LCL down
  */
@@ -845,7 +830,7 @@ float	*pres, *temp, *dp;
 			npts++;
 		}
 
-		G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+		G_polyline (Skewt_ov, GPLT_DOT, C_BG1, npts, x, y);
 	}
 /*
  * Draw the saturation mixing ratio line from the surface up to the LCL
@@ -866,7 +851,7 @@ float	*pres, *temp, *dp;
 
 	npts = 2;
 
-	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+	G_polyline (Skewt_ov, GPLT_DOT, C_BG1, npts, x, y);
 /*
  * Done
  */
@@ -917,10 +902,10 @@ int	plot_ndx;
 /*
  * Draw the lines
  */
-	G_polyline (Skewt_ov, GPLT_SOLID, Colorbase + Temp_color[plot_ndx], 
-		good_t, xt, yt);
-	G_polyline (Skewt_ov, GPLT_SOLID, Colorbase + Dp_color[plot_ndx], 
-		good_d, xd, yd);
+	G_polyline (Skewt_ov, GPLT_SOLID, C_TRACE1 + 2 * plot_ndx, good_t, 
+		xt, yt);
+	G_polyline (Skewt_ov, GPLT_SOLID, C_TRACE2 + 2 * plot_ndx, good_d, 
+		xd, yd);
 /*
  * Draw the lifted parcel lines if requested
  */
@@ -933,8 +918,8 @@ int	plot_ndx;
 /*
  * Tell edit about these two traces
  */
-	edit_set_trace (id_name, f_temp, f_pres, Temp_color[plot_ndx]);
-	edit_set_trace (id_name, f_dp, f_pres, Dp_color[plot_ndx]);
+	edit_set_trace (id_name, f_temp, f_pres, C_TRACE1 + 2 * plot_ndx);
+	edit_set_trace (id_name, f_dp, f_pres, C_TRACE2 + 2 * plot_ndx);
 /*
  * Done
  */
@@ -1008,8 +993,8 @@ int	plot_ndx, nplots;
 	/*
 	 * Draw the wind line
 	 */
-		G_polyline (Winds_ov, GPLT_SOLID, 
-			Colorbase + Temp_color[plot_ndx], 2, xov, yov);
+		G_polyline (Winds_ov, GPLT_SOLID, C_TRACE1 + 2 * plot_ndx, 2, 
+			xov, yov);
 	}
 /*
  * Declare the winds fields to edit
@@ -1022,23 +1007,22 @@ int	plot_ndx, nplots;
 	xov[0] = xstart;	xov[1] = xstart;
 	yov[0] = 0.0;		yov[1] = 1.0;
 
-	G_polyline (Winds_ov, GPLT_SOLID, Colorbase + C_BG2, 2, xov, yov);
+	G_polyline (Winds_ov, GPLT_SOLID, C_BG2, 2, xov, yov);
 /*
  * Annotate on the first one
  */
 	if (plot_ndx == 0)
 	{
-		G_text (Winds_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025, 
-			GT_CENTER, GT_TOP, 0.5, -0.01, "WINDS PROFILE");
-		G_text (Winds_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.02, 
-			GT_LEFT, GT_CENTER, 0.5, -0.06, " = 10 M/S");
+		G_text (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
+			GT_TOP, 0.5, -0.01, "WINDS PROFILE");
+		G_text (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.02, GT_LEFT, 
+			GT_CENTER, 0.5, -0.06, " = 10 M/S");
 
 		xov[0] = 0.5 - (10.0 * xscale);
 		xov[1] = 0.5;
 		yov[0] = -0.06;
 		yov[1] = -0.06;
-		G_polyline (Winds_ov, GPLT_SOLID, Colorbase + C_WHITE, 
-			2, xov, yov);
+		G_polyline (Winds_ov, GPLT_SOLID, C_WHITE, 2, xov, yov);
 	}
 /*
  * Done

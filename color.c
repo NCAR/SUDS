@@ -1,7 +1,7 @@
 /*
  * Handle initialization and changing of colors
  *
- * $Revision: 1.2 $ $Date: 1989-08-11 10:40:57 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1989-08-23 10:48:22 $ $Author: burghart $
  */
 # include <stdio.h>
 # include "globals.h"
@@ -155,18 +155,18 @@ color_init ()
 /*
  * Build the current color table
  */
-	color_new (C_BLACK, "black", "black");
-	color_new (C_WHITE, "white", "white");
-	color_new (C_BG1, "bg1", "gray60");
-	color_new (C_BG2, "bg2", "gray45");
-	color_new (C_BG3, "bg3", "steel blue");
-	color_new (C_BG4, "bg4", "sienna");
-	color_new (C_TRACE1, "trace1", "red");
-	color_new (C_TRACE2, "trace2", "cyan");
-	color_new (C_TRACE3, "trace3", "magenta");
-	color_new (C_TRACE4, "trace4", "medium slate blue");
-	color_new (C_TRACE5, "trace5", "yellow");
-	color_new (C_TRACE6, "trace6", "green");
+	color_new (C_BLACK - Colorbase, "black", "black");
+	color_new (C_WHITE - Colorbase, "white", "white");
+	color_new (C_BG1 - Colorbase, "bg1", "gray60");
+	color_new (C_BG2 - Colorbase, "bg2", "gray45");
+	color_new (C_BG3 - Colorbase, "bg3", "steel blue");
+	color_new (C_BG4 - Colorbase, "bg4", "sienna");
+	color_new (C_TRACE1 - Colorbase, "trace1", "red");
+	color_new (C_TRACE2 - Colorbase, "trace2", "cyan");
+	color_new (C_TRACE3 - Colorbase, "trace3", "magenta");
+	color_new (C_TRACE4 - Colorbase, "trace4", "medium slate blue");
+	color_new (C_TRACE5 - Colorbase, "trace5", "yellow");
+	color_new (C_TRACE6 - Colorbase, "trace6", "green");
 }
 
 
@@ -235,10 +235,13 @@ color_build_ov ()
  * Build the graphics overlay which shows the current colors
  */
 {
-	int	i, color;
-	float	x, y;
-	char	string[10];
-
+	int	i, j, color, npixels;
+	int	ix0, ix1, iy0, iy1;
+	float	x, y, x0, x1, y0, y1;
+	char	string[10], *pixdata;
+/*
+ * Get the overlay if necessary
+ */
 	if (! C_ov)
 	{
 		C_ov = G_new_overlay (Wkstn, 0);
@@ -246,7 +249,10 @@ color_build_ov ()
 	}
 
 	G_clear (C_ov);
-
+/*
+ * Write the index name and color name for each color onto the graphics
+ * screen
+ */
 	for (i = 0; i < NCOLORS; i++)
 	{
 	/*
@@ -261,16 +267,61 @@ color_build_ov ()
 				y -= 1.0;
 		}
 	/*
-	 * Use the associated color except for C_BLACK, since it won't
-	 * show up against the background (which is C_BLACK by definition)
+	 * Color 0 is the screen background color, so we need a different
+	 * color behind it for it to show up
 	 */
-		if (i == C_BLACK)
-			color = Colorbase + C_WHITE;
-		else
-			color = Colorbase + i;
+		if (i == 0)
+		{
+		/*
+		 * White rectangle for the index name
+		 */
+			G_tx_box (C_ov, GTF_STROKE, 0.3, GT_CENTER, 
+				GT_CENTER, x, y + 0.16, C_current[i].ndxname,
+				&x0, &y0, &x1, &y1);
+
+			G_wc_to_px (C_ov, x0, y0, &ix0, &iy0);
+			G_wc_to_px (C_ov, x1, y1, &ix1, &iy1);
+
+			npixels = (ix1 - ix0 + 3) * (iy1 - iy0 + 3);
+
+			pixdata = (char *) malloc (npixels * sizeof (char));
+
+			for (j = 0; j < npixels; j++)
+				pixdata[j] = C_WHITE;
+
+			G_pixel_fill (C_ov, pixdata, ix0 - 1, iy0 - 1, 
+				ix1 - ix0 + 3, iy1 - iy0 + 3, GP_BYTE,
+				GPM_OVERWRITE);
+
+			free (pixdata);
+		/*
+		 * White rectangle for the color name
+		 */
+			G_tx_box (C_ov, GTF_STROKE, 0.3, GT_CENTER, 
+				GT_CENTER, x, y - 0.16, C_current[i].colorname,
+				&x0, &y0, &x1, &y1);
+
+			G_wc_to_px (C_ov, x0, y0, &ix0, &iy0);
+			G_wc_to_px (C_ov, x1, y1, &ix1, &iy1);
+
+			npixels = (ix1 - ix0 + 3) * (iy1 - iy0 + 3);
+
+			pixdata = (char *) malloc (npixels * sizeof (char));
+
+			for (j = 0; j < npixels; j++)
+				pixdata[j] = C_WHITE;
+
+			G_pixel_fill (C_ov, pixdata, ix0 - 1, iy0 - 1, 
+				ix1 - ix0 + 3, iy1 - iy0 + 3, GP_BYTE,
+				GPM_OVERWRITE);
+
+			free (pixdata);
+		}
 	/*
 	 * Print the index name and color name on the screen
 	 */
+		color = Colorbase + i;
+
 		G_text (C_ov, color, GTF_STROKE, 0.3, GT_CENTER, 
 			GT_CENTER, x, y + 0.16, C_current[i].ndxname);
 		G_text (C_ov, color, GTF_STROKE, 0.3, GT_CENTER, 

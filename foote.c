@@ -1,22 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.4  89/07/11  14:50:45  burghart
- * 
- * All annotation now uses GTF_MINSTROKE font
- * 
- * Revision 1.3  89/06/29  16:15:01  burghart
- * Fixed problem of missing '(' in annotation and added capability to 
- * interrupt the plot
- * 
- * Revision 1.2  89/05/30  15:05:38  burghart
- * Change in the altitude calculation of ft_alt() to use 
- * 1/2 * (vt_1 / pres_1 + vt_0 / pres_0) instead of
- * (vt_1 + vt_0) / (pres_1 + pres_0).
- * 
- * Revision 1.1  89/03/16  15:14:08  burghart
- * Initial revision
+ * $Revision: 1.6 $ $Date: 1989-08-23 10:48:57 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>
@@ -47,11 +32,6 @@ static float	Foote_height = 3.0;
 static float	Xtxt_top = 0.0, Ytxt_top = 1.19;
 
 /*
- * Colors to use
- */
-static int Color[] = { C_TRACE1, C_TRACE2, C_TRACE3, 0 };
-
-/*
  * Forward declarations
  */
 void	ft_background (), ft_annotate (), ft_top_text (), ft_abort ();
@@ -67,7 +47,7 @@ struct ui_command *cmds;
  */
 {
 	char	*id_name;
-	int	i, maxpts, pt = 0, nplots, plt;
+	int	i, maxpts, pt = 0, nplots, plt, color;
 	float	x[200], yli[200], ydist[200];
 	float	pres[BUFLEN], temp[BUFLEN], dp[BUFLEN], alt[BUFLEN];
 	float	li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
@@ -119,6 +99,10 @@ struct ui_command *cmds;
 	for (plt = 0; plt < nplots; plt++)
 	{
 	/*
+	 * Set the color
+	 */
+		color = C_TRACE1 + plt;
+	/*
 	 * Get the name of the sounding (use the default if necessary)
 	 */
 		if (cmds->uc_ctype != UTT_END)
@@ -135,7 +119,7 @@ struct ui_command *cmds;
 	/*
 	 * Plot the annotation
 	 */
-		ft_annotate (id_name, plt);
+		ft_annotate (id_name, color);
 	/*
 	 * Loop through the points
 	 */
@@ -195,10 +179,8 @@ struct ui_command *cmds;
 	/*
 	 * Draw the lines
 	 */
-		G_polyline (Foote_ov, GPLT_DOT, Colorbase + Color[plt], 
-			pt, x, yli);
-		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + Color[plt], 
-			pt, x, ydist);
+		G_polyline (Foote_ov, GPLT_DOT, color, pt, x, yli);
+		G_polyline (Foote_ov, GPLT_SOLID, color, pt, x, ydist);
 	}
 /*
  * Update the display
@@ -221,8 +203,9 @@ ft_reset_annot ()
 
 
 void
-ft_annotate (id_name, plot_ndx)
+ft_annotate (id_name, color)
 char	*id_name;
+int	color;
 {
 	char	site[40], string[100], *snd_site ();
 	date	sdate, snd_time ();
@@ -249,7 +232,7 @@ char	*id_name;
 	strcpy (string, "   (");
 	strcpyUC (string + 4, id_name);
 	strcat (string, ")");
-	ft_top_text (string, Color[plot_ndx], FALSE);
+	ft_top_text (string, color, FALSE);
 }
 
 
@@ -278,11 +261,10 @@ ft_background ()
 		x[0] = x[1] = height / Foote_height;
 		y[0] = 0.0;
 		y[1] = 1.0;
-		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_BG2, 
-			2, x, y);
+		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 		sprintf (string, "%.1f", height);
-		G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025, 
+		G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
 			GT_CENTER, GT_TOP, x[0], -0.01, string);
 	/*
 	 * Draw a horizontal line for this height (up to Foote_height km)
@@ -293,24 +275,23 @@ ft_background ()
 		x[0] = 0.0;
 		x[1] = 1.0;
 		y[0] = y[1] = height / Foote_height;
-		G_polyline (Foote_ov, GPLT_SOLID, Colorbase + C_BG2, 
-			2, x, y);
+		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
-		G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025, 
+		G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
 			GT_RIGHT, GT_CENTER, -0.01, y[0], string);
 	}
 /*
  * Text blurbs
  */
-	G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025,
-			GT_LEFT, GT_CENTER, -.19, 0.535, "DISTANCE");
-	G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025,
-			GT_LEFT, GT_CENTER, -.19, 0.50, "TO");
-	G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025,
-			GT_LEFT, GT_CENTER, -.19, 0.465, "LFC (KM)");
+	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
+		-0.19, 0.535, "DISTANCE");
+	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
+		-0.19, 0.50, "TO");
+	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
+		-0.19, 0.465, "LFC (KM)");
 
-	G_text (Foote_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025,
-			GT_CENTER, GT_CENTER, 0.5, -.05, "PARCEL HEIGHT (KM)");
+	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, GT_CENTER,
+		0.5, -.05, "PARCEL HEIGHT (KM)");
 /*
  * Lifted index scale
  */
@@ -324,23 +305,23 @@ ft_background ()
 	 * (The extra 0.002 makes sure we don't plot over a distance line)
 	 */
 		y[0] = y[1] = li / (2.0 * MAX_LI) + 0.5 + 0.002;
-		G_polyline (Foote_ov, GPLT_DOT, Colorbase + C_BG4, 2, x, y);
+		G_polyline (Foote_ov, GPLT_DOT, C_BG4, 2, x, y);
 
 		sprintf (string, "%.1f", li);
-		G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025, 
-			GT_LEFT, GT_CENTER, 1.01, y[0], string);
+		G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_LEFT, 
+			GT_CENTER, 1.01, y[0], string);
 	}
 
-	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
-		GT_RIGHT, GT_CENTER, 1.19, 0.535, "PARCEL");
-	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
-		GT_RIGHT, GT_CENTER, 1.19, 0.50, "LIFTED");
-	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
-		GT_RIGHT, GT_CENTER, 1.19, 0.465, "INDEX");
+	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
+		1.19, 0.535, "PARCEL");
+	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
+		1.19, 0.50, "LIFTED");
+	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
+		1.19, 0.465, "INDEX");
 
 	sprintf (string, "(AT %d MB)", Flg_mli ? 400 : 500);
-	G_text (Foote_ov, Colorbase + C_BG4, GTF_MINSTROKE, 0.025,
-		GT_RIGHT, GT_CENTER, 1.19, 0.43, string);
+	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
+		1.19, 0.43, string);
 /*
  * Restore the original clipping
  */
@@ -438,8 +419,8 @@ int     color, newline;
 /*
  * Write in the annotation
  */
-        G_text (Foote_ov, Colorbase + color, GTF_MINSTROKE, 0.025, 
-		GT_LEFT, GT_TOP, Xtxt_top, Ytxt_top, string);
+        G_text (Foote_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_top, Ytxt_top, string);
 /*
  * Update the location for the next annotation
  */

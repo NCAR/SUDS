@@ -1,15 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.3  89/08/02  14:39:11  burghart
- * Made changes to deal with new color handling (#def's in color.h changed)
- * 
- * Revision 1.2  89/07/11  14:51:44  burghart
- * All annotation now uses GTF_MINSTROKE font
- * 
- * Revision 1.1  89/06/26  09:57:56  burghart
- * Initial revision
+ * $Revision: 1.5 $ $Date: 1989-08-23 10:49:17 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -20,11 +12,6 @@
 # include "fields.h"
 
 # define DEG_TO_RAD(x)	((x) * .017453292)
-
-/*
- * Colors to use and their order
- */
-static int H_color[] = { C_TRACE1, C_TRACE2, C_TRACE3, 0 };
 
 /*
  * Overlays for the background and the data
@@ -146,7 +133,7 @@ int	plot_ndx;
 	float	frac, xmark, ymark;
 	float	snd_s_alt ();
 	int	i, npts, goodpts;
-	int	color = Colorbase + H_color[plot_ndx % 3];
+	int	color = C_TRACE1 + plot_ndx;
 	char	string[10];
 /*
  * Grab the data
@@ -214,11 +201,11 @@ int	plot_ndx;
 /*
  * Annotate
  */
-	hd_annotate (id_name, plot_ndx);
+	hd_annotate (id_name, color);
 /*
  * Tell edit about this trace
  */
-	edit_set_trace (id_name, f_wspd, f_wdir, H_color[plot_ndx]);
+	edit_set_trace (id_name, f_wspd, f_wdir, color);
 /*
  * Done
  */
@@ -252,17 +239,17 @@ hd_background ()
 	x[2] = W_scale;		y[2] = W_scale;
 	x[3] = -W_scale;	y[3] = W_scale;
 	x[4] = -W_scale;	y[4] = -W_scale;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 5, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 5, x, y);
 /*
  * Cross through 0,0
  */
 	x[0] = -W_scale;	y[0] = 0.0;
 	x[1] = W_scale;		y[1] = 0.0;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 	x[0] = 0.0;	y[0] = -W_scale;
 	x[1] = 0.0;	y[1] = W_scale;
-	G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, x, y);
+	G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 /*
  * Label the horizontal axes
  */
@@ -279,26 +266,24 @@ hd_background ()
 		x[0] = x[1] = (float) tick;
 		y[0] = -W_scale;
 		y[1] = ((tick % 5) == 0) ? -0.95 * W_scale : -0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
-			x, y);
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 		y[0] = W_scale;
 		y[1] = ((tick % 5) == 0) ? 0.95 * W_scale : 0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
-			x, y);
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 	/*
 	 * Label every fifth tick
 	 */
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", (int) tick);
-			G_text (Hodo_bg_ov, Colorbase + C_WHITE, 
-				GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER, 
-				GT_TOP, (float) tick, -1.02 * W_scale, string);
+			G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+				0.05 * W_scale, GT_CENTER, GT_TOP, 
+				(float) tick, -1.02 * W_scale, string);
 		}
 	}
 
-	G_text (Hodo_bg_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
+	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
 		GT_CENTER, GT_TOP, 0.0, -1.1 * W_scale, "X (M/S)");
 /*
  * Label the vertical axes
@@ -316,30 +301,27 @@ hd_background ()
 		y[0] = y[1] = (float) tick;
 		x[0] = -W_scale;
 		x[1] = ((tick % 5) == 0) ? -0.95 * W_scale : -0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
-			x, y);
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 		x[0] = W_scale;
 		x[1] = ((tick % 5) == 0) ? 0.95 * W_scale : 0.97 * W_scale;
-		G_polyline (Hodo_bg_ov, GPLT_SOLID, Colorbase + C_BG2, 2, 
-			x, y);
+		G_polyline (Hodo_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
 	/*
 	 * Label every fifth tick
 	 */
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", tick);
-			G_text (Hodo_bg_ov, Colorbase + C_WHITE, 
-				GTF_MINSTROKE, 0.05 * W_scale, GT_RIGHT, 
-				GT_CENTER, -1.02 * W_scale, (float) tick, 
-				string);
+			G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+				0.05 * W_scale, GT_RIGHT, GT_CENTER, 
+				-1.02 * W_scale, (float) tick, string);
 		}
 	}
 
-	G_text (Hodo_bg_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
-		GT_CENTER, GT_BOTTOM, -1.15 * W_scale, 0.01 * W_scale, "Y");
-	G_text (Hodo_bg_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
-		GT_CENTER, GT_TOP, -1.15 * W_scale, -0.01 * W_scale, "(M/S)");
+	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER, 
+		GT_BOTTOM, -1.15 * W_scale, 0.01 * W_scale, "Y");
+	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER, 
+		GT_TOP, -1.15 * W_scale, -0.01 * W_scale, "(M/S)");
 /*
  * Restore the clipping
  */
@@ -396,9 +378,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Hodo_ov, Colorbase + color, GTF_MINSTROKE, 
-		0.025 * 2 * W_scale, GT_LEFT, GT_TOP, Xtxt_top, Ytxt_top, 
-		string);
+	G_text (Hodo_ov, color, GTF_MINSTROKE, 0.025 * 2 * W_scale, GT_LEFT, 
+		GT_TOP, Xtxt_top, Ytxt_top, string);
 /*
  * Update the location for the next annotation
  */
@@ -488,9 +469,9 @@ float	wspd, wdir, *x, *y;
 
 
 void
-hd_annotate (id_name, plot_ndx)
+hd_annotate (id_name, color)
 char	*id_name;
-int	plot_ndx;
+int	color;
 /*
  * Annotate the hodograph
  */
@@ -500,16 +481,16 @@ int	plot_ndx;
 /*
  * Top annotation
  */
-	hd_top_text ("SITE: ", H_color[plot_ndx], TRUE);
+	hd_top_text ("SITE: ", C_WHITE, TRUE);
 	site = snd_site (id_name);
-	hd_top_text (site, H_color[plot_ndx], FALSE);
-	hd_top_text ("  TIME: ", H_color[plot_ndx], FALSE);
+	hd_top_text (site, C_WHITE, FALSE);
+	hd_top_text ("  TIME: ", C_WHITE, FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (temp, &sdate, UDF_FULL);
 	strcpyUC (string, temp);
-	hd_top_text (string, H_color[plot_ndx], FALSE);
+	hd_top_text (string, C_WHITE, FALSE);
 	strcpy (string, "  (");
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")");
-	hd_top_text (string, H_color[plot_ndx], FALSE);
+	hd_top_text (string, color, FALSE);
 }
