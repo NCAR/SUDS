@@ -1,7 +1,7 @@
 /*
  * JAWS format sounding access
  *
- * $Revision: 1.4 $ $Date: 1991-01-16 21:40:06 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-03-20 23:04:05 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -95,11 +95,6 @@ struct snd	*sounding;
 		 */
 			dptr[i]->value = val[i];
 			dptr[i]->index = ndx;
-		/*
-		 * Convert altitude to ground relative
-		 */
-			if (i == 1)
-				val[i] -= sounding->sitealt;
 		/*
 		 * Link the point into the list or make it the head
 		 */

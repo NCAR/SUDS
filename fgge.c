@@ -1,7 +1,7 @@
 /*
  * FGGE format sounding access
  *
- * $Revision: 1.4 $ $Date: 1990-02-08 15:02:08 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-03-20 23:02:03 $ $Author: burghart $
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -109,11 +109,15 @@ struct snd	*sounding;
 			val[i] = (float) 
 				fgge_int_extract (string, start[i], flen[i]);
 		/*
-		 * Scale four of the fields
+		 * Scale four of the fields and convert altitude to MSL
 		 */
-			if (val[i] != BAD && 
-				(i == 0 || i == 4 || i == 7 || i == 10))
-				val[i] *= 0.1;
+			if (val[i] != BAD)
+			{
+				if (i == 0 || i == 4 || i == 7 || i == 10)
+					val[i] *= 0.1;
+				else if (i == 2)
+					val[i] += sounding->sitealt;
+			}
 		}
 	/*
 	 * Insert the data

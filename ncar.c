@@ -1,7 +1,7 @@
 /*
  * NCAR format sounding access
  *
- * $Revision: 1.3 $ $Date: 1991-01-16 21:40:40 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1991-03-20 23:06:53 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -141,10 +141,10 @@ struct snd	*sounding;
 			vt = t_v (temp + T_K, pres, e);
 		/*
 		 * Assign the altitude (the first good point is set to
-		 * 0 km altitude
+		 * the site altitude
 		 */
 			if (pres_prev >= GARBAGE)
-				val[5] = 0.0;
+				val[5] = sounding->sitealt;
 			else
 				val[5] = alt_prev + R_D / G_0 * 0.5 * 
 					(vt / pres + vt_prev / pres_prev) * 

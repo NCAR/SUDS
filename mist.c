@@ -1,7 +1,7 @@
 /*
  * MIST format sounding access
  *
- * $Revision: 1.1 $ $Date: 1990-02-09 15:43:13 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1991-03-20 23:05:14 $ $Author: burghart $
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -179,13 +179,10 @@ struct snd	*sounding;
 		for (i = 0; i < NFLD; i++)
 			val[i] = mist_extract (string, start[i], flen[i]);
 	/*
-	 * Convert time to seconds and alt to AGL
+	 * Convert time to seconds
 	 */
 		if (val[0] != BAD)
 			val[0] *= 60.0;
-
-		if (val[1] != BAD)
-			val[1] -= sounding->sitealt;
 	/*
 	 * Insert the data points into their respective data lists
 	 */
