@@ -1,5 +1,9 @@
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  89/05/25  10:43:04  burghart
+ * Added test in an_li() to make sure the sounding actually reaches the
+ * pressure for which the index is calculated.
+ * 
  * Revision 1.4  89/05/19  14:33:11  burghart
  * Added bulk Richardson number calculation and positive energy is
  * now labeled as CAPE.
@@ -32,9 +36,13 @@
 /*
  * Forward declarations
  */
-float	an_lfc_calc (), an_area (), an_li (), an_fmli (), an_shear ();
-void	an_surface (), an_printf ();
+float	an_lfc_calc (), an_area (), an_li (), an_shear ();
+void	an_surface (), an_printf (), an_do_analysis ();
 
+/*
+ * Sounding id
+ */
+char	*Id_name;
 /*
  * Output file info
  */
@@ -50,12 +58,9 @@ struct ui_command	*cmds;
  */
 {
 	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN], u[BUFLEN], v[BUFLEN];
-	float	t_sfc, p_sfc, dp_sfc, li, fmli, area, shear;
-	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
-	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
-	float	area_pos = 0.0, area_neg = 0.0;
-	int	sfc = 0, i, npts, trop = 0, name_loc = 0;
-	char	*snd_default (), *snd_site (), *id_name, string[80];
+	float	t_sfc, p_sfc, dp_sfc, temp700, dp700;
+	int	i, npts, name_loc = 0, success, ndx700;
+	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
  * See if we're writing to a file
@@ -85,43 +90,98 @@ struct ui_command	*cmds;
  * Get the sounding name (or the default)
  */
 	if (cmds[name_loc].uc_ctype != UTT_END)
-		id_name = UPTR (cmds[name_loc]);
+		Id_name = UPTR (cmds[name_loc]);
 	else
-		id_name = snd_default ();
+		Id_name = snd_default ();
 /*
  * Get the necessary sounding data
  */
-	npts = snd_get_data (id_name, t, BUFLEN, f_temp, BADVAL);
-	snd_get_data (id_name, p, BUFLEN, f_pres, BADVAL);
-	snd_get_data (id_name, dp, BUFLEN, f_dp, BADVAL);
+	npts = snd_get_data (Id_name, t, BUFLEN, f_temp, BADVAL);
+	snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
+	snd_get_data (Id_name, dp, BUFLEN, f_dp, BADVAL);
 /*
  * Get our surface points
  */
-	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
 /*
  * Begin printing info
  */
-	sdate = snd_time (id_name);
+	sdate = snd_time (Id_name);
 	ud_format_date (string, &sdate, UDF_FULL);
 
-	an_printf ("\nAnalysis for sounding '%s'\n", id_name);
-	an_printf ("Time: %s, Site: %s\n", string, snd_site (id_name));
+	an_printf ("\nAnalysis for sounding '%s'\n", Id_name);
+	an_printf ("Time: %s, Site: %s\n", string, snd_site (Id_name));
 	an_printf ("-----------------------------------------------\n");
-	an_printf ("Surface potential temperature%s: %.1f K\n", 
+/*
+ * Perform the surface-based analysis
+ */
+	an_printf ("SURFACE-BASED ANALYSIS\n");
+
+	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
+	an_printf ("\t Surface potential temperature%s: %.1f K\n", 
 		Flg_mli ? " (50 mb average)" : "",
 		theta_dry (t_sfc + T_K, p_sfc));
-	an_printf ("Surface mixing ratio%s: %.1f g/kg \n", 
+	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
 		w_sat (dp_sfc + T_K, p_sfc));
+	an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc);
+/*
+ * Do the forecast analysis (i.e., start from 700mb)
+ */
+	an_printf ("FORECAST (700 mb-BASED) ANALYSIS\n");
+
+	success = an_700 (t, p, dp, npts, p_sfc, dp_sfc, &temp700, 
+		&dp700, &ndx700);
+
+	if (! success)
+	{
+		an_printf ("\t Unable to find 700 mb temperature\n");
+		return;
+	}
+
+	an_printf (
+		"\t 700 mb temperature: %.1f K (potential temp.: %.1f K)\n",
+		temp700 + T_K, theta_dry (temp700 + T_K, 700.0));
+	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
+		Flg_mli ? " (50 mb average)" : "",
+		w_sat (dp_sfc + T_K, p_sfc));
+	an_do_analysis (t + ndx700, p + ndx700, dp + ndx700, npts - ndx700, 
+		temp700, 700.0, dp700);
+}
+
+
+
+
+void
+an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc)
+float	*t, *p, *dp, t_sfc, p_sfc, dp_sfc;
+int	npts;
+/*
+ * Perform the analysis of the sounding data in arrays t, p, and dp, using
+ * t_sfc, p_sfc, and dp_sfc as the surface values.
+ */
+{
+	float	li, area, shear;
+	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
+	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
+	float	area_pos = 0.0, area_neg = 0.0;
+	int	i, stop = 0;
 /*
  * Get the pressure, temperature, potential temp. and equivalent
  * potential temp. of the LCL
  */
 	p_lcl = lcl_pres (t_sfc + T_K, dp_sfc + T_K, p_sfc);
 	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
-	an_printf ("LCL pressure: %.1f mb\n", p_lcl);
+	an_printf ("\t LCL pressure: %.1f mb\n", p_lcl);
 	theta_lcl = theta_dry (t_lcl, p_lcl);
 	theta_e_lcl = theta_w (t_lcl, p_lcl);
+/*
+ * Print the lifted index info
+ */
+	li = an_li (p, t, npts, theta_e_lcl, TRUE);
+
+	if (li != BADVAL)
+		an_printf ("\t %s index: %.2f\n", 
+			Flg_mli ? "Modified lifted" : "Lifted", li);
 /*
  * Integrate the area (energy) from the surface up to the LCL
  */
@@ -129,7 +189,7 @@ struct ui_command	*cmds;
 	t_lower = t_sfc + T_K;
 	dt_lower = t_lower - theta_lcl;
 
-	for (i = sfc + 1; p_lower > p_lcl; i++)
+	for (i = 1; p_lower > p_lcl; i++)
 	{
 	/*
 	 * Make sure we have a good point
@@ -197,34 +257,17 @@ struct ui_command	*cmds;
 		dt_lower = dt_upper;
 	}
 /*
- * Print the lifted index info
- */
-	li = an_li (p, t, npts, theta_e_lcl, TRUE);
-
-	if (Flg_mli)
-	{
-		if (li != BADVAL)
-			an_printf ("Modified lifted index: %.2f\n", li);
-	/*
-	 * Get the forecasted modified lifted index, too
-	 */
-		fmli = an_fmli (p, t, npts, p_sfc, dp_sfc);
-		if (fmli != BADVAL)
-			an_printf ("Forecasted modified lifted index: %.2f\n", 
-				fmli);
-	}
-	else
-		if (li != BADVAL)
-			an_printf ("Lifted index: %.2f\n", li);
-/*
  * Integrate the area (energy) from the LCL to the LFC
  */
 	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0);
 
 	if (p_lfc != BADVAL)
-		an_printf ("LFC pressure: %.1f mb\n", p_lfc);
+		an_printf ("\t LFC pressure: %.1f mb\n", p_lfc);
 	else
-		an_printf ("No LFC\n");
+	{
+		an_printf ("\t No LFC\n");
+		return;
+	}
 
 	for (; p_lower > p_lfc && i < npts; i++)
 	{
@@ -296,17 +339,18 @@ struct ui_command	*cmds;
 /*
  * Print the total areas from the surface to the LFC
  */
-	an_printf ("Positive area below the LFC: %.0f J/kg\n", 
+	an_printf ("\t Positive area below the LFC: %.0f J/kg\n", 
 		area_pos * R_D);
-	an_printf ("Negative area below the LFC: %.0f J/kg\n", 
+	an_printf ("\t Negative area below the LFC: %.0f J/kg\n", 
 		area_neg * R_D);
 /*
- * Now integrate up to the tropopause
+ * Now integrate up to the top of the positive area or 300 mb, whichever
+ * occurs higher.
  */
 	area_pos = 0.0;
 	area_neg = 0.0;
 
-	for (; i < npts && !trop; i++)
+	for (; i < npts && !stop; i++)
 	{
 	/*
 	 * Make sure we have a good point
@@ -348,10 +392,9 @@ struct ui_command	*cmds;
 			t_upper = tslope * (ln_p - log (p_lower)) + t_lower;
 			dt_upper = 0.0;
 		/*
-		 * Choose the pressure where we cross the moist adiabat
-		 * as the tropopause if it's <= 300 mb.
+		 * Stop if we cross into negative area above 300 mb
 		 */
-			trop = p_upper <= 300.0;
+			stop = p_upper <= 300.0;
 		/*
 		 * We aren't using the ith point this time, but we still
 		 * want it next time, so decrement i
@@ -362,7 +405,7 @@ struct ui_command	*cmds;
 	 * If we crossed into negative area before we reached 300 mb, just
 	 * stop at 300 mb.
 	 */
-		trop = trop || (dt_upper > 0.0 && p_upper <= 300.0);
+		stop = stop || (dt_upper > 0.0 && p_upper <= 300.0);
 	/*
 	 * Integrate between (t_lower,p_lower) and (t_upper,p_upper)
 	 */
@@ -380,18 +423,18 @@ struct ui_command	*cmds;
 		t_lower = t_upper;
 		dt_lower = dt_upper;
 	}
-	an_printf ("CAPE: %.0f J/kg\n", area_pos * R_D);
-	an_printf ("Negative area above the LFC: %.0f J/kg\n", 
+	an_printf ("\t CAPE: %.0f J/kg\n", area_pos * R_D);
+	an_printf ("\t Negative area above the LFC: %.0f J/kg\n", 
 		area_neg * R_D);
 /*
  * Bulk Richardson number
  */
-	shear = an_shear (id_name);
+	shear = an_shear ();
 	if (shear != 0.0)
-		an_printf ("Bulk Richardson number: %.1f\n", 
+		an_printf ("\t Bulk Richardson number: %.1f\n", 
 			2.0 * R_D * area_pos / (shear * shear));
 	else
-		an_printf ("Bulk Richardson number: NO SHEAR\n");
+		an_printf ("\t Bulk Richardson number: NO SHEAR\n");
 
 	an_printf ("\n");
 }
@@ -602,14 +645,11 @@ int	npts;
  */
 	p_top = *p_sfc - 50.0;
 
-	for (; p[i] > p_top || p[i] == BADVAL; i++)
+	for (; (p[i] > p_top || p[i] == BADVAL) && i < npts; i++)
 	{
 	/*
-	 * Don't try to use non-existent or bad values
+	 * Don't try to use bad values
 	 */
-		if (i == npts)
-			ui_error ("The sounding does not span 50 mb");
-
 		if (p[i] == BADVAL || dp[i] == BADVAL || t[i] == BADVAL)
 			continue;
 	/*
@@ -627,6 +667,12 @@ int	npts;
 		}
 	}
 /*
+ * Make sure we spanned 50 mb
+ */
+	if (i == npts)
+		ui_error ("The sounding does not span 50 mb");
+
+/*
  * Find the mean mixing ratio, then get the corresponding dewpoint.
  */
 	mr = mr_sum / mr_count;
@@ -640,6 +686,56 @@ int	npts;
  * Done
  */
 	return;
+}
+
+
+
+int
+an_700 (t, p, dp, npts, p_sfc, dp_sfc, temp700, dp700, ndx700)
+float	*t, *p, *dp, p_sfc, dp_sfc, *temp700, *dp700;
+int	npts, *ndx700;
+/*
+ * Find the 700 mb temperature, the 700 mb dewpoint corresponding to the
+ * surface mixing ratio, and the index of the last pressure > 700 mb in 
+ * the data arrays.
+ */
+{
+	int	i;
+	float	t_prev, p_prev, w;
+/*
+ * Find the first pressure < 700.0
+ */
+	for (i = 0; i < npts; i++)
+	{
+		if (p[i] == BADVAL || t[i] == BADVAL)
+			continue;
+
+		if (p[i] < 700.0)
+			break;
+
+		p_prev = p[i];
+		t_prev = t[i];
+	}
+
+	*ndx700 = i - 1;
+/*
+ * Make sure we have two good points to interpolate between
+ */
+	if (p_prev == BADVAL || i == npts)
+		return (FALSE);
+/*
+ * Interpolate the 700 mb temperature from the point we just found and the
+ * previous good point
+ */
+	*temp700 = t_prev + (700.0 - p_prev) / (p[i] - p_prev) * 
+		(t[i] - t_prev);
+/*
+ * Find the mixing ratio of our surface dewpoint, then find the
+ * corresponding 700 mb dewpoint
+ */
+	w = w_sat (dp_sfc + T_K, p_sfc);
+	*dp700 = t_mr (700.0, w) - T_K;
+	return (TRUE);
 }
 
 
@@ -677,7 +773,7 @@ int	npts, verbose;
  */
 	if (p_prev == BADVAL || i == npts)
 	{
-		an_printf ("Cannot calculate lifted index\n");
+		an_printf ("\t Cannot calculate lifted index\n");
 		return (BADVAL);
 	}
 /*
@@ -687,11 +783,11 @@ int	npts, verbose;
 		(p[i] - p_prev) + T_K;
 	li = temp - t_sat (theta_e_lcl, ndx_level);
 /*
- * Be verbose (if requested)
+ * Be verbose if requested
  */
 	if (verbose)
 		an_printf (
-		"%d mb temperature: %.1f K (potential temp.: %.1f K)\n",
+		"\t %d mb temperature: %.1f K (potential temp.: %.1f K)\n",
 			(int) ndx_level, temp, theta_dry (temp, ndx_level));
 /*
  * Done
@@ -699,68 +795,6 @@ int	npts, verbose;
 	return (li);
 }
 
-
-
-
-float
-an_fmli (p, t, npts, p_sfc, dp_sfc)
-float	*p, *t, p_sfc, dp_sfc;
-int	npts;
-/*
- * Find the forecasted modified lifted index
- */
-{
-	int	i;
-	float	temp700, dp700, p_prev, t_prev, p_lcl, t_lcl;
-	float	theta_e_lcl, w;
-/*
- * Find the first pressure < 700.0
- */
-	for (i = 0; i < npts; i++)
-	{
-		if (p[i] == BADVAL || t[i] == BADVAL)
-			continue;
-
-		if (p[i] < 700.0)
-			break;
-
-		p_prev = p[i];
-		t_prev = t[i];
-	}
-/*
- * Make sure we have two good points to interpolate between
- */
-	if (p_prev == BADVAL || i == npts)
-	{
-		an_printf ("Unable to find 700 mb temperature\n");
-		return (BADVAL);
-	}
-/*
- * Interpolate the 700 mb temperature from the point we just found and the
- * previous good point
- */
-	temp700 = t_prev + (700.0 - p_prev) / (p[i] - p_prev) * 
-		(t[i] - t_prev) + T_K;
-	an_printf (
-		"700 mb temperature: %.1f K (potential temp.: %.1f K)\n",
-		temp700, theta_dry (temp700, 700.0));
-/*
- * Find the mixing ratio of our surface dewpoint, then find the
- * corresponding 700 mb dewpoint
- */
-	w = w_sat (dp_sfc + T_K, p_sfc);
-	dp700 = t_mr (700.0, w);
-/*
- * Get LCL info using the surface dewpoint and the 700 mb temperature
- */
-	p_lcl = lcl_pres (temp700, dp700, 700.0);
-	t_lcl = lcl_temp (temp700, dp700);
-	theta_e_lcl = theta_w (t_lcl, p_lcl);
-/*
- * Actually find the forecasted lifted index
- */
-	return (an_li (p, t, npts, theta_e_lcl, FALSE));
-}
 
 
 
@@ -793,8 +827,7 @@ int	ARGS;	/* ARGS is defined in ui_param.h */
 
 
 float
-an_shear (id_name)
-char	*id_name;
+an_shear ()
 /*
  * Find a shear value for use in the Bulk Richardson number calculation
  */
@@ -808,10 +841,10 @@ char	*id_name;
  * Get the wind and altitude data
  */
 	ERRORCATCH
-		npts = snd_get_data (id_name, p, BUFLEN, f_pres, BADVAL);
-		snd_get_data (id_name, wspd, BUFLEN, f_wspd, BADVAL);
-		snd_get_data (id_name, wdir, BUFLEN, f_wdir, BADVAL);
-		snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
+		npts = snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
+		snd_get_data (Id_name, wspd, BUFLEN, f_wspd, BADVAL);
+		snd_get_data (Id_name, wdir, BUFLEN, f_wdir, BADVAL);
+		snd_get_data (Id_name, alt, BUFLEN, f_alt, BADVAL);
 	ON_ERROR
 		return (0.0);
 	ENDCATCH
