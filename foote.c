@@ -2,6 +2,10 @@
  * Foote chart stuff
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  89/06/29  16:15:01  burghart
+ * Fixed problem of missing '(' in annotation and added capability to 
+ * interrupt the plot
+ * 
  * Revision 1.2  89/05/30  15:05:38  burghart
  * Change in the altitude calculation of ft_alt() to use 
  * 1/2 * (vt_1 / pres_1 + vt_0 / pres_0) instead of
@@ -206,8 +210,8 @@ ft_reset_annot ()
  * Reset the annotation location
  */
 {
-	Xtxt_top = 0.0;
-	Ytxt_top = 1.19;
+	Xtxt_top = -0.75 * BORDER;
+	Ytxt_top = 1.0 + 0.95 * BORDER;
 }
 
 
@@ -225,12 +229,12 @@ char	*id_name;
 /*
  * Site
  */
-	ft_top_text ("Site: ", C_WHITE, TRUE);
+	ft_top_text ("SITE: ", C_WHITE, TRUE);
 	ft_top_text (snd_site (id_name), C_WHITE, FALSE);
 /*
  * Time
  */
-	ft_top_text ("  Time: ", C_WHITE, FALSE);
+	ft_top_text ("  TIME: ", C_WHITE, FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (string, &sdate, UDF_FULL);
 	strcpyUC (string, string);
@@ -417,20 +421,20 @@ int     color, newline;
 /*
  * Find out how the string fits on the current line
  */
-        G_tx_box (Foote_ov, GTF_STROKE, 0.035, GT_LEFT, GT_TOP,
+        G_tx_box (Foote_ov, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP,
                 Xtxt_top, Ytxt_top, string, &x0, &y0, &x1, &y1);
 /*
  * Start a new line if necessary or requested
  */
-        if (Xtxt_top > 0.0 && (x1 > 1.0 + 2 * BORDER || newline))
+        if (Xtxt_top > 0.0 && (x1 > 1.0 + 0.75 * BORDER || newline))
         {
-                Xtxt_top = 0.0;
-                Ytxt_top -= 0.032;
+                Xtxt_top = -0.75 * BORDER;
+                Ytxt_top -= 0.028;
         }
 /*
  * Write in the annotation
  */
-        G_text (Foote_ov, Colorbase + color, GTF_STROKE, 0.035, 
+        G_text (Foote_ov, Colorbase + color, GTF_MINSTROKE, 0.025, 
 		GT_LEFT, GT_TOP, Xtxt_top, Ytxt_top, string);
 /*
  * Update the location for the next annotation
