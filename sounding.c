@@ -2,6 +2,9 @@
  * Sounding module.  Load, copy, and keep track of soundings.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:16:30  burghart
+ * Initial revision
+ * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
 # include "globals.h"
@@ -595,10 +598,7 @@ struct ui_command	*cmds;
 	char	*id_name, *snd_default ();
 	char	*fname = UPTR (cmds[0]);
 	struct snd	sounding;
-	int	nflds = 0, npts, file_id, fnum, ndx, bufpos = 0;
-	float	badval = BADVAL;
-	struct snd_datum	*dptr[MAXFLDS];
-	char	buf[MAXRECLEN];
+	void	cls_write_file ();
 /*
  * Get the sounding name then the sounding
  */
@@ -609,103 +609,11 @@ struct ui_command	*cmds;
 
 	sounding = snd_find_sounding (id_name);
 /*
- * Create the file
+ * Write the CLASS format sounding
  */
-	if ((file_id = bfcreate (fname)) == 0)
-		ui_error ("Unable to create file '%s'", fname);
-/*
- * Count the number of fields and get the data start addresses
- */
-	while (sounding.fields[nflds] != f_null)
-	{
-		dptr[nflds] = sounding.dlists[nflds];
-		nflds++;
-	}
-/*
- * Write the first record, which contains:
- *	release time
- *	number of fields
- *	number of data records
- *	bad value flag
- *	site name
- *	site altitude
- */
-	memcpy (buf + bufpos, &(sounding.rls_time), sizeof (date));
-	bufpos += sizeof (date);
-
-	memcpy (buf + bufpos, &nflds, sizeof (int));
-	bufpos += sizeof (int);
-
-	memcpy (buf + bufpos, &(sounding.maxndx), sizeof (int));
-	bufpos += sizeof (int);
-
-	memcpy (buf + bufpos, &badval, sizeof (float));
-	bufpos += sizeof (float);
-
-	strcpy (buf + bufpos, sounding.site);
-	bufpos += strlen (sounding.site) + 1;
-
-	memcpy (buf + bufpos, sounding.sitealt);
-	bufpos += sizeof (float);
-
-	bfput (file_id, buf, bufpos);
-/*
- * Write a record with the field id's
- */
-	bufpos = 0;
-	for (fnum = 0; fnum < nflds; fnum++)
-	{
-		memcpy (buf + bufpos, &(sounding.fields[fnum]), 
-			sizeof (fldtype));
-		bufpos += sizeof (fldtype);
-	}
-
-	bfput (file_id, buf, bufpos);
-/*
- * Write the data
- */
-	for (ndx = 0; ndx <= sounding.maxndx; ndx++)
-	{
-		bufpos = 0;
-	/*
-	 * Run through the fields, creating the record for this index
-	 */
-		for (fnum = 0; fnum < nflds; fnum++)
-		{
-		/*
-		 * If the index matches, write out the value for this field
-		 * and move to the next point
-		 */
-			if (dptr[fnum] && dptr[fnum]->index == ndx)
-			{
-				memcpy (buf + bufpos, &(dptr[fnum]->value),
-					sizeof (float));
-				dptr[fnum] = dptr[fnum]->next;
-			}
-		/*
-		 * Otherwise, write out the bad value flag
-		 */
-			else
-			{
-				memcpy (buf + bufpos, &badval, sizeof (float));
-			}
-		/*
-		 * Increment the buffer position
-		 */
-			bufpos += sizeof (float);
-		}
-	/*
-	 * Write this record
-	 */
-		bfput (file_id, buf, bufpos);
-	}
-/*
- * We're done
- */
-	bfclose (file_id);
-	return;
+	cls_write_file (fname, &sounding);
 }
-
+	
 
 
 
