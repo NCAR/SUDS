@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.13 $ $Date: 1990-11-01 13:40:59 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1990-11-05 11:19:19 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -49,10 +49,10 @@ struct ui_command *cmds;
 {
 	char	*id_name;
 	int	i, maxpts, pt = 0, nplots, plt, color;
-	float	x[200], yli[200], ydist[200];
-	float	pres[BUFLEN], temp[BUFLEN], dp[BUFLEN], alt[BUFLEN];
-	float	li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
-	float	an_li (), an_lfc_calc ();
+	float	x[400], yli[400], ydist[400];
+	float	pres[BUFLEN], vt[BUFLEN], dp[BUFLEN], alt[BUFLEN];
+	float	li_pres, li_temp, li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
+	float	an_li_ref (), an_lfc_calc ();
 	char	*snd_default ();
 	void	ft_reset_annot ();
 /*
@@ -111,16 +111,31 @@ struct ui_command *cmds;
 		else
 			id_name = snd_default ();
 	/*
-	 * Get the data
+	 * Get the data (Note that we use virtual temperature instead of
+	 * temperature)
 	 */
 		maxpts = snd_get_data (id_name, pres, BUFLEN, f_pres, BADVAL);
-		snd_get_data (id_name, temp, BUFLEN, f_temp, BADVAL);
+		snd_get_data (id_name, vt, BUFLEN, f_vt, BADVAL);
 		snd_get_data (id_name, dp, BUFLEN, f_dp, BADVAL);
 		snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
+	/*
+	 * Convert dewpoints to K
+	 */
+		for (i = 0; i < maxpts; i++)
+			if (dp[i] != BADVAL)
+				dp[i] += T_K;
 	/*
 	 * Plot the annotation
 	 */
 		ft_annotate (id_name, color);
+	/*
+	 * Get the reference pressure and temp. for lifted index calculations
+	 */
+		li_pres = Flg_mli ? 400.0 : 500.0;
+		li_temp = an_li_ref (pres, vt, maxpts);
+		if (li_temp == BADVAL)
+			ui_printf ("No %d mb temp. for lifted index\n",
+				(int) li_pres);
 	/*
 	 * Loop through the points
 	 */
@@ -136,7 +151,7 @@ struct ui_command *cmds;
 		/*
 		 * Don't use bad points
 		 */
-			if (pres[i] == BADVAL || temp[i] == BADVAL || 
+			if (pres[i] == BADVAL || vt[i] == BADVAL || 
 				dp[i] == BADVAL)
 				continue;
 		/*
@@ -151,23 +166,23 @@ struct ui_command *cmds;
 		/*
 		 * Get LCL info
 		 */
-			p_lcl = lcl_pres (temp[i] + T_K, dp[i] + T_K, pres[i]);
-			t_lcl = lcl_temp (temp[i] + T_K, dp[i] + T_K);
+			p_lcl = lcl_pres (vt[i], dp[i], pres[i]);
+			t_lcl = lcl_temp (vt[i], dp[i]);
 			theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 		/*
 		 * Get the parcel lifted index and calculate the y coordinate
 		 * for this point
 		 */
-			li = an_li (pres, temp, maxpts, theta_e_lcl, FALSE);
+			li = li_temp - t_sat (theta_e_lcl, li_pres);
 			yli[pt] = li / (2.0 * MAX_LI) + 0.5;
 		/*
 		 * Find the LFC pressure for this parcel
 		 */
-			lfc_pres = an_lfc_calc (temp, pres, dp, maxpts, 
-				temp[i], pres[i], dp[i], 350.0);
+			lfc_pres = an_lfc_calc (vt, pres, dp, maxpts, 
+				vt[i], pres[i], dp[i], 350.0);
 
 			if (lfc_pres != BADVAL)
-				ydist[pt] = (ft_alt (lfc_pres, temp, pres, dp, 
+				ydist[pt] = (ft_alt (lfc_pres, vt, pres, dp, 
 					alt, maxpts) - 
 					alt[i]) / (Foote_height * 1000.0);
 			else
@@ -323,19 +338,19 @@ ft_background ()
 
 
 float
-ft_alt (lfc_pres, temp, pres, dp, alt, npts)
-float	lfc_pres, *temp, *pres, *dp, *alt;
+ft_alt (ref_pres, vt, pres, dp, alt, npts)
+float	ref_pres, *vt, *pres, *dp, *alt;
 int	npts;
 /*
- * Find the height of the given LFC
+ * Find the height of the given reference pressure
  */
 {
 	int	i = 0, ceil, floor;
-	float	e_ceil, e_floor, vt_ceil, vt_floor, vt_lfc;
+	float	vt_ref;
 /*
- * Find the first good point above this LFC (the 'ceiling')
+ * Find the first good point above the reference (the 'ceiling')
  */
-	while (pres[i] > lfc_pres || temp[i] == BADVAL ||
+	while (pres[i] > ref_pres || vt[i] == BADVAL ||
 		pres[i] == BADVAL || dp[i] == BADVAL || 
 		alt[i] == BADVAL)
 		if (++i == npts)
@@ -343,39 +358,32 @@ int	npts;
 
 	ceil = i;
 /*
- * Find the first good point below the LFC (the 'floor')
+ * Find the first good point below the reference (the 'floor')
  */
 	i--;
-	while (temp[i] == BADVAL || pres[i] == BADVAL || 
+	while (vt[i] == BADVAL || pres[i] == BADVAL || 
 		dp[i] == BADVAL || alt[i] == BADVAL)
 		if (--i == npts)
 			ui_error ("*BUG* Floor error in ft_height");
 
 	floor = i;
 /*
- * Now find the virtual temperatures at the ceiling and floor points
+ * Interpolate to get the virtual temperature at the reference
  */
-	e_ceil = e_from_dp (dp[ceil] + T_3);
-	e_floor = e_from_dp (dp[floor] + T_3);
-	vt_ceil = t_v (temp[ceil] + T_3, pres[ceil], e_ceil);
-	vt_floor = t_v (temp[floor] + T_3, pres[floor], e_floor);
-/*
- * Interpolate to get the virtual temperature at the LFC
- */
-	vt_lfc = vt_floor + (vt_ceil - vt_floor) * 
-		(log (lfc_pres) - log (pres[floor])) / 
+	vt_ref = vt[floor] + (vt[ceil] - vt[floor]) * 
+		(log (ref_pres) - log (pres[floor])) / 
 		(log (pres[ceil]) - log (pres[floor]));
 /*
- * Calculate the thickness of the layer from the floor to the LFC and add 
- * it to the floor altitude
+ * Calculate the thickness of the layer from the floor to the reference and 
+ * add it to the floor altitude
  *
  * This formula is adapted from equations 2.24 of Wallace and Hobbs' 
  * "Atmospheric Science" (1977) using a simple estimation of the 
  * integral.
  */
 	return (alt[floor] + R_D / G_0 * 0.5 * 
-		(vt_floor / pres[floor] + vt_lfc / lfc_pres) * 
-		(pres[floor] - lfc_pres));
+		(vt[floor] / pres[floor] + vt_ref / ref_pres) * 
+		(pres[floor] - ref_pres));
 }
 
 
