@@ -2,6 +2,9 @@
  * Skew-t plotting module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/06/23  13:51:54  burghart
+ * Moved W_scale parameter from here to globals.h, so it can be used elsewhere
+ * 
  * Revision 1.1  89/03/16  15:16:17  burghart
  * Initial revision
  * 
@@ -504,24 +507,24 @@ int	color, newline;
 /*
  * Set the clipping so we can annotate in the bottom margin
  */
-	G_clip_window (Skewt_ov, 0.0, -BORDER, 1.0, 0.0);
+	G_clip_window (Skewt_ov, -BORDER, -BORDER, 1.0 + 2 * BORDER, 0.0);
 /*
  * Find out how the string fits on the current line
  */
-	G_tx_box (Skewt_ov, GTF_STROKE, 0.035, GT_LEFT, GT_TOP,
+	G_tx_box (Skewt_ov, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP,
 		Xtxt_bot, Ytxt_bot, string, &x0, &y0, &x1, &y1);
 /*
  * Start a new line if necessary or requested
  */
-	if (Xtxt_bot > 0.0 && (x1 > 1.0 || newline))
+	if (Xtxt_bot > 0.0 && (x1 > 1.0 + 2 * BORDER || newline))
 	{
-		Xtxt_bot = 0.0;
-		Ytxt_bot -= 0.032;
+		Xtxt_bot = -0.5 * BORDER;
+		Ytxt_bot -= 0.03;
 	}
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, Colorbase + color, GTF_STROKE, 0.035, GT_LEFT,
+	G_text (Skewt_ov, Colorbase + color, GTF_MINSTROKE, 0.025, GT_LEFT,
 		GT_TOP, Xtxt_bot, Ytxt_bot, string);
 /*
  * Update the location for the next annotation
@@ -548,24 +551,24 @@ int	color, newline;
 /*
  * Set the clipping so we can annotate in the top margin
  */
-	G_clip_window (Skewt_ov, 0.0, 1.0, 1.0 + 2 * BORDER, 1.0 + BORDER);
+	G_clip_window (Skewt_ov, -BORDER, 1.0, 1.0 + 2 * BORDER, 1.0 + BORDER);
 /*
  * Find out how the string fits on the current line
  */
-	G_tx_box (Skewt_ov, GTF_STROKE, 0.035, GT_LEFT, GT_TOP,
+	G_tx_box (Skewt_ov, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP,
 		Xtxt_top, Ytxt_top, string, &x0, &y0, &x1, &y1);
 /*
  * Start a new line if necessary or requested
  */
 	if (Xtxt_top > 0.0 && (x1 > 1.0 + 2 * BORDER || newline))
 	{
-		Xtxt_top = 0.0;
-		Ytxt_top -= 0.032;
+		Xtxt_top = -0.5 * BORDER;
+		Ytxt_top -= 0.03;
 	}
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, Colorbase + color, GTF_STROKE, 0.035, GT_LEFT, 
+	G_text (Skewt_ov, Colorbase + color, GTF_MINSTROKE, 0.025, GT_LEFT, 
 		GT_TOP, Xtxt_top, Ytxt_top, string);
 /*
  * Update the location for the next annotation
@@ -585,10 +588,10 @@ skt_reset_annot ()
  * Reset the annotation locations
  */
 {
-	Xtxt_top = 0.0;
-	Ytxt_top = 1.19;
-	Xtxt_bot = 0.0;
-	Ytxt_bot = -0.01;
+	Xtxt_top = -0.5 * BORDER;
+	Ytxt_top = 1.0 + 0.95 * BORDER;
+	Xtxt_bot = -0.5 * BORDER;
+	Ytxt_bot = -0.05 * BORDER;
 }
 
 
@@ -606,10 +609,10 @@ int	plot_ndx;
 /*
  * Top annotation
  */
-	skt_top_text ("Site: ", C_WHITE, TRUE);
+	skt_top_text ("SITE: ", C_WHITE, TRUE);
 	site = snd_site (id_name);
 	skt_top_text (site, C_WHITE, FALSE);
-	skt_top_text ("  Time: ", C_WHITE, FALSE);
+	skt_top_text ("  TIME: ", C_WHITE, FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (temp, &sdate, UDF_FULL);
 	strcpyUC (string, temp);
@@ -618,8 +621,8 @@ int	plot_ndx;
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")  ");
 	skt_top_text (string, C_WHITE, FALSE);
-	skt_top_text ("Temp./Winds ", Temp_color[plot_ndx], FALSE);
-	skt_top_text ("Dewpoint  ", Dp_color[plot_ndx], FALSE);
+	skt_top_text ("TEMP/WINDS ", Temp_color[plot_ndx], FALSE);
+	skt_top_text ("DEWPOINT  ", Dp_color[plot_ndx], FALSE);
 }
 
 
@@ -721,30 +724,40 @@ float	*pres, *temp, *dp;
  * and dp data
  */
 {
-	int	sfc = 0, npts;
+	int	sfc = 0, npts, ndx_700;
 	float	x[200], y[200];
 	float	p_lcl, t_lcl, pt, w, t_sfc, p_sfc, dp_sfc, ept;
-	float	p, pstep = 10, t;
+	float	t_700, dp_700, p_lcl700, t_lcl700, ept_700, pt_700;
+	float	p, pstep = 10, t, min_lcl;
 	void	an_surface ();
 /*
  * Find the first good point and use it as the surface point
  */
 	an_surface (temp, pres, dp, ndata, &t_sfc, &p_sfc, &dp_sfc);
+	an_700 (temp, pres, dp, ndata, p_sfc, dp_sfc, &t_700, &dp_700, 
+		&ndx_700);
 
-	t_sfc += T_K;
-	dp_sfc += T_K;
+	t_sfc += T_K;	t_700 += T_K;
+	dp_sfc += T_K;	dp_700 += T_K;
 /*
- * Find the potential temperature and mixing ratio for our surface point
+ * Find the mixing ratio for our surface point
  */
-	pt = theta_dry (t_sfc, p_sfc);
 	w = w_sat (dp_sfc, p_sfc);
 /*
- * Get the LCL pressure and temperature and the eqivalent potential
- * temperature there
+ * Get the potential temperature, LCL pressure and temperature, and the 
+ * eqivalent potential temperature at the surface
  */
+	pt = theta_dry (t_sfc, p_sfc);
 	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
 	t_lcl = lcl_temp (t_sfc, dp_sfc);
 	ept = theta_w (t_lcl, p_lcl);
+/*
+ * Get the forecasted (700 mb) LCL pressure, temp, and ept
+ */
+	pt_700 = theta_dry (t_700, 700.0);
+	p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
+	t_lcl700 = lcl_temp (t_700, dp_700);
+	ept_700 = theta_w (t_lcl700, p_lcl700);
 /*
  * Draw the saturated adiabat from the LCL up
  */
@@ -753,6 +766,20 @@ float	*pres, *temp, *dp;
 	for (p = p_lcl; p >= Pmin - pstep; p -= pstep)
 	{
 		t = t_sat (ept, p) - T_K;
+		y[npts] = YPOS (p);
+		x[npts] = XPOS ((float) t, y[npts]);
+		npts++;
+	}
+
+	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_LGRAY, npts, x, y);
+/*
+ * Draw the saturated adiabat from the forecasted LCL up
+ */
+	npts = 0;
+
+	for (p = p_lcl700; p >= Pmin - pstep; p -= pstep)
+	{
+		t = t_sat (ept_700, p) - T_K;
 		y[npts] = YPOS (p);
 		x[npts] = XPOS ((float) t, y[npts]);
 		npts++;
@@ -785,10 +812,38 @@ float	*pres, *temp, *dp;
 
 	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_LGRAY, npts, x, y);
 /*
- * Draw the saturation mixing ratio line from the LCL down
+ * Draw the dry adiabat from the forecasted LCL down
  */
-	t = t_mr (p_lcl, w) - T_K;
-	y[0] = YPOS ((float) p_lcl);
+	npts = 0;
+
+	for (p = p_lcl700; p < 700.0 + pstep; p += pstep)
+	{
+	/*
+	 * Stop at 700 mb
+	 */
+		if (p > 700.0)
+			p = 700.0;
+	/*
+	 * Get the temp corresponding to our theta at this pressure
+	 */
+		t = theta_to_t (pt_700, p) - T_K;
+	/*
+	 * Translate into overlay coordinates
+	 */
+		y[npts] = YPOS (p);
+		x[npts] = XPOS ((float) t, y[npts]);
+		npts++;
+	}
+
+	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_LGRAY, npts, x, y);
+/*
+ * Draw the saturation mixing ratio line from the surface up to the LCL
+ * with the lower pressure
+ */
+	min_lcl = (p_lcl < p_lcl700 ? p_lcl : p_lcl700);
+
+	t = t_mr (min_lcl, w) - T_K;
+	y[0] = YPOS ((float) min_lcl);
 	x[0] = XPOS ((float) t, y[0]);
 
 	t = t_mr (p_sfc, w) - T_K;
@@ -959,10 +1014,10 @@ int	plot_ndx, nplots;
  */
 	if (plot_ndx == 0)
 	{
-		G_text (Winds_ov, Colorbase + C_WHITE, GTF_STROKE, 0.035, 
-			GT_CENTER, GT_TOP, 0.5, -0.01, "Winds Profile");
-		G_text (Winds_ov, Colorbase + C_WHITE, GTF_STROKE, 0.02, 
-			GT_LEFT, GT_CENTER, 0.5, -0.06, " = 10 m/s");
+		G_text (Winds_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.025, 
+			GT_CENTER, GT_TOP, 0.5, -0.01, "WINDS PROFILE");
+		G_text (Winds_ov, Colorbase + C_WHITE, GTF_MINSTROKE, 0.02, 
+			GT_LEFT, GT_CENTER, 0.5, -0.06, " = 10 M/S");
 
 		xov[0] = 0.5 - (10.0 * xscale);
 		xov[1] = 0.5;
