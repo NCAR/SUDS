@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: globals.h,v 1.9 1994-06-24 21:51:00 burghart Exp $
+ * $Id: globals.h,v 1.10 1994-11-02 23:15:47 burghart Exp $
  */
 
 # include <ui.h>
@@ -43,7 +43,7 @@
 
 
 # define BADVAL	-999.
-# define BUFLEN	2048
+# define BUFLEN	5000	/* max number of points we can handle in a sounding */
 
 # define T_K	273.15
 
