@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.9 $ $Date: 1990-09-12 10:31:09 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-12-11 16:41:01 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -1478,10 +1478,11 @@ struct ui_command	*cmds;
 		/*
 		 * Link it into the list
 		 */
-			newpt->prev = e;
-			newpt->next = e->next;
-			newpt->next->prev = newpt;
-			e->next = newpt;
+			newpt->next = e;
+			newpt->prev = e->prev;
+			if (newpt->prev)
+				newpt->prev->next = newpt;
+			e->prev = newpt;
 			e = newpt;
 		}
 	/*
