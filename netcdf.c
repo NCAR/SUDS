@@ -1,7 +1,7 @@
 /*
  * netCDF sounding access
  *
- * $Revision: 1.4 $ $Date: 1991-03-22 18:24:28 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-04-09 04:02:56 $ $Author: burghart $
  * 
  */
 # include <time.h>
@@ -18,7 +18,7 @@ struct fldmatch
 	char	*nc_name;	/* netCDF name for this field	*/
 } Netcdf_tbl[] =
 {
-	{f_time,	"offset_time"	}, 
+	{f_time,	"time_offset"	}, 
 	{f_lat,		"lat"		}, 
 	{f_lon,		"lon"		},
 	{f_alt,		"alt"		},
