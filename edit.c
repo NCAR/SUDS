@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.4 $ $Date: 1989-09-21 13:34:40 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1989-09-21 13:48:43 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -1324,6 +1324,7 @@ struct ui_command	*cmds;
 {
 	int	newindex, i, nfld = 0;
 	struct snd_datum	*datum, *prev, *new;
+	struct snd_datum	*snd_data_ptr ();
 	float	*vals;
 	fldtype *flds;
 /*
