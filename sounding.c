@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.13 $ $Date: 1990-12-11 10:39:36 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1991-01-16 21:55:10 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -405,7 +405,7 @@ fldtype fld, *chain;
 	/*
 	 * We don't have a raw field, see if we can derive it
 	 */
-		if (fdd_derive (fld, &dfld, &ndflds, &dfunc))
+		for (i = 0; fdd_derive (fld, i, &dfld, &ndflds, &dfunc); i++)
 		{
 		/*
 		 * Allocate space to hold the fields for the derivation
