@@ -20,13 +20,22 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.15 1993-07-21 21:49:57 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.16 1993-09-21 20:21:32 burghart Exp $";
 
 # include <math.h>
-# include <varargs.h>
 # include <met_formulas.h>
 # include "fields.h"
 # include "flags.h"
+
+/*
+ * cflow barfs on varargs stuff, and we want to avoid that
+ * (note that "cflow -Dcflow ..." is required for this to work)
+ */
+# ifndef cflow
+#	include <varargs.h>
+# else
+#	define va_dcl	int va_alist;
+# endif
 
 # define TRUE	1
 # define FALSE	0
