@@ -1,6 +1,5 @@
-CFLAGS = -I/rdss/include -g -Bstatic -O
-XLIBS = -lXaw -lXmu -lXt -lXext -lX11
-CC = gcc
+TOP = ..
+LOCALCFLAGS = -Bstatic -I$(XINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG)
 
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	convert.o edit.o eformat.o \
@@ -9,44 +8,35 @@ OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	noaa.o nws.o output.o rsanal.o skewt.o sounding.o util.o xsect.o \
 	xyplot.o
 
-all:	suds /locallib/suds.lf
-
-test:	sudstest /locallib/suds.lf
+all:	suds suds.lf
 
 xsaber:	$(OBJS)
-	# load $(CFLAGS) $(OBJS) -lrdss -lnetcdf $(XLIBS) -ltermcap -lm
+	# load $(CFLAGS) $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB)
 	# link
 	
 
-install: suds
-	install -c suds /localbin/suds
+install: suds suds.lf
+	install -c suds $(RDSSBIN)/suds
 	ar r libsuds.a *.o
 	ranlib libsuds.a
 
 suds:	$(OBJS)
-	$(CC) $(CFLAGS) -o suds $(OBJS) -lrdss -lnetcdf $(XLIBS) -ltermcap -lm
+	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs -L$(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB)
 
-suds.lf:	/locallib/suds.lf
+suds.lf: $(RDSSLIBRARIES)/suds.lf
 
-/locallib/suds.lf:	suds.state suds.menu keywords.h
-	@ cp /locallib/suds.lf /locallib/suds.lf~
-	@ cc -P suds.state
-	@ suds -n make-lf
+$(RDSSLIBRARIES)/suds.lf:	suds.state suds.menu keywords.h
+	@ cc -E suds.state | grep -v '^# [0-9]' | cat -s > suds.i
+	@ uic < make-lf
+	@ install -c suds.lf $(RDSSLIBRARIES)/suds.lf
 	@ rm -f suds.i
 
 clean:
 	rm -f core *.o
-
-Makefile: Makefile.cpp
-	mv Makefile Makefile~
-	cp Makefile.cpp Makefile.c
-	echo "# DO NOT EDIT!  EDIT Makefile.cpp INSTEAD" > Makefile
-	cc -E Makefile.c >> Makefile
-	rm -f Makefile.c
-	make depend
 
 coda:
 	(CODA=./.codarc; export CODA; coda sources)
 
 depend:
 	makedepend $(CFLAGS) *.c
+
