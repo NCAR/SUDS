@@ -2,6 +2,9 @@
  * E-format sounding access module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/04/06  10:28:44  burghart
+ * Changed call to fclose () to bfclose ()
+ * 
  * Revision 1.1  89/03/16  15:13:11  burghart
  * Initial revision
  * 
@@ -30,6 +33,7 @@ struct snd	*sounding;
 	float	badval, datum;
 	char	buf[MAXRECLEN];
 	struct snd_datum	*dptr[MAXFLDS];
+	float	ui_float_prompt ();
 /*
  * Open the file
  */
@@ -61,11 +65,15 @@ struct snd	*sounding;
  * KLUGE: We prompt for the site altitude if we are reading an old e-format
  * file w/o the alt
  */
-	if (bufpos < rlen)
+	if (bufpos - rlen >= sizeof (float))
 		memcpy (&(sounding->sitealt), buf + bufpos, sizeof (float));
 	else
-		ui_float_prompt ("Enter the sounding site altitude in m", 
-			(char *) NULL, 0.0, 5000.0, 1611.0);
+	{
+		ui_printf ("No site altitude in file\n");
+		sounding->sitealt = ui_float_prompt (
+			"Enter the site altitude in meters", 
+			(char *) NULL, -50.0, 5000.0, 0.0);
+	}
 /*
  * Read the second record with the field identifiers
  */
