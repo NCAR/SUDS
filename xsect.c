@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.22 1993-05-11 20:45:59 burghart Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.23 1994-02-23 17:04:06 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -141,7 +141,7 @@ struct ui_command	*cmds;
 		Nsnd = 0;
 		for (; cmds->uc_ctype != UTT_END; cmds++)
 		{
-			S_id[Nsnd] = (char *) malloc (1+sizeof (UPTR (*cmds)));
+			S_id[Nsnd] = (char *) malloc (1+strlen (UPTR (*cmds)));
 			strcpy (S_id[Nsnd], UPTR (*cmds));
 			Nsnd++;
 		}
