@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: globals.h,v 1.5 1991-10-21 22:20:28 burghart Exp $
+ * $Id: globals.h,v 1.6 1992-06-05 19:27:25 burghart Exp $
  */
 
 # include <ui.h>
@@ -31,7 +31,7 @@
 # endif
 
 # define BADVAL	-999.
-# define BUFLEN	1024
+# define BUFLEN	2048
 
 # define T_K	273.15
 
