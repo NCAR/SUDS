@@ -20,9 +20,9 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.19 1998-02-06 22:57:57 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.20 2002-07-12 15:38:56 burghart Exp $";
 
-# ifdef NETCDF
+# if HAVE_LIBNETCDF
 
 # include <time.h>
 # include <netcdf.h>
@@ -615,4 +615,4 @@ struct ui_command	*cmds;
 }
 
 
-# endif /* NETCDF */
+# endif /* HAVE_LIBNETCDF */
