@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.9 1991-10-21 21:40:47 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.10 1991-12-13 16:43:12 burghart Exp $";
 
 # include <math.h>
 # include <varargs.h>
@@ -115,7 +115,7 @@ fdd_dt_init ()
 	int	i;
 	void	fdd_mr (), fdd_u_wind (), fdd_v_wind (), fdd_theta ();
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
-	void	fdd_wdir (), fdd_vt (), fdd_ascent ();
+	void	fdd_wdir (), fdd_vt (), fdd_ascent (), fdd_rh ();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -134,8 +134,9 @@ fdd_dt_init ()
 	fdd_add_derivation (f_dp, fdd_dp, 2, f_temp, f_rh);
 	fdd_add_derivation (f_wspd, fdd_wspd, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_wdir, fdd_wdir, 2, f_u_wind, f_v_wind);
-	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_dp);
+	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_rh);
 	fdd_add_derivation (f_ascent, fdd_ascent, 2, f_time, f_alt);
+	fdd_add_derivation (f_rh, fdd_rh, 2, f_temp, f_dp);
 /*
  * Mark the initialization as done
  */
@@ -466,16 +467,16 @@ int	npts;
  * virtual temperature derivation routine
  */
 {
-	float	*temp = dbufs[0], *pres = dbufs[1], *dp = dbufs[2];
+	float	*temp = dbufs[0], *pres = dbufs[1], *rh = dbufs[2];
 	int	i;
 
 	for (i = 0; i < npts; i++)
 	{
-		if (temp[i] == badval || pres[i] == badval || dp[i] == badval)
+		if (temp[i] == badval || pres[i] == badval || rh[i] == badval)
 			buf[i] = badval;
 		else
 			buf[i] = t_v (temp[i] + T_K, pres[i], 
-				e_from_dp (dp[i] + T_K));
+				0.01 * rh[i] * e_w (temp[i] + T_K));
 	}
 }
 
@@ -508,3 +509,33 @@ int	npts;
 		prevalt = alt[i];
 	}
 }
+
+
+
+
+void
+fdd_rh (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * derive relative humidity from temperature and dewpoint
+ */
+{
+	float	*temp = dbufs[0], *dp = dbufs[1];
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (temp[i] == badval || dp[i] == badval)
+		{
+			buf[i] = badval;
+			continue;
+		}
+		else
+			buf[i] = 100.0 * e_from_dp (dp[i] + T_K) / 
+				e_w (temp[i] + T_K);
+	}
+}
+
+
+
