@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.13 $ $Date: 1991-01-31 15:22:48 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1991-03-20 22:53:32 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -304,11 +304,6 @@ struct snd	*sounding;
 			if (val < badthresh && ! end_of_file)
 			{
 			/*
-			 * Change altitude to AGL
-			 */
-				if (fld == f_alt)
-					val -= sounding->sitealt;
-			/*
 			 * Get a new point
 			 */
 				prevpt = dptr[fndx];
@@ -484,11 +479,6 @@ struct snd	*sounding;
 			{
 				val = data[i]->value;
 				data[i] = data[i]->next;
-			/*
-			 * Adjust altitude to MSL
-			 */
-				if (fld == f_alt)
-					val += sounding->sitealt;
 			}
 			else
 				val = 99999.;
@@ -628,11 +618,6 @@ struct snd	*sounding;
 		 */
 			if (val[i] == badval[i])
 				continue;
-		/*
-		 * Convert altitudes to AGL
-		 */
-			if (sounding->fields[i] == f_alt)
-				val[i] -= sounding->sitealt;
 		/*
 		 * Get a new point
 		 */
