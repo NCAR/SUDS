@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.4 $ $Date: 1990-05-07 10:09:29 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1990-05-09 14:16:43 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -227,7 +227,8 @@ xs_put_data ()
  * Fill the cross-section array with data from the chosen soundings
  */
 {
-	int	i, j, snd, pt, npts, ok, ngood;
+	int	i, j, snd, pt, npts, ok, ngood, level;
+	float	zstep, w, fval[VDIM], weight[VDIM], hdis[VDIM];
 	float	*fdata, *sval, *spos;
 	float	*xpos, *ypos, *zpos, *tpos;
 	float	site_alt, plane_ang, val, x, y, dis, hlen, pt_ang;
@@ -244,6 +245,10 @@ xs_put_data ()
  */
 	if (! Time_height)
 		plane_ang = atan2 (Y1 - Y0, X1 - X0);
+/*
+ * Vertical grid spacing
+ */
+	zstep = P_hgt / (float)(VDIM - 1);
 /*
  * Loop through the soundings
  */
@@ -297,7 +302,12 @@ xs_put_data ()
 		else
 			snd_get_data (S_id[snd], fdata, BUFLEN, Fld, BADVAL);
 	/*
-	 * Assign each data point to the closest point on the plane
+	 * Initialize the weight array to zero
+	 */
+		for (i = 0; i < VDIM; i++)
+			weight[i] = 0.0;
+	/*
+	 * Loop through the points
 	 */
 		for (pt = 0; pt < npts; pt++)
 		{
@@ -332,21 +342,41 @@ xs_put_data ()
 		 */
 			xs_extend_trace (hlen, zpos[pt]);
 		/*
-		 * Find the indices of the closest point on the plane
+		 * Find the closest vertical grid level to the z position
+		 * of this point
 		 */
-			i = (int)((HDIM - 1) * hlen / P_len + 0.5);
-			j = (int)((VDIM - 1) * zpos[pt] / P_hgt + 0.5);
+			level = (int)((VDIM - 1) * zpos[pt] / P_hgt + 0.5);
 		/*
-		 * Assign the point on the plane, if the indices are reasonable
-		 * and if this is the closest data point so far to point (i,j)
-		 * in the array
+		 * If the grid level is reasonable, add this point to
+		 * the weighted average for the level
 		 */
-			if (i >= 0 && i < HDIM && j >= 0 && j < VDIM &&
-				(WDATA (i,j) < 0.0 || dis < WDATA (i,j)))
+			if (level >= 0 && level < VDIM)
 			{
-				PDATA (i,j) = fdata[pt];
-				WDATA (i,j) = dis;
+				w = 1.0 - 2.0 * 
+					fabs (zpos[pt] - level*zstep) / zstep;
+
+				fval[level] = (fval[level] * weight[level] +
+					fdata[pt] * w) / (weight[level] + w);
+				hdis[level] = (hdis[level] * weight[level] +
+					hlen * w) / (weight[level] + w);
+				weight[level] += w;
 			}
+		}
+	/*
+	 * Move the weighted averages into the grid
+	 */
+		for (j = 0; j < VDIM; j++)
+		{
+			if (weight[j] == 0.0)
+				continue;
+		/*
+		 * Find our horizontal grid location
+		 */
+			i = (int)((HDIM - 1) * hdis[j] / P_len + 0.5);
+		/*
+		 * Put the value in the grid
+		 */
+			PDATA (i, j) = fval[j];
 		}
 	/*
 	 * Draw the trace for this sounding
