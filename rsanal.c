@@ -2,6 +2,9 @@
  * RSANAL format sounding access
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:16:06  burghart
+ * Initial revision
+ * 
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -32,8 +35,7 @@ struct snd	*sounding;
  * Get the RSANAL format sounding from the given file
  */
 {
-	FILE	*sfile;
-	int	ndx, i, status, start;
+	int	sfile, ndx, i, status, start;
 	struct snd_datum	*dptr[NFLD];
 	float	sitelat, sitelon, sitealt, val[NFLD];
 	char	string[STRSIZE], site[27];
@@ -41,12 +43,14 @@ struct snd	*sounding;
 /*
  * Open the file
  */
-	if ((sfile = fopen (fname, "r")) == 0)
+	if ((sfile = dview (fname)) == 0)
 		ui_error ("Cannot open sounding file '%s'", fname);
 /*
  * Read the header line
  */
-	fgets (string, STRSIZE - 1, sfile);
+	status = dget (sfile, string, STRSIZE);
+	if (status < 0)
+		ui_error ("Cannot read header line");
 /*
  * Read the date and time
  */
@@ -58,11 +62,11 @@ struct snd	*sounding;
 	strncpy (site, string + 10, 26);
 	site[26] = 0;
 	for (i = 25; site[i] == ' '; i--)
-		site[i] = (char *) 0;
+		site[i] = (char) 0;
 
 	sounding->site = (char *) 
 		malloc ((1 + strlen (site)) * sizeof (char));
-	strcat (sounding->site, site);
+	strcpy (sounding->site, site);
 /*
  * Get the station location
  */
@@ -97,12 +101,18 @@ struct snd	*sounding;
 	/*
 	 * Read the next line or do the second half of the previous line
 	 */
-		if (start == 5)
+		if (start == 4)
 			start = 44;
 		else
 		{
-			status = fgets (string, STRSIZE - 1, sfile);
-			if (status == NULL)
+		/*
+		 * read the next record
+		 */
+			status = dget (sfile, string, STRSIZE);
+		/*
+		 * make sure we got something
+		 */
+			if (status < 0)
 				break;
 			start = 4;
 		}
@@ -141,7 +151,7 @@ struct snd	*sounding;
 /*
  * Close the file and return
  */
-	fclose (sfile);
+	dclose (sfile);
 	return;
 }
 
