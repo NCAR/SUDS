@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.20 $ $Date: 1991-03-21 17:08:36 $ $Author: burghart $ 
+ * $Revision: 1.21 $ $Date: 1991-06-10 21:32:07 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -11,17 +11,19 @@
 # include "globals.h"
 # include "fields.h"
 # include "flags.h"
+# include "keywords.h"
 # include "met_formulas.h"
 
 # define R_D	287.
 
 # define DEG_TO_RAD(x)	(0.017453293 * (x))
 # define RAD_TO_DEG(x)	(57.29577951 * (x))
+# define BETWEEN(x,a,b)	((((x)-(a))*((x)-(b))) <= 0)
 
 /*
  * Pressure to use for lifted index calculations
  */
-# define LI_PRES	(Flg_mli ? 400 : 500)
+# define LI_PRES	(Flg_mli ? 400.0 : 500.0)
 
 /*
  * Mean Layer Vector Wind pressure bounds
@@ -29,10 +31,23 @@
 float	Mlvw_bot = 1000.0, Mlvw_top = 700.0;
 
 /*
+ * List of extra stuff to show in analysis
+ */
+# define MAXSHOWLEN	10
+
+struct {
+	fldtype	fld;
+	float	pres;
+} Show_list[MAXSHOWLEN];
+
+int	Show_len = 0;
+
+/*
  * Forward declarations
  */
 float	an_lfc_calc (), an_area (), an_li (), an_li_ref (), an_shear ();
 void	an_surface (), an_printf (), an_do_analysis (), an_mlvw ();
+void	an_set_showlist (), an_show ();
 
 /*
  * Sounding id
@@ -62,9 +77,17 @@ struct ui_command	*cmds;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
+ * Shunt off "analysis show" commands
+ */
+	if (cmds[0].uc_ctype == UTT_KW && UKEY (cmds[0]) == KW_SHOW)
+	{
+		an_set_showlist (++cmds);
+		return (0);
+	}
+/*
  * See if we're writing to a file
  */
-	if (cmds[0].uc_ctype == UTT_KW)
+	if (cmds[0].uc_ctype == UTT_KW && UKEY (cmds[0]) == KW_TO)
 	{
 	/*
 	 * Set the output flag and make sure we look for the sounding name
@@ -149,11 +172,12 @@ struct ui_command	*cmds;
 		w_sat (dp_sfc, p_sfc));
 
 	ref = an_li_ref (p, t, npts);
-	an_printf ("\t %d mb temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, ref);
 	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
 
 	ref = an_li_ref (p, vt, npts);
-	an_printf ("\t %d mb virtual temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("\t %d mb virtual temperature: %.1f K ", (int) LI_PRES, 
+		ref);
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
 		theta_dry (ref, LI_PRES));
 /*
@@ -196,11 +220,12 @@ struct ui_command	*cmds;
 		w_sat (dp_sfc, p_sfc));
 
 	ref = an_li_ref (p, t, npts);
-	an_printf ("\t %d mb temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("\t %d mb temperature: %.1f K ", (int) LI_PRES, ref);
 	an_printf ("(potential temp.: %.1f K)\n", theta_dry (ref, LI_PRES));
 
 	ref = an_li_ref (p, vt, npts);
-	an_printf ("\t %d mb virtual temperature: %.1f K ", LI_PRES, ref);
+	an_printf ("\t %d mb virtual temperature: %.1f K ", (int) LI_PRES, 
+		ref);
 	an_printf ("(virtual potential temp.: %.1f K)\n", 
 		theta_dry (ref, LI_PRES));
 /*
@@ -208,6 +233,10 @@ struct ui_command	*cmds;
  */
 	an_do_analysis (vt + ndx_fore, p + ndx_fore, dp + ndx_fore, 
 		npts - ndx_fore, vt_fore, Forecast_pres, dp_fore);
+/*
+ * Do the show list
+ */
+	an_show ();
 }
 
 
@@ -820,7 +849,7 @@ int	npts;
 	if ((ref = an_li_ref (p, t, npts)) == BADVAL)
 	{
 		an_printf ("\t Cannot find %d mb temp. for lifted index\n", 
-			LI_PRES);
+			(int) LI_PRES);
 		return (BADVAL);
 	}
 
@@ -1082,5 +1111,106 @@ struct ui_command	*cmds;
 {
 	Mlvw_bot = UFLOAT (cmds[0]);
 	Mlvw_top = UFLOAT (cmds[1]);
+}
+
+
+
+
+void
+an_set_showlist (cmds)
+struct ui_command	*cmds;
+/*
+ * Handle the "analyze show" command
+ */
+{
+	int	cmd = 0, listlen = 0;
+
+	while (cmds[cmd].uc_ctype != UTT_END)
+	{
+		Show_list[listlen].fld = fd_num (UPTR (cmds[cmd++]));
+		Show_list[listlen].pres = UFLOAT (cmds[cmd++]);
+		listlen++;
+	}
+
+	Show_len = listlen;
+}
+
+
+
+
+void
+an_show ()
+/*
+ * Show the user-requested stuff
+ */
+{
+	int	npts, i, pt;
+	float	pres[BUFLEN], data[BUFLEN];
+	float	showpres, p_prev, data_prev, val = BADVAL;
+	fldtype	showfld;
+/*
+ * Bail out now if there's nothing to show
+ */
+	if (Show_len == 0)
+		return;
+/*
+ * Loop through the list
+ */
+	an_printf ("USER-REQUESTED VARIABLES: \n");
+
+	npts = snd_get_data (Id_name, pres, BUFLEN, f_pres, BADVAL);
+
+	for (i = 0; i < Show_len; i++)
+	{
+		showfld = Show_list[i].fld;
+		showpres = Show_list[i].pres;
+	/*
+	 * Get the requested field, filling with bad values if necessary
+	 */
+		ERRORCATCH
+			snd_get_data (Id_name, data, BUFLEN, showfld, BADVAL);
+		ON_ERROR
+			for (pt = 0; pt < npts; pt++)
+				data[pt] = BADVAL;
+		ENDCATCH
+	/*
+	 * Find the first good point
+	 */
+		for (pt = 0; pt < npts; pt++)
+			if (pres[pt] != BADVAL && data[pt] != BADVAL)
+				break;
+
+		p_prev = pres[pt];
+		data_prev = data[pt];
+	/*
+	 * Move up until we're straddling the desired pressure
+	 */
+		for (pt++; pt < npts; pt++)
+		{
+			if (pres[pt] == BADVAL || data[pt] == BADVAL)
+				continue;
+
+			if (BETWEEN (showpres, p_prev, pres[pt]))
+				break;
+
+			p_prev = pres[pt];
+			data_prev = data[pt];
+		}
+	/*
+	 * Do the interpolation and spit out the value
+	 */
+		if (pt == npts)
+			an_printf ("\t The %s is BAD at %.0f mb\n", 
+				fd_desc (showfld), showpres);
+		else
+		{
+			val = data_prev + (data[pt] - data_prev) * 
+				(showpres - p_prev) / (pres[pt] - p_prev);
+
+			an_printf ("\t The %s is %.2f %s at %.0f mb\n", 
+				fd_desc (showfld), val, fd_units (showfld),
+				showpres);
+		}
+	}
 }
 
