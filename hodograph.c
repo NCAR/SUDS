@@ -1,7 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.8 $ $Date: 1990-04-02 09:52:07 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-05-10 14:14:04 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -10,6 +10,7 @@
 # include "derive.h"
 # include "color.h"
 # include "fields.h"
+# include "keywords.h"
 
 # define DEG_TO_RAD(x)	((x) * .017453292)
 
@@ -27,6 +28,17 @@ static float	S_width, S_height;
  * Current text position for the bottom and top annotations
  */
 static float	Xtxt_top, Ytxt_top;
+
+/*
+ * Mark increment and top altitude
+ */
+static int	Mark_inc;
+static int	Top_alt;
+
+/*
+ * ``Stepped'' plot?
+ */
+static char	Stepping;
 
 /*
  * Forward declarations
@@ -49,6 +61,37 @@ struct ui_command	*cmds;
 	int	plot_ndx = 0, nplots;
 	overlay ovlist[2];
 	char	*snd_default ();
+/*
+ * Initialize
+ */
+	Mark_inc = 1000;
+	Top_alt = 20000;
+	Stepping = FALSE;
+/*
+ * Handle the qualifiers
+ */
+	for (; cmds[0].uc_ctype == UTT_KW; cmds++)
+	{
+		switch (UKEY (cmds[0]))
+		{
+		    case KW_MARK:
+			cmds++;
+			Mark_inc = (int)(UFLOAT (cmds[0]) * 1000);
+			break;
+		    case KW_STEP:
+			Stepping = TRUE;
+			cmds++;
+			Mark_inc = (int)(UFLOAT (cmds[0]) * 1000);
+			break;
+		    case KW_TOP:
+			cmds++;
+			Top_alt = (int)(UFLOAT (cmds[0]) * 1000);
+			break;
+		    default:
+			ui_error ("BUG! Can't handle keyword %d in hd_plot!",
+				UKEY (cmds[0]));
+		}
+	}
 /*
  * Make sure the graphics stuff is ready
  */
@@ -128,57 +171,67 @@ int	plot_ndx;
  * Draw the actual data part of the hodograph
  */
 {
-	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN];
-	float	u[BUFLEN], v[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
+	float	u[BUFLEN], v[BUFLEN], ustep[BUFLEN], vstep[BUFLEN];
+	float	alt[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
 	float	frac, xmark, ymark;
 	float	snd_s_alt ();
-	int	i, npts, goodpts;
+	int	i, npts, steppts, ndx;
 	int	color = C_DATA1 + plot_ndx;
 	char	string[10];
 /*
  * Grab the data
  */
-	npts = snd_get_data (id_name, wspd, BUFLEN, f_wspd, BADVAL);
-	snd_get_data (id_name, wdir, BUFLEN, f_wdir, BADVAL);
+	npts = snd_get_data (id_name, u, BUFLEN, f_u_wind, BADVAL);
+	snd_get_data (id_name, v, BUFLEN, f_v_wind, BADVAL);
 	snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
-/*
- * Build the u and v arrays from the wind speed and direction
- * and put a mark at every 1km MSL
- */
+
 	site_alt = snd_s_alt (id_name);
-	mark_alt = 1000.0 * ((int) site_alt / 1000 + 1);
-
-	goodpts = 0;
-
+/*
+ * Compress out levels with any bad data
+ */
+	ndx = 0;
 	for (i = 0; i < npts; i++)
 	{
-		if (wspd[i] == BADVAL || wdir[i] == BADVAL)
+		if (u[i] == BADVAL || v[i] == BADVAL || alt[i] == BADVAL)
 			continue;
-	/*
-	 * Break the wind into u and v components and increment the count
-	 */
-		u[goodpts] = wspd[i] * cos (DEG_TO_RAD (270.0 - wdir[i]));
-		v[goodpts] = wspd[i] * sin (DEG_TO_RAD (270.0 - wdir[i]));
-		goodpts++;
-	/*
-	 * Skip altitude stuff if the alt is bad
-	 */
-		if (alt[i] == BADVAL)
-			continue;
+
+		u[ndx] = u[i];
+		v[ndx] = v[i];
+		alt[ndx] = alt[i] + site_alt;	/* Convert to MSL, too */
+		ndx++;
+	}
+
+	npts = ndx;
+/*
+ * If we're doing a stepped plot, start out with the surface winds
+ */
+	if (Stepping)
+	{
+		ustep[0] = u[0];
+		vstep[0] = v[0];
+		steppts = 1;
+	}
+/*
+ * Find the first mark altitude
+ */
+	mark_alt = (float)(Mark_inc) * ((int) site_alt / Mark_inc + 1);
+/*
+ * Put in the altitude marks, and find the plot points if we're doing
+ * a stepped plot
+ */
+	for (i = 1; i < npts && (int) mark_alt <= Top_alt; i++)
+	{
 	/*
 	 * Put in a mark if we passed the mark altitude
 	 */
-		alt[i] += site_alt;
-		if (alt[i] > mark_alt && goodpts > 1)
+		if (alt[i] > mark_alt)
 		{
 		/*
 		 * Interpolate to the mark altitude
 		 */
-			frac = (mark_alt - prev_alt) / (alt[i] - prev_alt);
-			xmark = u[goodpts-2] + 
-				frac * (u[goodpts-1] - u[goodpts-2]);
-			ymark = v[goodpts-2] + 
-				frac * (v[goodpts-1] - v[goodpts-2]);
+			frac = (mark_alt - alt[i-1]) / (alt[i] - alt[i-1]);
+			xmark = u[i-1] + frac * (u[i] - u[i-1]);
+			ymark = v[i-1] + frac * (v[i] - v[i-1]);
 		/*
 		 * Draw the mark
 		 */
@@ -190,27 +243,36 @@ int	plot_ndx;
 				GT_LEFT, GT_CENTER, xmark + 0.02 * W_scale, 
 				ymark, 0.0, string);
 		/*
+		 * Save the point if we're doing a stepped plot
+		 */
+			if (Stepping)
+			{
+				ustep[steppts] = xmark;
+				vstep[steppts] = ymark;
+				steppts++;
+			}
+		/*
 		 * Increment the mark altitude
 		 */
-			mark_alt += 1000.0;
+			mark_alt += (float) Mark_inc;
 		}
-	/*
-	 * Save the last good altitude
-	 */
-		prev_alt = alt[i];
 	}
 /*
  * Draw the hodograph from the u and v arrays we just built
  */
-	G_polyline (Hodo_ov, GPLT_SOLID, color, goodpts, u, v);
+	if (Stepping)
+		G_polyline (Hodo_ov, GPLT_SOLID, color, steppts, ustep, vstep);
+	else
+		G_polyline (Hodo_ov, GPLT_SOLID, color, i - 1, u, v);
 /*
  * Annotate
  */
 	hd_annotate (id_name, color);
 /*
- * Tell edit about this trace
+ * Tell edit about this trace if it's not a stepped plot
  */
-	edit_set_trace (id_name, f_wspd, f_wdir, color);
+	if (! Stepping)
+		edit_set_trace (id_name, f_wspd, f_wdir, color);
 /*
  * Done
  */
