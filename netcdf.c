@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.18 1997-11-19 21:38:15 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.19 1998-02-06 22:57:57 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -83,18 +83,29 @@ struct snd	*sounding;
  * Get the sounding from the given netCDF file
  */
 {
-	int	len, status, ndx, npts, fld, nflds, id;
+	int	len, i, status, ndx, npts, fld, nflds, id;
 	int	v_id[MAXFLDS], dims[MAX_VAR_DIMS], ndims, natts;
         long    zero = 0;
 	long	basetime;
 	float	v, flag[MAXFLDS], *fdata;
-	double	*ddata;
+	double	*ddata, dval;
 	void	*dptr;
-	nc_type	datatype;
+	nc_type	type;
 	char	string[80];
 	struct tm		*t;
 	struct snd_datum	*pt, *prevpt;
 	struct fldmatch	*fm;
+/*
+ * We accept any of a number of different attributes for the site name
+ */
+	char *site_attrs[] = 
+	{
+	    "zebra_platform",
+	    "zeb_platform",
+	    "platform",
+	    "site_name"
+	};
+	int n_site_attrs = sizeof (site_attrs) / sizeof (char*);
 /*
  * Set netCDF errors to non-verbose, non-fatal
  */
@@ -105,20 +116,29 @@ struct snd	*sounding;
 	if ((Sfile = ncopen (fname, NC_NOWRITE)) == -1)
 		ui_error ("Cannot open netCDF file '%s'", fname);
 /*
- * Get the site name attribute in any of four forms: "zebra_platform", 
- * "zeb_platform", "platform", or "site_name".
+ * Go through the attributes named in the site_attrs array, and accept the
+ * first one we find as our site name.
  */
-	if ((ncattget (Sfile, NC_GLOBAL, "zebra_platform",
-		       (void *) string) == -1) &&
-	    (ncattget (Sfile, NC_GLOBAL, "zeb_platform", 
-		       (void *) string) == -1) &&
-	    (ncattget (Sfile, NC_GLOBAL, "platform", (void *) string) == -1) &&
-	    (ncattget (Sfile, NC_GLOBAL, "site_name", (void *) string) == -1))
-		ui_error ("Can't find 'zeb_platform' or 'site_name'!", ncerr);
+	for (i = 0; i < n_site_attrs; i++)
+	{
+	    if (ncattinq (Sfile, NC_GLOBAL, site_attrs[i], &type, &len) == -1)
+		continue;
 
-	sounding->site = (char *) 
-		malloc ((1 + strlen (string)) * sizeof (char));
-	strcpy (sounding->site, string);
+	    ncattget (Sfile, NC_GLOBAL, site_attrs[i], (void*) string);
+
+	    sounding->site = (char*) malloc (1 + len);
+	    strncpy (sounding->site, string, len);
+	    sounding->site[len] = 0;
+	    break;
+	}
+
+	if (i == n_site_attrs)
+	{
+	    char *noname = "(unknown)";
+	    ui_warning ("Can't find a site name.  Using '%s'.", noname);
+	    sounding->site = (char*) malloc (1 + strlen(noname));
+	    strcpy (sounding->site, noname);
+	}
 /*
  * Site lat, lon, alt
  */
@@ -176,13 +196,22 @@ struct snd	*sounding;
 	/*
 	 * Get the missing value flag for this field
 	 */
-		status = ncattget (Sfile, id, "missing_value", 
-				   (void *)(&flag[nflds]));
-		if (status == -1)
+		if (ncattinq (Sfile, id, "missing_value", &type, &len) == -1)
 		{
-			ui_warning ("No missing value flag for %s, using %.1f",
+		    ui_warning ("No missing_value flag for %s, using %.1f",
 				fd_name (sounding->fields[nflds]), NC_BADVAL);
-			flag[nflds] = NC_BADVAL;
+		    flag[nflds] = NC_BADVAL;
+		}
+		else
+		{
+		    if (type == NC_DOUBLE)
+		    {
+			ncattget (Sfile, id, "missing_value", (void *)(&dval));
+			flag[nflds] = (float) dval;
+		    }
+		    else
+			ncattget (Sfile, id, "missing_value", 
+				  (void *)(&flag[nflds]));
 		}
 		
 		nflds++;
@@ -204,16 +233,16 @@ struct snd	*sounding;
 	/*
 	 * We only deal with float or double data, dimensioned only by time...
 	 */
-		status = ncvarinq (Sfile, v_id[fld], NULL, &datatype, &ndims, 
+		status = ncvarinq (Sfile, v_id[fld], NULL, &type, &ndims, 
 				   dims, &natts);
 		if (status == -1 || ndims != 1 ||
-		    (datatype != NC_FLOAT && datatype != NC_DOUBLE))
+		    (type != NC_FLOAT && type != NC_DOUBLE))
 			ui_error ("Dimension or data type problem with '%s'!",
 				  fd_name (sounding->fields[fld]));
 	/*
 	 * Get the data for this field
 	 */
-		dptr = (datatype == NC_FLOAT) ? (void *)fdata : (void *)ddata;
+		dptr = (type == NC_FLOAT) ? (void *)fdata : (void *)ddata;
 		
 		status = ncvarget (Sfile, v_id[fld], &zero, (long *) &npts, 
 				   dptr);
@@ -226,7 +255,7 @@ struct snd	*sounding;
 	 * that none of the data *require* the extra range available in a
 	 * double...)
 	 */
-		if (datatype == NC_DOUBLE)
+		if (type == NC_DOUBLE)
 			for (ndx = 0; ndx < npts; ndx++)
 				fdata[ndx] = ddata[ndx];
 	/*
