@@ -43,11 +43,12 @@
 # define KW_TOP		39
 # define KW_EXTEND	40
 # define KW_CENTER	41
+# define KW_NETCDF	42
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	41
+# define MAXKW	42
 
 /*
  * Threshold criteria keywords
@@ -73,8 +74,9 @@
 # define SFMT_MIST	8
 # define SFMT_GALE	9
 # define SFMT_NMC	10
+# define SFMT_NETCDF	11
 
-# define MAXFMT		10  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		11  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show
