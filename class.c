@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.9 $ $Date: 1990-04-13 15:32:57 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-06-14 14:07:43 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -26,9 +26,20 @@ struct fldmatch	F_match_tbl[] =
 	{f_wdir, "WD", ":d"}, {f_u_wind, "U", ":m/s"}, {f_v_wind, "V", ":m/s"},
 	{f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""}, {f_qrh, "Qh", ""}, 
 	{f_qwind, "Quv", ""}, {f_qu, "Qu", ""}, {f_qv, "Qv", ""}, 
+	{f_rtype, "Rtype", ""}, {f_range, "Rng", ":km"}, 
+	{f_azimuth, "Ang", ":deg"}, {f_dz, "dZ", ":m/s"},
 	{f_null, "", ""}
 };
 
+/*
+ * Forward declarations
+ */
+void	cls_newclass ();
+
+/*
+ * The sounding file
+ */
+static FILE	*Sfile;
 
 
 
@@ -40,7 +51,6 @@ struct snd	*sounding;
  * Get the CLASS sounding from the given file
  */
 {
-	FILE	*sfile;
 	int	i, j, year, month, day, hour, minute, second;
 	int	ndx, npts, n_fld, n_sfc_fld, status, pos, fndx;
 	int	end_of_file = FALSE;
@@ -53,18 +63,39 @@ struct snd	*sounding;
 /*
  * Open the file
  */
-	if ((sfile = fopen (fname, "r")) == 0)
+	if ((Sfile = fopen (fname, "r")) == 0)
 		ui_error ("Cannot open CLASS file '%s'", fname);
 /*
  * Read the location name
- * In reading the location string, we test to see if it was terminated with
- * a comma.  If it wasn't, we assume this is not really a CLASS file.
- * (So far, CLASS files are the only ones with commas in the first line)
+ *
+ * In a kind of klugy way, we attempt to identify the file by one of 
+ * two means:
+ *
+ *	1) If there is a comma delimiter, assume it is an old CLASS format
+ *	   file (before 4/90).  So far, old CLASS is the only format with
+ *	   commas in the first line.
+ *
+ *	2) If the first ten characters are "Data Type:", assume it is
+ *	   a new CLASS format file.
  */
 	pos = 0;
-	while ((character = fgetc (sfile)) != ',' && character != '\n')
+	while ((character = fgetc (Sfile)) != ',' && character != '\n')
+	{
 		string[pos++] = character;
-
+	/*
+	 * If we have the string "Data Type:", this is a new CLASS
+	 * format file, so deal with it elsewhere
+	 */
+		if (pos == 10 && ! strncmp (string, "Data Type:", 10))
+		{
+			cls_newclass (sounding);
+			return;
+		}
+	}
+/*
+ * If the last character was a comma, we have an old CLASS format
+ * file.  Otherwise, this probably isn't a CLASS file at all.
+ */	
 	if (character == ',')
 		string[pos] = (char) 0;
 	else
@@ -72,7 +103,7 @@ struct snd	*sounding;
 /*
  * Read the lon, lat, and alt
  */
-	fscanf (sfile, "%f,%f,%f\n", &(sounding->sitelon), 
+	fscanf (Sfile, "%f,%f,%f\n", &(sounding->sitelon), 
 		&(sounding->sitelat), &(sounding->sitealt));
 
 	sounding->site = (char *) 
@@ -80,7 +111,7 @@ struct snd	*sounding;
 	strcpy (sounding->site, string);
 /*
  * Make sure we got non-zero lat, lon, and alt.  This is here because
- * some old files written by SUDS have these values as zero.
+ * some old files written by SUDS have these values set to zero.
  */
 	if (sounding->sitelon == 0.0 && sounding->sitelat == 0.0)
 	{
@@ -103,7 +134,7 @@ struct snd	*sounding;
 /*
  * Sounding release date and time
  */
-	fscanf (sfile, "%d,%d,%d,%d:%d:%d\n", &year, &month, &day, &hour,
+	fscanf (Sfile, "%d,%d,%d,%d:%d:%d\n", &year, &month, &day, &hour,
 		&minute, &second);
 
 	year -= 1900;	/* ui date stuff puts on 1900 for us */
@@ -112,12 +143,12 @@ struct snd	*sounding;
 /*
  * Comment and number of points
  */
-	fscanf (sfile, "%[^,],%d\n", string, &npts);
+	fscanf (Sfile, "%[^,],%d\n", string, &npts);
 	npts++;		/* Add one for the surface point */
 /*
  * Surface fields
  */
-	fscanf (sfile, "%[^,],", string);
+	fscanf (Sfile, "%[^,],", string);
 
 	character = ' ';
 	for (i = 0; character != '\n'; i++)
@@ -127,7 +158,7 @@ struct snd	*sounding;
 	/*
 	 * Get the field string
 	 */
-		fscanf (sfile, "%[^:,\n]", string);
+		fscanf (Sfile, "%[^:,\n]", string);
 	/*
 	 * Search the fields table for a match
 	 */
@@ -146,14 +177,14 @@ struct snd	*sounding;
 	/*
 	 * Read past the units
 	 */
-		fscanf (sfile, "%[^,\n]", string);
-		character = fgetc (sfile);
+		fscanf (Sfile, "%[^,\n]", string);
+		character = fgetc (Sfile);
 	}
 	n_sfc_fld = i;
 /*
  * Sounding fields
  */
-	fscanf (sfile, "%[^,],", string);
+	fscanf (Sfile, "%[^,],", string);
 	character = ' ';
 	for (i = 0; character != '\n'; i++)
 	{
@@ -162,7 +193,7 @@ struct snd	*sounding;
 	/*
 	 * Get the field string
 	 */
-		fscanf (sfile, "%[^:,\n]", string);
+		fscanf (Sfile, "%[^:,\n]", string);
 	/*
 	 * Search the fields table for a match
 	 */
@@ -181,8 +212,8 @@ struct snd	*sounding;
 	/*
 	 * Read past the units
 	 */
-		fscanf (sfile, "%[^,\n]", string);
-		character = fgetc (sfile);
+		fscanf (Sfile, "%[^,\n]", string);
+		character = fgetc (Sfile);
 	}
 /*
  * Null terminate the fields list
@@ -207,7 +238,7 @@ struct snd	*sounding;
  * Skip ahead 4 lines
  */
 	for (i = 0; i < 4; i++)
-		fgets (string, STRSIZE, sfile);
+		fgets (string, STRSIZE, Sfile);
 /*
  * Initialize the data pointers to null
  */
@@ -244,11 +275,11 @@ struct snd	*sounding;
 		 * Bypass the comma
 		 */
 			if (i > 0)
-				fscanf (sfile, ",");
+				fscanf (Sfile, ",");
 		/*
 		 * Read the value
 		 */
-			status = fscanf (sfile, "%f", &val);
+			status = fscanf (Sfile, "%f", &val);
 			end_of_file = (status == EOF);
 			if (end_of_file && ndx < 1)
 			   ui_error ("Bad data read -- Is this a CLASS file?");
@@ -293,7 +324,7 @@ struct snd	*sounding;
 	/*
 	 * Read the line terminator
 	 */
-		fscanf (sfile, "\n");
+		fscanf (Sfile, "\n");
 	}
 /*
  * Set the max index for these data
@@ -302,7 +333,7 @@ struct snd	*sounding;
 /*
  * Close the file and return
  */
-	fclose (sfile);
+	fclose (Sfile);
 	return;
 }
 
@@ -317,7 +348,6 @@ struct snd	*sounding;
  * Write the given sounding into file 'fname' using the CLASS data format
  */
 {
-	FILE	*sfile;
 	int	i, j, year, month, day, hour, minute, second;
 	int	ndx, nflds, altered = FALSE;
 	long	current_time;
@@ -328,7 +358,7 @@ struct snd	*sounding;
 /*
  * Open the file
  */
-	if ((sfile = fopen (fname, "w")) == 0)
+	if ((Sfile = fopen (fname, "w")) == 0)
 		ui_error ("Cannot create file '%s'", fname);
 /*
  * Copy the site name into a string, replacing commas with spaces
@@ -355,7 +385,7 @@ struct snd	*sounding;
  *	year,month,day,hh:mm:ss
  *	blurb,npts
  */
-	fprintf (sfile, "%s,%.5f,%.5f,%d\n", string, sounding->sitelon,
+	fprintf (Sfile, "%s,%.5f,%.5f,%d\n", string, sounding->sitelon,
 		sounding->sitelat, (int) sounding->sitealt);
 
 	year = 1900 + sounding->rls_time.ds_yymmdd / 10000;
@@ -364,10 +394,10 @@ struct snd	*sounding;
 	hour = sounding->rls_time.ds_hhmmss / 10000;
 	minute = (sounding->rls_time.ds_hhmmss / 100) % 100;
 	second = sounding->rls_time.ds_hhmmss % 100;
-	fprintf (sfile, "%d,%02d,%02d,%02d:%02d:%02d\n", year, month, day, 
+	fprintf (Sfile, "%d,%02d,%02d,%02d:%02d:%02d\n", year, month, day, 
 		hour, minute, second);
 
-	fprintf (sfile, "SUDS edited data,%d\n", sounding->maxndx);
+	fprintf (Sfile, "SUDS edited data,%d\n", sounding->maxndx);
 /*
  * Write the fields and units into a string
  */
@@ -403,17 +433,17 @@ struct snd	*sounding;
 /*
  * Now write two lines with the field names into the output file
  */
-	fprintf (sfile, "SURFACE:%s\n", fldstring);
-	fprintf (sfile, "FLIGHT: %s\n", fldstring);
+	fprintf (Sfile, "SURFACE:%s\n", fldstring);
+	fprintf (Sfile, "FLIGHT: %s\n", fldstring);
 /*
  * Four lines for comments
  */
 	current_time = time (0);
-	fprintf (sfile, "SUDS edited sounding file, created by %s %s",
+	fprintf (Sfile, "SUDS edited sounding file, created by %s %s",
 		getenv ("USER"), ctime (&current_time));
-	fprintf (sfile, "/\n");
-	fprintf (sfile, "/\n");
-	fprintf (sfile, "/\n");
+	fprintf (Sfile, "/\n");
+	fprintf (Sfile, "/\n");
+	fprintf (Sfile, "/\n");
 /*
  * Establish our pointers into the data lists
  */
@@ -452,21 +482,169 @@ struct snd	*sounding;
 		 * for lat and lon only)
 		 */
 			if (fld == f_lat || fld == f_lon)
-				fprintf (sfile, "%.5f", val);
+				fprintf (Sfile, "%.5f", val);
 			else
-				fprintf (sfile, "%.2f", val);
+				fprintf (Sfile, "%.2f", val);
 		/*
 		 * Put in a comma or end the line
 		 */
 			if (nflds - i > 1)
-				fprintf (sfile, ",");
+				fprintf (Sfile, ",");
 			else
-				fprintf (sfile, "\n");
+				fprintf (Sfile, "\n");
 		}
 	}
 /*
  * Close the file
  */
-	fclose (sfile);
+	fclose (Sfile);
 }
 					
+
+
+
+void
+cls_newclass (sounding)
+struct snd	*sounding;
+/*
+ * We have a new CLASS format file opened and the first ten
+ * characters ("Data Type:") have been read already.  Read
+ * the rest and stuff the info into 'sounding'.
+ */
+{
+	char	string[STRSIZE];
+	int	year, month, day, hour, minute, second;
+	int	i, status = 0, ndx;
+	struct snd_datum	*dptr[MAXFLDS], *prevpt;
+	float	val[MAXFLDS], badval[MAXFLDS];
+/*
+ * Ignore the first and second lines
+ */
+	fgets (string, STRSIZE, Sfile);
+	fgets (string, STRSIZE, Sfile);
+/*
+ * Read the third line and strip trailing '\r' and '\n' characters
+ */
+	fgets (string, STRSIZE, Sfile);
+	for (i = strlen (string) - 1; string[i]=='\r' || string[i]=='\n'; i--)
+		string[i] = '\0';
+/*
+ * Build a site name from the third line info
+ */
+	sounding->site = (char *) 
+		malloc ((strlen (string) - 34) * sizeof (char));
+	strcpy (sounding->site, string + 35);
+/*
+ * Get the lon, lat, and alt
+ */
+	fscanf (Sfile, "%[^N]N,%f,%f,%f", string, &sounding->sitelon, 
+		&sounding->sitelat, &sounding->sitealt);
+/*
+ * Sounding release date and time
+ */
+	fscanf (Sfile, "%[^:]:%d,%d,%d,%d:%d:%d", string, &year, &month, 
+		&day, &hour, &minute, &second);
+	year -= 1900;
+
+	sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
+	sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
+/*
+ * Skip the rest of this line and the next ten lines
+ */
+	for (i = 0; i < 11; i++)
+		fgets (string, STRSIZE, Sfile);
+/*
+ * Initialize the data pointers
+ */
+	for (i = 0; i < MAXFLDS; i++)
+		dptr[i] = 0;
+/*
+ * Assign the fields (hard-wired)
+ */
+	sounding->fields[0] = f_time;	sounding->fields[1] = f_pres;
+	sounding->fields[2] = f_temp;	sounding->fields[3] = f_dp;
+	sounding->fields[4] = f_rh;	sounding->fields[5] = f_u_wind;
+	sounding->fields[6] = f_v_wind;	sounding->fields[7] = f_wspd;
+	sounding->fields[8] = f_wdir;	sounding->fields[9] = f_dz;
+	sounding->fields[10] = f_lon;	sounding->fields[11] = f_lat;
+	sounding->fields[12] = f_range;	sounding->fields[13] = f_azimuth;
+	sounding->fields[14] = f_alt;	sounding->fields[15] = f_qpres;
+	sounding->fields[16] = f_qtemp;	sounding->fields[17] = f_qrh;
+	sounding->fields[18] = f_qu;	sounding->fields[19] = f_qv;
+	sounding->fields[20] = f_qwind;	sounding->fields[21] = f_null;
+/*
+ * Bad value flags
+ * We don't use bad value flags for the quality fields (15-20)
+ */
+	badval[0] = 9999.0;	badval[1] = 9999.0;
+	badval[2] = 999.0;	badval[3] = 999.0;
+	badval[4] = 999.0;	badval[5] = 999.0;
+	badval[6] = 999.0;	badval[7] = 999.0;
+	badval[8] = 999.0;	badval[9] = 99.0;
+	badval[10] = 999.0;	badval[11] = 999.0;
+	badval[12] = 999.0;	badval[13] = 999.0;
+	badval[14] = 99999.0;	badval[15] = 32767.0;
+	badval[16] = 32767.0;	badval[17] = 32767.0;
+	badval[18] = 32767.0;	badval[19] = 32767.0;
+	badval[20] = 32767.0;
+/*
+ * Get the data
+ */
+	for (ndx = 0; ; ndx++)
+	{
+	/*
+	 * Read the data values from the next line
+	 */
+		for (i = 0; i < 21 && status != EOF; i++)
+			status = fscanf (Sfile, "%f", &val[i]);
+
+		if (status == EOF || status == 0)
+			break;
+	/*
+	 * Kluge for the ardent:  do a read to get rid of the end-of-line
+	 */
+		fgets (string, STRSIZE, Sfile);
+	/*
+	 * Put the 21 data points into their respective data lists
+	 */
+		for (i = 0; i < 21; i++)
+		{
+		/*
+		 * Don't put bad values in the list
+		 */
+			if (val[i] == badval[i])
+				continue;
+		/*
+		 * Get a new point
+		 */
+			prevpt = dptr[i];
+			dptr[i] = (struct snd_datum *)
+				calloc (1, sizeof (struct snd_datum));
+		/*
+		 * Set the value and the index
+		 */
+			dptr[i]->value = val[i];
+			dptr[i]->index = ndx;
+		/*
+		 * Link the point into the list or make it the head
+		 */
+			if (prevpt)
+			{
+				prevpt->next = dptr[i];
+				dptr[i]->prev = prevpt;
+			}
+			else
+				sounding->dlists[i] = dptr[i];
+		}
+	}
+/*
+ * Set the max index number for the sounding
+ */
+	sounding->maxndx = ndx - 1;
+/*
+ * Close the file and return
+ */
+	fclose (Sfile);
+	return;
+}
+
