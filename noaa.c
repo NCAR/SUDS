@@ -1,7 +1,7 @@
 /*
  * NOAA format sounding access
  *
- * $Revision: 1.3 $ $Date: 1989-08-11 10:56:11 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1989-09-19 16:08:30 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -45,7 +45,7 @@ struct snd	*sounding;
 
 	sounding->site = (char *) malloc (10 * sizeof (char));
 	sounding->site[9] = 0;
-	sprintf (sounding->site, "%.1f,%.1f", xloc, yloc);
+	sprintf (sounding->site, "%.1f %.1f", xloc, yloc);
 /*
  * Finish off the line
  */
