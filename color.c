@@ -1,8 +1,27 @@
 /*
  * Handle initialization and changing of colors
- *
- * $Revision: 1.6 $ $Date: 1990-04-02 09:28:38 $ $Author: burghart $
  */
+/*
+ *		Copyright (C) 1988-91 by UCAR
+ *	University Corporation for Atmospheric Research
+ *		   All rights reserved
+ *
+ * No part of this work covered by the copyrights herein may be reproduced
+ * or used in any form or by any means -- graphic, electronic, or mechanical,
+ * including photocopying, recording, taping, or information storage and
+ * retrieval systems -- without permission of the copyright owner.
+ * 
+ * This software and any accompanying written materials are provided "as is"
+ * without warranty of any kind.  UCAR expressly disclaims all warranties of
+ * any kind, either express or implied, including but not limited to the
+ * implied warranties of merchantibility and fitness for a particular purpose.
+ * UCAR does not indemnify any infringement of copyright, patent, or trademark
+ * through use or modification of this software.  UCAR does not provide 
+ * maintenance or updates for its software.
+ */
+
+static char *rcsid = "$Id: color.c,v 1.7 1991-10-21 21:32:26 burghart Exp $";
+
 # include <stdio.h>
 # include "globals.h"
 # include "color.h"
