@@ -1,7 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.5 $ $Date: 1989-08-23 10:49:17 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-10-09 15:53:37 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -152,47 +152,52 @@ int	plot_ndx;
 
 	for (i = 0; i < npts; i++)
 	{
-		if (wspd[i] == BADVAL || wdir[i] == BADVAL || alt[i] == BADVAL)
+		if (wspd[i] == BADVAL || wdir[i] == BADVAL)
 			continue;
 	/*
-	 * Break the wind into x and y components
+	 * Break the wind into x and y components and increment the count
 	 */
 		x[goodpts] = wspd[i] * cos (DEG_TO_RAD (90.0 - wdir[i]));
 		y[goodpts] = wspd[i] * sin (DEG_TO_RAD (90.0 - wdir[i]));
+		goodpts++;
+	/*
+	 * Skip altitude stuff if the alt is bad
+	 */
+		if (alt[i] == BADVAL)
+			continue;
 	/*
 	 * Put in a mark if we passed the mark altitude
 	 */
 		alt[i] += site_alt;
-		if (alt[i] > mark_alt)
+		if (alt[i] > mark_alt && goodpts > 1)
 		{
 		/*
 		 * Interpolate to the mark altitude
 		 */
 			frac = (mark_alt - prev_alt) / (alt[i] - prev_alt);
-			xmark = x[goodpts - 1] + 
-				frac * (x[goodpts] - x[goodpts - 1]);
-			ymark = y[goodpts - 1] + 
-				frac * (y[goodpts] - y[goodpts - 1]);
+			xmark = x[goodpts-2] + 
+				frac * (x[goodpts-1] - x[goodpts-2]);
+			ymark = y[goodpts-2] + 
+				frac * (y[goodpts-1] - y[goodpts-2]);
 		/*
 		 * Draw the mark
 		 */
-			G_text (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
-				GT_CENTER, GT_CENTER, xmark, ymark, "+");
+			G_write (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
+				GT_CENTER, GT_CENTER, xmark, ymark, 0.0, "+");
 
 			sprintf (string, "%.1f", mark_alt / 1000.0);
-			G_text (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
+			G_write (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
 				GT_LEFT, GT_CENTER, xmark + 0.02 * W_scale, 
-				ymark, string);
+				ymark, 0.0, string);
 		/*
 		 * Increment the mark altitude
 		 */
 			mark_alt += 1000.0;
 		}
 	/*
-	 * Save the last good altitude and increment the count of good points
+	 * Save the last good altitude
 	 */
 		prev_alt = alt[i];
-		goodpts++;
 	}
 /*
  * Draw the hodograph from the x and y arrays we just built
@@ -277,14 +282,14 @@ hd_background ()
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", (int) tick);
-			G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+			G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
 				0.05 * W_scale, GT_CENTER, GT_TOP, 
-				(float) tick, -1.02 * W_scale, string);
+				(float) tick, -1.02 * W_scale, 0.0, string);
 		}
 	}
 
-	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
-		GT_CENTER, GT_TOP, 0.0, -1.1 * W_scale, "X (M/S)");
+	G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
+		GT_CENTER, GT_TOP, 0.0, -1.1 * W_scale, 0.0, "X (M/S)");
 /*
  * Label the vertical axes
  */
@@ -312,16 +317,14 @@ hd_background ()
 		if ((tick % 5) == 0)
 		{
 			sprintf (string, "%d", tick);
-			G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
+			G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 
 				0.05 * W_scale, GT_RIGHT, GT_CENTER, 
-				-1.02 * W_scale, (float) tick, string);
+				-1.02 * W_scale, (float) tick, 0.0, string);
 		}
 	}
 
-	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER, 
-		GT_BOTTOM, -1.15 * W_scale, 0.01 * W_scale, "Y");
-	G_text (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER, 
-		GT_TOP, -1.15 * W_scale, -0.01 * W_scale, "(M/S)");
+	G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER,
+		GT_BOTTOM, -1.1 * W_scale, 0.0, 90.0, "Y (M/S)");
 /*
  * Restore the clipping
  */
@@ -378,8 +381,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Hodo_ov, color, GTF_MINSTROKE, 0.025 * 2 * W_scale, GT_LEFT, 
-		GT_TOP, Xtxt_top, Ytxt_top, string);
+	G_write (Hodo_ov, color, GTF_MINSTROKE, 0.025 * 2 * W_scale, GT_LEFT, 
+		GT_TOP, Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
  */
