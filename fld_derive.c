@@ -20,12 +20,13 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.13 1992-07-30 20:41:10 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.14 1993-04-28 16:19:39 carson Exp $";
 
 # include <math.h>
 # include <varargs.h>
 # include <met_formulas.h>
 # include "fields.h"
+# include "flags.h"
 
 # define TRUE	1
 # define FALSE	0
@@ -116,7 +117,7 @@ fdd_dt_init ()
 	void	fdd_mr (), fdd_u_wind (), fdd_v_wind (), fdd_theta ();
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
 	void	fdd_wdir (), fdd_vt (), fdd_ascent (), fdd_rh ();
-	void	fdd_theta_v ();
+	void	fdd_theta_v (), fdd_ri(), fdd_mflux(), fdd_mflux_uv();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -139,6 +140,9 @@ fdd_dt_init ()
 	fdd_add_derivation (f_ascent, fdd_ascent, 2, f_time, f_alt);
 	fdd_add_derivation (f_rh, fdd_rh, 2, f_temp, f_dp);
 	fdd_add_derivation (f_theta_v, fdd_theta_v, 3, f_temp, f_pres, f_rh);
+	fdd_add_derivation (f_ri, fdd_ri, 4, f_u_wind, f_v_wind, f_theta, f_alt);
+	fdd_add_derivation (f_mflux, fdd_mflux, 2, f_mr, f_wspd);
+	fdd_add_derivation (f_mflux_uv, fdd_mflux_uv, 3, f_mr, f_u_wind, f_v_wind);
 /*
  * Mark the initialization as done
  */
@@ -562,6 +566,95 @@ int	npts;
 			theta = theta_dry (temp[i] + T_K, pres[i]);
 			buf[i] = t_v (theta, pres[i], 
 				0.01 * rh[i] * e_sw (temp[i] + T_K));
+		}
+	}
+}
+
+
+void
+fdd_ri (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * Richardson Number derivation routine
+ */
+{
+	float	*u_wind = dbufs[0], *v_wind = dbufs[1], *theta = dbufs[2];
+	float	*alt = dbufs[3];
+	double	 g, dz, dz2, du2, dtheta, theta_avg;
+	int	i;
+
+	g = 9.81;
+	for (i = 1; i < npts-1; i++)
+	{
+		if (u_wind[i+1] == badval || v_wind[i+1] == badval || 
+		    theta[i+1] == badval  || alt[i+1] == badval ||
+		    u_wind[i-1] == badval || v_wind[i-1] == badval || 
+		    theta[i-1] == badval || alt[i-1] == badval )
+			buf[i] = badval;
+		else
+		{
+			dz = alt[i+1] - alt[i-1];
+			dz2 = dz*dz;
+			du2 =((u_wind[i+1]-u_wind[i-1])*(u_wind[i+1]-u_wind[i-1]) +
+			      (v_wind[i+1]-v_wind[i-1])*(v_wind[i+1]-v_wind[i-1]) ) ;
+			dtheta = (theta[i+1]-theta[i-1]);
+			theta_avg = ((theta[i+1]+theta[i-1])/2.0) ;
+
+			/* This is very sensitive to noisy winds data */
+			buf[i] = du2*theta_avg / (g*dtheta*dz) ;
+		}
+	}
+	buf[0] = badval;
+	buf[npts-1] = badval;
+}
+
+
+void
+fdd_mflux (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * moisture flux derivation routine
+ */
+{
+	float	*mr = dbufs[0], *wspd = dbufs[1];
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (mr[i] == badval || wspd[i] == badval )
+			buf[i] = badval;
+		else
+		{
+			/* Wind speed times the specific humidity */
+			buf[i] = wspd[i] * ( mr[i]/(1.0+mr[i]) );
+		}
+	}
+}
+
+void
+fdd_mflux_uv (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * moisture flux (with respect to u or v) derivation routine
+ */
+{
+	float	*mr = dbufs[0], *u_wind = dbufs[1], *v_wind = dbufs[2];
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (mr[i] == badval || u_wind[i] == badval || v_wind[i] == badval )
+			buf[i] = badval;
+		else
+		{
+			/* Wind speed times the specific humidity */
+			if ( Flg_uwind )
+				buf[i] = u_wind[i] * ( mr[i]/(1.0+mr[i]) );
+			else
+				buf[i] = v_wind[i] * ( mr[i]/(1.0+mr[i]) );
 		}
 	}
 }

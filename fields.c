@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.16 1993-04-08 21:42:07 burghart Exp $";
+static char *rcsid = "$Id: fields.c,v 1.17 1993-04-28 16:18:10 carson Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -32,11 +32,13 @@ static struct
 	char	*aliases[5];
 	float	bot, top;
 	float	center, step;
+	float	ibot, itop, istep, igap;
 } Fnamelist[] =
 {
 	{f_alt, "altitude MSL", "m",
 		{"alt", "altitude", ""},
-		0.0,	16000.0,	0.0,	500.0	},
+		0.0,	16000.0,	0.0,	500.0,
+		1600.0, 16000.0,	50.0,	500.0 	},
 	{f_ascent, "ascent rate", "m/s",
 		{"ascent", "dz/dt", "dz", ""},
 		0.0,	10.0,	0.0,	1.0	},
@@ -57,7 +59,8 @@ static struct
 		0.0,	20.0,	5.0,	1.0	},
 	{f_pres, "pressure", "mb",
 		{"pres", "press", "pressure", ""},
-		1050.0,	100.0,	1000.0,	100.0	},
+		1050.0,	100.0,	1000.0,	100.0,
+		 850.0,  20.0,	 -10.0,	200.0	},
 	{f_qpres, "pressure quality", "",
 		{"qpres", "qp", ""},
 		0.0,	10.0,	0.0,	0.1	},
@@ -129,6 +132,15 @@ static struct
 	{f_qrh, "wind speed", "m/s",
 		{"wspd", ""},
 		0.0,	50.0,	0.0,	5.0	},
+	{f_ri, "Richardson Number", "",
+		{"ri", ""},
+		0.0,    10.0,   0.0,    1.0     },
+	{f_mflux, "moisture flux", "",
+		{"mflx", "mflux", ""},
+		-50.0,  50.0,   0.0,    10.0    },
+	{f_mflux_uv, "moisture flux wrt u or v winds", "",
+		{"mflx_uv", "mflux_uv", ""},
+		-50.0,  50.0,   0.0,    10.0    },
 	{f_null, "null field", "",
 		{""},
 		0.0,	0.0,	0.0,	0.0	}
@@ -288,6 +300,81 @@ fldtype fld;
 }
 
 
+ 
+
+double
+fd_ibot (fld)
+fldtype fld;
+/*
+ * Return the bottom value to use when interpolating the given field
+ */
+{
+        int     i;
+ 
+        for (i = 0; Fnamelist[i].fld != f_null; i++)
+                if (Fnamelist[i].fld == fld)
+                        return ((double) Fnamelist[i].ibot);
+ 
+        ui_error ("Unknown field type %d", fld);
+}
+ 
+ 
+  
+  
+double
+fd_itop (fld)
+fldtype fld;
+/* 
+ * Return the top value to use when interpolating the given field 
+ */ 
+{
+        int     i; 
+  
+        for (i = 0; Fnamelist[i].fld != f_null; i++) 
+                if (Fnamelist[i].fld == fld) 
+                        return ((double) Fnamelist[i].itop); 
+  
+        ui_error ("Unknown field type %d", fld); 
+} 
+ 
+  
+  
+double
+fd_istep (fld)
+fldtype fld;
+/* 
+ * Return the step value to use when interpolating the given field 
+ */ 
+{
+        int     i; 
+  
+        for (i = 0; Fnamelist[i].fld != f_null; i++) 
+                if (Fnamelist[i].fld == fld) 
+                        return ((double) Fnamelist[i].istep); 
+  
+        ui_error ("Unknown field type %d", fld); 
+} 
+ 
+  
+  
+double
+fd_igap (fld)
+fldtype fld;
+/* 
+ * Return the gap detection value to use when interpolating the given field 
+ */ 
+{
+        int     i; 
+  
+        for (i = 0; Fnamelist[i].fld != f_null; i++) 
+                if (Fnamelist[i].fld == fld) 
+                        return ((double) Fnamelist[i].igap); 
+  
+        ui_error ("Unknown field type %d", fld); 
+} 
+
+
+
 
 void
 fd_set_limits (cmds)
@@ -309,6 +396,33 @@ struct ui_command	*cmds;
 			}
 
 	ui_error ("Unknown field '%s'", fname);
+}
+ 
+
+
+
+void
+fd_set_ilimits (cmds)
+struct ui_command       *cmds;
+/*
+ * Change the interpolation limits for a field
+ */
+{
+        int     i, j;
+        char    *fname = UPTR (cmds[0]);
+
+        for (i = 0; Fnamelist[i].fld != f_null; i++)
+                for (j = 0; *Fnamelist[i].aliases[j]; j++)
+                        if (! strcmp (fname, Fnamelist[i].aliases[j]))
+                        {
+                                Fnamelist[i].ibot = UFLOAT (cmds[1]);
+                                Fnamelist[i].itop = UFLOAT (cmds[2]);
+                                Fnamelist[i].istep= UFLOAT (cmds[3]);
+                                Fnamelist[i].igap = UFLOAT (cmds[4]);
+                                return;
+                        }
+ 
+        ui_error ("Unknown field '%s'", fname);
 }
 
 
@@ -347,13 +461,23 @@ fd_show_limits ()
 {
 	int	i;
 
-	ui_nf_printf ("\n     FIELD   BOTTOM      TOP   CENTER     STEP\n");
-	ui_nf_printf ("----------------------------------------------\n");
+	ui_nf_printf ("\n             Plot and Analysis Limits          \
+    Interpolation Limits \n");
+	ui_nf_printf ("     FIELD   BOTTOM      TOP   CENTER     STEP\
+     BOTTOM      TOP   STEP     GAP\n");
+	ui_nf_printf ("----------------------------------------------\
+------------------------------------\n");
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
-		ui_nf_printf ("%10s %8.2f %8.2f %8.2f %8.2f\n", 
+	{
+		ui_nf_printf ("%10s %8.2f %8.2f %8.2f %8.2f   ",
 			Fnamelist[i].aliases[0], Fnamelist[i].bot, 
 			Fnamelist[i].top, Fnamelist[i].center, 
-			Fnamelist[i].step);
+			Fnamelist[i].step );
+		ui_nf_printf("%8.2f %8.2f %7.2f %7.2f\n", 
+			Fnamelist[i].ibot,
+			Fnamelist[i].itop, Fnamelist[i].istep,
+			Fnamelist[i].igap);
+	}
 
 	ui_printf ("\n");
 }
