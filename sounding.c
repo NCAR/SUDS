@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.8 $ $Date: 1990-01-23 09:29:12 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-02-08 15:14:31 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -47,6 +47,7 @@ snd_init ()
 	void	cls_read_file (), jaw_read_file ();
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
+	void	mist_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -71,6 +72,9 @@ snd_init ()
 
 	Read_file[SFMT_NCAR]	= ncar_read_file;
 	Fmt_name[SFMT_NCAR]	= "NCAR mobile";
+
+	Read_file[SFMT_MIST]	= mist_read_file;
+	Fmt_name[SFMT_MIST]	= "MIST";
 
 	Init = TRUE;
 }
@@ -727,15 +731,20 @@ struct ui_command	*cmds;
 			ui_nf_printf ("Format: %s  ", 
 				Fmt_name[sounding->format]);
 		/*
-		 * Site
+		 * Site name
 		 */
 			ui_nf_printf ("Site: %s  ", sounding->site);
-			ui_nf_printf ("Alt: %d m  ", (int) sounding->sitealt);
 		/*
 		 * Time
 		 */
 			ud_format_date (string, &sounding->rls_time, UDF_FULL);
 			ui_nf_printf ("Time: %s\n", string);
+		/*
+		 * Site location
+		 */
+			ui_nf_printf ("Alt: %d m  ", (int) sounding->sitealt);
+			ui_nf_printf ("Lat: %.4f deg.  ", sounding->sitelat);
+			ui_nf_printf ("Lon: %.4f deg.\n", sounding->sitelon);
 		/*
 		 * Fields
 		 */
