@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: flags.h,v 1.6 1992-09-18 16:04:13 carson Exp $
+ * $Id: flags.h,v 1.7 1993-04-28 16:19:21 carson Exp $
  */
 
 # ifndef var
@@ -38,3 +38,8 @@ var char	Flg_vt;		/* Virtual temperature on skew-t plots?	*/
 var char	Flg_hodo_msl;	/* Altitudes MSL in hodographs?	*/
 var char	Flg_barb;	/* Plot wind barbs on skew-t? */
 var char	Flg_logp;	/* Plot log(p) for xyplot and xsect plots */
+var char	Flg_datalim;	/* Use data to define interpolation limits */
+var char	Flg_lsqfit;	/* Use least squares fit for interpolation */
+var char	Flg_annotate;	/* Annotate on xsect plot? */
+var char	Flg_oldCLASS;	/* Write files in old class format? */
+var char	Flg_uwind;	/* Compute moisture flux in u-wind direction */

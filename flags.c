@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: flags.c,v 1.7 1992-09-18 16:09:31 carson Exp $";
+static char *rcsid = "$Id: flags.c,v 1.8 1993-04-28 16:18:56 carson Exp $";
 
 # include "globals.h"
 # include "flags.h"
@@ -57,6 +57,16 @@ struct flgst
 		"Plot wind barbs on skew-t plots"},
 	{ "logp",	&Flg_logp,	FALSE,
 		"Plot Log(P) for xyplot plots"},
+	{ "datalim",	&Flg_datalim,	TRUE,
+		"Use data to define interpolation limits"},
+	{ "lsqfit",	&Flg_lsqfit,	FALSE,
+		"Use least squares fit for interpolation "},
+	{ "xs_annotate",&Flg_annotate,	TRUE,
+		"Annotate on xsect plot "},
+	{ "oldCLASS",	&Flg_oldCLASS,	FALSE,
+		"Write files in old CLASS format "},
+	{ "mflux_u",	&Flg_uwind,	TRUE,
+		"Compute moisture flux in u-wind direction "},
 	{ ___,		___,		___,		___ }
 };
 
