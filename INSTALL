@@ -16,7 +16,12 @@ SUDS Installation
 First, unpack the archive and go to the directory which is
 created:
 
-	$ zcat suds-<version>.tar.gz | tar xvf -
+	For the .gz distribution:
+	$ gunzip -c suds-<version>.tar.gz | tar xvf -
+
+	For the .Z distribution:
+	$ uncompress -c suds-<version>.tar.Z | tar xvf -
+
 	$ cd suds-<version>
 	
 To install under /usr/local, and assuming RDSS libraries are also installed 
