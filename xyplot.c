@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xyplot.c,v 1.4 1992-08-10 15:28:53 burghart Exp $";
+static char *rcsid = "$Id: xyplot.c,v 1.5 1992-08-14 22:08:10 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -103,12 +103,12 @@ struct ui_command	*cmds;
  * Get the two fields and their limits
  */
 	Xfld = fd_num (UPTR (*cmds++));
-	Xmin = fd_bot (Xfld);
-	Xmax = fd_top (Xfld);
+	Xmin = (float) fd_bot (Xfld);
+	Xmax = (float) fd_top (Xfld);
 
 	Yfld = fd_num (UPTR (*cmds++));
-	Ymin = fd_bot (Yfld);
-	Ymax = fd_top (Yfld);
+	Ymin = (float) fd_bot (Yfld);
+	Ymax = (float) fd_top (Yfld);
 /*
  * Set the plot limits and plot the background
  */
