@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.11 1993-06-16 16:24:27 case Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.12 1993-07-06 18:36:28 case Exp $";
 
 # ifdef NETCDF
 
@@ -281,6 +281,9 @@ struct ui_command	*cmds;
 	char	string[80];
 	fldtype	fld, nc_fld;
 	struct snd_datum	*data[MAXFLDS];
+#ifdef SVR4
+        char tz[20];
+#endif
 /*
  * Get the filename then the sounding name
  */
@@ -434,11 +437,21 @@ struct ui_command	*cmds;
 	t.tm_hour = sounding.rls_time.ds_hhmmss / 10000;
 	t.tm_min = (sounding.rls_time.ds_hhmmss / 100) % 100;
 	t.tm_sec = sounding.rls_time.ds_hhmmss % 100;
+#ifndef SVR4
 	t.tm_gmtoff = 0;
 	t.tm_zone = (char *) 0;
 	t.tm_wday = t.tm_isdst = t.tm_yday = 0;
-
 	base_time = timegm (&t) + offset * 3600;
+#else
+        strcpy (tz, "TZ=GMT");
+        putenv (tz);
+        timezone = 0;
+        altzone = 0;
+        daylight = 0;
+        t.tm_wday = t.tm_yday = 0;
+        t.tm_isdst = -1;
+        base_time = (long) mktime (&t) + offset * 3600;
+#endif
 	ncvarput1 (Sfile, v_base, 0, &base_time);
 /*
  * If we don't have an offset time field, put in zeros now
