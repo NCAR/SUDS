@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.3 $ $Date: 1989-09-05 17:01:58 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1989-09-21 13:34:40 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -124,7 +124,8 @@ static struct
 /*
  * Forward declarations
  */
-void	edit_p_add (), edit_draw (), edit_cursor (), edit_unpoint ();
+void	edit_saveloc (), edit_show_region (), edit_draw_cursor ();
+void	edit_unpoint ();
 
 
 
@@ -177,13 +178,13 @@ struct ui_command	*cmds;
 	 * physical cursor position
 	 */
 		if (pt->index == E_datum->index)
-			edit_p_add (E_datum, pt);
+			edit_saveloc (E_datum, pt);
 	}
 /*
  * Redraw the physical cursor and the edit region
  */
-	edit_cursor ();
-	edit_draw ();
+	edit_show_region ();
+	edit_draw_cursor ();
 /*
  * Done
  */
@@ -241,13 +242,13 @@ struct ui_command	*cmds;
 	 * physical cursor position
 	 */
 		if (pt->index == E_datum->index)
-			edit_p_add (E_datum, pt);
+			edit_saveloc (E_datum, pt);
 	}
 /*
  * Redraw the physical cursor and the edit region
  */
-	edit_cursor ();
-	edit_draw ();
+	edit_show_region ();
+	edit_draw_cursor ();
 /*
  * Done
  */
@@ -257,10 +258,10 @@ struct ui_command	*cmds;
 
 
 void
-edit_p_add (primary, secondary)
+edit_saveloc (primary, secondary)
 struct snd_datum	*primary, *secondary;
 /*
- * Move the physical cursor
+ * Save the physical cursor location
  */
 {
 	int	old_dis, new_dis;
@@ -324,7 +325,7 @@ struct snd_datum	*primary, *secondary;
 	 * If we're going back through the mark, draw now
 	 */
 		if (! E_region.current)
-			edit_draw ();
+			edit_show_region ();
 	}
 /*
  * Done
@@ -335,7 +336,7 @@ struct snd_datum	*primary, *secondary;
 
 
 void
-edit_draw ()
+edit_show_region ()
 /*
  * Highlight the trace between the mark point and the current pointer
  * position.
@@ -343,9 +344,10 @@ edit_draw ()
 {
 	int	offset, color, npts;
 /*
- * If the edit field isn't in the current plot, just return
+ * If the edit field isn't in the current plot or if the mark
+ * has not been set, just return
  */
-	if (Etrace < 0)
+	if (Etrace < 0 || !E_region.mark)
 		return;
 /*
  * Different actions based on whether we increased or decreased the edit
@@ -393,15 +395,14 @@ struct ui_command	*cmds;
  */
 {
 	int	i;
-	char	*id_name, *fname;
+	char	*id_name;
 	fldtype	fld;
 	struct snd_datum	*x_pt, *y_pt, *snd_data_ptr ();
 	char	*snd_default ();
 /*
  * Get the field
  */
-	fname = UPTR (cmds[0]);
-	fld = fd_num (fname);
+	fld = fd_num (UPTR (cmds[0]));
 /*
  * Get the sounding name (or the default if none was specified)
  */
@@ -497,10 +498,6 @@ struct ui_command	*cmds;
 			Cursor_sec = Cursor_sec->next;
 	}
 /*
- * Our cursor pointers are correct, put up the cursor
- */
-	edit_cursor ();
-/*
  * Forget the old edit region
  */
 	E_region.mark = 0;
@@ -512,6 +509,10 @@ struct ui_command	*cmds;
 		else
 			G_clear (E_region.ov);
 	}
+/*
+ * Our cursor pointers are correct, put up the cursor
+ */
+	edit_draw_cursor ();
 }
 
 
@@ -861,7 +862,7 @@ struct ui_command	*cmds;
  * Make sure the cursor moves if necessary
  */
 	if (E_datum == Cursor_pri)
-		edit_cursor ();
+		edit_draw_cursor ();
 /*
  * Done
  */
@@ -989,7 +990,7 @@ edit_examine ()
 
 
 void
-edit_cursor ()
+edit_draw_cursor ()
 /*
  * Put the cursor based on the current Cursor_pri and Cursor_sec
  */
@@ -1309,4 +1310,92 @@ char	*id_name;
  * Done
  */
 	return;
+}
+
+
+
+
+void
+edit_insert (cmds)
+struct ui_command	*cmds;
+/*
+ * Handle the INSERT command
+ */
+{
+	int	newindex, i, nfld = 0;
+	struct snd_datum	*datum, *prev, *new;
+	float	*vals;
+	fldtype *flds;
+/*
+ * Get the index for the new point, depending on whether we're inserting 
+ * above or below
+ */
+	newindex = E_datum->index;
+	if (UKEY (cmds[0]) == KW_ABOVE)
+		newindex++;
+/*
+ * Fields and values to insert
+ */
+	for (i = 1; cmds[i].uc_ctype != UTT_END; i += 2)
+		nfld++;
+
+	flds = (fldtype *) malloc (nfld * sizeof (fldtype));
+	vals = (float *) malloc (nfld * sizeof (float));
+
+	for (i = 0; i < nfld; i++)
+	{
+		flds[i] = fd_num (UPTR (cmds[2*i + 1]));
+		vals[i] = UFLOAT (cmds[2*i + 2]);
+	}
+/*
+ * Open up a space for the new index in the data lists
+ */
+	snd_bump_indices (Eid, newindex);
+/*
+ * Loop through the fields being inserted
+ */
+	for (i = 0; i < nfld; i++)
+	{
+	/*
+	 * Get the data pointer for this field
+	 */
+		datum = (struct snd_datum *) snd_data_ptr (Eid, flds[i]);
+	/*
+	 * Find the points to insert between
+	 */
+		prev = (struct snd_datum *) 0;
+
+		while (datum && datum->index < newindex)
+		{
+			prev = datum;
+			datum = datum->next;
+		}
+	/*
+	 * Create the new datum
+	 */
+		new = (struct snd_datum *) malloc (sizeof (struct snd_datum));
+		new->index = newindex;
+		new->value = vals[i];
+		new->prev = prev;
+		new->next = datum;
+	/*
+	 * Insert it into the linked list
+	 */
+		if (prev)
+			prev->next = new;
+		else
+			snd_head (Eid, flds[i], new);
+
+		if (datum)
+			datum->prev = new;
+	}
+/*
+ * Redraw the last plot if necessary
+ */
+	if (Etrace >= 0)
+	{
+		Replot = TRUE;
+		(*Lastplot.plot) (Lastplot.cmds);
+		Replot = FALSE;
+	}
 }
