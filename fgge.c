@@ -1,7 +1,7 @@
 /*
  * FGGE format sounding access
  *
- * $Revision: 1.3 $ $Date: 1989-08-11 10:49:23 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1990-02-08 15:02:08 $ $Author: burghart $
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -33,7 +33,7 @@ struct snd	*sounding;
 	FILE	*sfile;
 	int	ndx, start[NFLD], flen[NFLD], i;
 	struct snd_datum	*dptr[NFLD];
-	float	sitelat, sitelon, val[NFLD];
+	float	val[NFLD];
 	char	string[STRSIZE], site[10], *status;
 	void	fgge_insert_data ();
 /*
@@ -57,13 +57,13 @@ struct snd	*sounding;
  */
 	sounding->sitealt = fgge_int_extract (string, 13, 5) / 10.0;
 
-	sitelat = fgge_int_extract (string, 18, 4) / 100.0;
+	sounding->sitelat = fgge_int_extract (string, 18, 4) / 100.0;
 	if (string[22] == 'S')
-		sitelat *= -1.0;
+		sounding->sitelat *= -1.0;
 
-	sitelon = fgge_int_extract (string, 23, 5) / 100.0;
+	sounding->sitelon = fgge_int_extract (string, 23, 5) / 100.0;
 	if (string[28] == 'W')
-		sitelon *= -1.0;
+		sounding->sitelon *= -1.0;
 /*
  * Get the date and time
  */
