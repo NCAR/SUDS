@@ -2,6 +2,9 @@
  * Hodograph plotting module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  89/08/02  14:39:11  burghart
+ * Made changes to deal with new color handling (#def's in color.h changed)
+ * 
  * Revision 1.2  89/07/11  14:51:44  burghart
  * All annotation now uses GTF_MINSTROKE font
  * 
@@ -56,7 +59,7 @@ struct ui_command	*cmds;
  */
 {
 	char	*id_name;
-	int	i, plot_ndx = 0, nplots;
+	int	plot_ndx = 0, nplots;
 	overlay ovlist[2];
 	char	*snd_default ();
 /*
@@ -139,7 +142,7 @@ int	plot_ndx;
  */
 {
 	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN];
-	float	x[BUFLEN], y[BUFLEN], mark_alt, site_alt, prev_alt;
+	float	x[BUFLEN], y[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
 	float	frac, xmark, ymark;
 	float	snd_s_alt ();
 	int	i, npts, goodpts;
@@ -510,6 +513,3 @@ int	plot_ndx;
 	strcat (string, ")");
 	hd_top_text (string, H_color[plot_ndx], FALSE);
 }
-
-
-

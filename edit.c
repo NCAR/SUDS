@@ -1,7 +1,8 @@
 /*
  * Editing routines
  * 
- * $Log: not supported by cvs2svn $
+ * $Revision: 1.2 $ $Date: 1989-08-11 10:47:26 $ $Author: burghart $
+ * 
  */
 # include <math.h>
 # include "globals.h"
@@ -340,7 +341,7 @@ edit_draw ()
  * position.
  */
 {
-	int	i, offset, color, npts;
+	int	offset, color, npts;
 /*
  * If the edit field isn't in the current plot, just return
  */
@@ -770,7 +771,6 @@ edit_erase ()
 {
 	struct ui_command	cmd;
 	struct snd_datum		*erasept;
-	int	movemark;
 /*
  * Make sure a SELECT has been done
  */
@@ -877,7 +877,7 @@ edit_examine ()
  */
 {
 	int	i, n_prev = 0;
-	struct snd_datum	*pri = E_datum, *sec, *start_x, *start_y;
+	struct snd_datum	*pri = E_datum, *sec;
 	struct snd_datum	*snd_data_ptr ();
 	fldtype	secfld;
 	char	*fd_name ();
@@ -1091,7 +1091,7 @@ struct ui_command	*cmds;
 	char	*id_name;
 	char	*snd_default ();
 	fldtype	targetfld, threshfld;
-	int	criterion, ndx, npts, i;
+	int	criterion, ndx, i;
 	float	compare_val;
 	struct snd_datum	*target, *thresh, *nexttarget;
 	struct snd_datum	*snd_data_ptr ();
@@ -1232,7 +1232,6 @@ fldtype	fld;
  * or the last point in the sounding, if there is no next datum.
  */
 {
-	struct snd_datum	*next = pt->next;
 	int	moveptr = (pt == E_datum);
 
 	if (! pt->prev && ! pt->next)

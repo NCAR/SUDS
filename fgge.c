@@ -1,7 +1,7 @@
 /*
  * FGGE format sounding access
  *
- * $Revision: 1.2 $ $Date: 1989-07-26 15:56:41 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1989-08-11 10:49:23 $ $Author: burghart $
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -31,10 +31,10 @@ struct snd	*sounding;
  */
 {
 	FILE	*sfile;
-	int	stn_num, ndx, start[NFLD], flen[NFLD], i, status;
+	int	ndx, start[NFLD], flen[NFLD], i;
 	struct snd_datum	*dptr[NFLD];
-	float	sitelat, sitelon, sitealt, val[NFLD];
-	char	string[STRSIZE], site[10];
+	float	sitelat, sitelon, val[NFLD];
+	char	string[STRSIZE], site[10], *status;
 	void	fgge_insert_data ();
 /*
  * Open the file
