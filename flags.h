@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: flags.h,v 1.4 1991-10-30 21:32:09 burghart Exp $
+ * $Id: flags.h,v 1.5 1992-08-05 19:05:56 burghart Exp $
  */
 
 # ifndef var
@@ -35,3 +35,4 @@ var char	Flg_winds;	/* Winds in skew-t plot?	*/
 var char	Flg_lift;	/* Show the lifted parcel?	*/
 var char	Flg_theta_w;	/* Theta_w on skew-t plots?	*/
 var char	Flg_vt;		/* Virtual temperature on skew-t plots?	*/
+var char	Flg_hodo_msl;	/* Altitudes MSL in hodographs?	*/

@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: flags.c,v 1.5 1992-05-05 21:04:42 burghart Exp $";
+static char *rcsid = "$Id: flags.c,v 1.6 1992-08-05 19:05:44 burghart Exp $";
 
 # include "globals.h"
 # include "flags.h"
@@ -51,6 +51,8 @@ struct flgst
 		"Use equivalent wet-bulb temperature on skew-t"},
 	{ "vt",		&Flg_vt,	FALSE,
 		"Use virtual temperature for analysis and skew-t"},
+	{ "hodo_msl",	&Flg_hodo_msl,	TRUE,
+		"Use MSL altitudes for hodographs"},
 	{ ___,		___,		___,		___ }
 };
 
