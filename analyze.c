@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.15 $ $Date: 1990-11-01 13:23:03 $ $Author: burghart $ 
+ * $Revision: 1.16 $ $Date: 1990-11-01 15:31:58 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -425,6 +425,8 @@ int	npts;
  * Bulk Richardson number
  */
 	shear = an_shear ();
+	an_printf ("\t Shear over lowest 6km: %.1f m/s\n", shear);
+
 	if (shear != 0.0)
 		an_printf ("\t Bulk Richardson number: %.1f\n", 
 			2.0 * R_D * area_pos / (shear * shear));
