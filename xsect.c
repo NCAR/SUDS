@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.1 $ $Date: 1990-01-23 13:46:12 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-02-07 09:01:12 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -446,7 +446,6 @@ xs_ov_check ()
  * current workstation
  */
 {
-	int	xres, yres;
 /*
  * Do we have an overlay for the background?
  */
@@ -473,7 +472,6 @@ xs_background ()
 	float	x[5], y[5], tick, tickinc, lat, lon, lolim, hilim, charsize;
 	char	string[80], ctime0[20], ctime1[20];
 	int	i, dolabel, seconds;
-	int	lat_deg, lat_min, lat_sec, lon_deg, lon_min, lon_sec;
 	char	*snd_site ();
 	date	sdate, del_time, end_time, snd_time ();
 
@@ -834,11 +832,16 @@ xs_time_height ()
 {
 	int	snd, sec_delta, pt, npts;
 	float	*tdata;
-	date	stime, diff, latest = {0, 0}, earliest = {99991231, 235959};
+	date	stime, diff, latest, earliest;
 	date	snd_time ();
 /*
  * Find the earliest and latest times from all of the soundings used
  */
+	earliest.ds_yymmdd = 99991231;
+	earliest.ds_hhmmss = 235959;
+	latest.ds_yymmdd = 0;
+	latest.ds_hhmmss = 0;
+
 	for (snd = 0; snd < Nsnd; snd++)
 	{
 		stime = snd_time (S_id[snd]);
