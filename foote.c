@@ -20,8 +20,9 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: foote.c,v 1.19 1992-08-10 15:28:12 burghart Exp $";
+static char *rcsid = "$Id: foote.c,v 1.20 1993-09-16 21:47:24 case Exp $";
 
+# include <math.h>
 # include <ui_param.h>
 # include <ui_date.h>
 # include <met_formulas.h>
