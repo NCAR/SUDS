@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.20 1992-04-09 21:58:10 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.21 1993-02-18 17:58:40 burghart Exp $";
 
 # include <stdio.h>
 # include <errno.h>
@@ -581,8 +581,8 @@ struct snd	*sounding;
 /*
  * Get the lon, lat, and alt
  */
-	fscanf (Sfile, "%[^N]N,%f,%f,%f", string, &sounding->sitelon, 
-		&sounding->sitelat, &sounding->sitealt);
+	fscanf (Sfile, "%[^:]:%[^,],%[^,],%f,%f,%f", string, string, string,
+		&sounding->sitelon, &sounding->sitelat, &sounding->sitealt);
 /*
  * Sounding release date and time
  */
