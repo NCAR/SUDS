@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.22 1992-12-11 21:30:24 case Exp $";
+static char *rcsid = "$Id: suds.c,v 1.23 1993-04-08 21:44:53 burghart Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -214,7 +214,7 @@ main_cmd_init ()
 	void	ft_plot (), hd_plot (), color_change (), edit_insert ();
 	void	xs_xsect (), cvt_origin (), fd_set_limits (), edit_extend ();
 	void	nc_write_file (), main_forecast (), an_mlvw_limits ();
-	void	xy_plot (), fd_set_conlimits ();
+	void	xy_plot (), fd_set_conlimits (), an_mix_depth ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -248,6 +248,7 @@ main_cmd_init ()
 	Cmd_routine[KW_MLVW]		= an_mlvw_limits;
 	Cmd_routine[KW_XYPLOT]		= xy_plot;
 	Cmd_routine[KW_CONLIMITS]	= fd_set_conlimits;
+	Cmd_routine[KW_MIXDEPTH]	= an_mix_depth;
 }
 
 

@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.6 1993-01-15 18:09:24 case Exp $
+ * $Id: suds.state,v 1.7 1993-04-08 21:45:07 burghart Exp $
  */
 
 # include "keywords.h"
@@ -135,6 +135,9 @@ define state suds-initial
 	endinput
 	input 'xyplot' KW_XYPLOT
 		next xy-xfld
+	endinput
+	input 'mixdepth' KW_MIXDEPTH
+		next ust$final_real
 	endinput
 
 	input 'copyright' KW_COPYRIGHT
