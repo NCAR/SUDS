@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.11 $ $Date: 1990-11-26 11:11:21 $ $Author: burghart $
+ * $Revision: 1.12 $ $Date: 1991-01-07 15:14:40 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -20,14 +20,29 @@ struct fldmatch
 
 struct fldmatch	F_match_tbl[] =
 {
-	{f_time, "Tim", ":s"}, {f_lat, "Lat", ":d"}, {f_lon, "Lon", ":d"},
-	{f_alt, "Alt", ":m"}, {f_pres, "Prs", ":mb"}, {f_temp, "Tmp", ":C"},
-	{f_dp, "Dpt", ":C"}, {f_rh, "RH", ":%"}, {f_wspd, "WS", ":m/s"},
-	{f_wdir, "WD", ":d"}, {f_u_wind, "U", ":m/s"}, {f_v_wind, "V", ":m/s"},
-	{f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""}, {f_qrh, "Qh", ""}, 
-	{f_qwind, "Quv", ""}, {f_qu, "Qu", ""}, {f_qv, "Qv", ""}, 
-	{f_rtype, "Rtype", ""}, {f_dz, "dZ", ":m/s"}, {f_mr, "MR", ":g/kg"},
-	{f_azimuth, "Ang", ":deg"}, {f_range, "Rng", ":km"}, 
+	{f_time, "Tim", ":s"}, 
+	{f_lat, "Lat", ":d"}, 
+	{f_lon, "Lon", ":d"},
+	{f_alt, "Alt", ":m"}, 
+	{f_pres, "Prs", ":mb"}, 
+	{f_temp, "Tmp", ":C"},
+	{f_dp, "Dpt", ":C"}, 
+	{f_rh, "RH", ":%"}, 
+	{f_wspd, "WS", ":m/s"},
+	{f_wdir, "WD", ":d"}, 
+	{f_u_wind, "U", ":m/s"}, 
+	{f_v_wind, "V", ":m/s"},
+	{f_qpres, "Qp", ""}, 
+	{f_qtemp, "Qt", ""}, 
+	{f_qrh, "Qh", ""}, 
+	{f_qwind, "Quv", ""}, 
+	{f_qu, "Qu", ""}, 
+	{f_qv, "Qv", ""}, 
+	{f_rtype, "Rtype", ""}, 
+	{f_dz, "dZ", ":m/s"}, 
+	{f_mr, "MR", ":g/kg"},
+	{f_azimuth, "Ang", ":deg"}, 
+	{f_range, "Rng", ":km"}, 
 	{f_null, "", ""}
 };
 
@@ -512,7 +527,7 @@ struct snd	*sounding;
  * the rest and stuff the info into 'sounding'.
  */
 {
-	char	string[STRSIZE];
+	char	string[STRSIZE], c;
 	int	year, month, day, hour, minute, second;
 	int	i, status = 0, ndx;
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
@@ -593,17 +608,16 @@ struct snd	*sounding;
 	for (ndx = 0; ; ndx++)
 	{
 	/*
-	 * Read the data values from the next line
+	 * Read the data values from the next line.  (we need the %c here 
+	 * because the fields are sometimes delimited with commas, sometimes 
+	 * with spaces.  Explicitly reading a character gets us past either 
+	 * way.)
 	 */
 		for (i = 0; i < 21 && status != EOF; i++)
-			status = fscanf (Sfile, "%f", &val[i]);
+			status = fscanf (Sfile, "%f%c", &val[i], &c);
 
 		if (status == EOF || status == 0)
 			break;
-	/*
-	 * Kluge for the ardent:  do a read to get rid of the end-of-line
-	 */
-		fgets (string, STRSIZE, Sfile);
 	/*
 	 * Put the 21 data points into their respective data lists
 	 */
