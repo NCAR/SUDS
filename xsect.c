@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.19 1992-08-10 16:14:57 burghart Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.20 1992-08-14 22:07:24 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -188,8 +188,8 @@ struct ui_command	*cmds;
 /*
  * Get the vertical limits
  */
-	P_bot = fd_bot (vfld);
-	P_hgt = fd_top (vfld) - P_bot;
+	P_bot = (float) fd_bot (vfld);
+	P_hgt = (float) fd_top (vfld) - P_bot;
 /*
  * If we're using altitude, convert to km
  */
@@ -268,7 +268,7 @@ struct ui_command	*cmds;
  */
 	contour_init (C_DATA5, 9, C_BG1, TRUE, BADVAL);
 	contour (Plane, HDIM, VDIM, Xs_ov, 0.0, 0.0, P_len, P_hgt, 
-		fd_center (Fld), fd_step (Fld));
+		(float) fd_center (Fld), (float) fd_step (Fld));
 /*
  * Update the display
  */
