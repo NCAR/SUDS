@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.18 $ $Date: 1990-11-06 14:42:54 $ $Author: burghart $ 
+ * $Revision: 1.19 $ $Date: 1991-01-16 21:38:07 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -11,7 +11,7 @@
 # include "globals.h"
 # include "fields.h"
 # include "flags.h"
-# include "derive.h"
+# include "met_formulas.h"
 
 # define R_D	287.
 

@@ -1,13 +1,13 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.10 $ $Date: 1990-12-11 16:41:01 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1991-01-16 21:39:09 $ $Author: burghart $
  * 
  */
 # include <math.h>
 # include "globals.h"
 # include "keywords.h"
-# include "derive.h"
+# include "met_formulas.h"
 # include "color.h"
 # include "sounding.h"
 

@@ -1,14 +1,14 @@
 /*
  * NCAR format sounding access
  *
- * $Revision: 1.2 $ $Date: 1989-12-18 15:10:17 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1991-01-16 21:40:40 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
 # include <math.h>
 # include <ui_param.h>
 # include "sounding.h"
-# include "derive.h"
+# include "met_formulas.h"
 
 # define R_D	287.
 # define G_0	9.80665

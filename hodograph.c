@@ -1,14 +1,14 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.10 $ $Date: 1990-10-26 10:29:36 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1991-01-16 21:39:47 $ $Author: burghart $
  * 
  */
 # include <math.h>
 # include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
-# include "derive.h"
+# include "met_formulas.h"
 # include "color.h"
 # include "fields.h"
 # include "keywords.h"

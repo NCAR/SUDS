@@ -1,13 +1,13 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.14 $ $Date: 1990-11-05 11:19:19 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1991-01-16 21:39:32 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
-# include "derive.h"
+# include "met_formulas.h"
 # include "color.h"
 # include "fields.h"
 # include "flags.h"

@@ -1,13 +1,13 @@
 /*
  * JAWS format sounding access
  *
- * $Revision: 1.3 $ $Date: 1989-12-18 14:44:42 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1991-01-16 21:40:06 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
 # include <ui_param.h>
 # include "sounding.h"
-# include "derive.h"
+# include "met_formulas.h"
 
 # define T_K	273.15
 
