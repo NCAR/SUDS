@@ -1,9 +1,7 @@
 /*
  * NOAA format sounding access
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  89/03/16  15:15:31  burghart
- * Initial revision
+ * $Revision: 1.3 $ $Date: 1989-08-11 10:56:11 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
