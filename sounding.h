@@ -2,6 +2,9 @@
  * Sounding structure definitions
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:16:51  burghart
+ * Initial revision
+ * 
  */
 # include <ui_param.h>		/* for the date stuff */
 # include "fields.h"
@@ -19,6 +22,8 @@ struct snd
 	date	rls_time;
 	char	*site;
 	float	sitealt;
+	float	sitelat;
+	float	sitelon;
 	int	maxndx;
 	fldtype	fields[MAXFLDS];
 	struct snd_datum	*dlists[MAXFLDS];
