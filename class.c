@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.17 1991-10-21 21:31:46 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.18 1991-12-05 22:26:21 burghart Exp $";
 
 # include <stdio.h>
 # include <ui_param.h>
@@ -738,6 +738,13 @@ struct snd	*sounding;
 		 */
 			if (val[i] == badval[i])
 				continue;
+		/*
+		 * KLUGE: U. of Lowell soundings have wspd in knots, even
+		 * though the header says m/s.  U and v are actually reported
+		 * in m/s, though.  Go figure.
+		 */
+			if (Lowell && sounding->fields[i] == f_wspd)
+				val[i] *= 0.514791;
 		/*
 		 * Get a new point
 		 */
