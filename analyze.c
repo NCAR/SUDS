@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.27 1992-07-21 22:22:34 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.28 1992-08-07 17:38:19 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -258,7 +258,7 @@ struct ui_command	*cmds;
 			Forecast_pres, dp_fore);
 	else
 		an_do_analysis (t + t_ndx_fore, p + t_ndx_fore, 
-			dp + t_ndx_fore, npts - t_ndx_fore, vt_fore, 
+			dp + t_ndx_fore, npts - t_ndx_fore, t_fore, 
 			Forecast_pres, dp_fore);
 /*
  * Do the show list
@@ -740,8 +740,9 @@ int	npts;
  * the mean potential temperature for the lowest 50 mb of the sounding.
  */
 {
-	int	i = 0, mr_count = 0, theta_count = 0;
-	float	mr_sum = 0.0, mr, theta_sum = 0.0, theta, p_top;
+	int	i = 0;
+	float	mr_sum = 0.0, theta_sum = 0.0, p_top, frac, delta;
+	float	pres, pres_prev, theta, theta_prev, mr, mr_prev;
 /*
  * Find the lowest point with good values in all three fields; this
  * will be our surface point.
@@ -752,11 +753,15 @@ int	npts;
 
 	*p_sfc = p[i];
 /*
- * Average the mixing ratio and theta over the lowest 50 mb
+ * Numeric integration to average mixing ratio and theta over the lowest 50 mb
  */
-	p_top = *p_sfc - 50.0;
+	p_top = p[i] - 50.0;
 
-	for (; (p[i] > p_top || p[i] == BADVAL) && i < npts; i++)
+	pres_prev = p[i];
+	theta_prev = theta_dry (t[i], p[i]);
+	mr_prev = w_sat (dp[i], p[i]);
+
+	for (; i < npts; i++)
 	{
 	/*
 	 * Don't try to use bad values
@@ -764,34 +769,52 @@ int	npts;
 		if (p[i] == BADVAL || dp[i] == BADVAL || t[i] == BADVAL)
 			continue;
 	/*
-	 * Find the mixing ratio and theta and increment our sums
+	 * Save the values at this level
 	 */
-		if (dp[i] != BADVAL)
+		pres = p[i];
+		theta = theta_dry (t[i], p[i]);
+		mr = w_sat (dp[i], p[i]);
+	/*
+	 * Interpolate to p_top if we pass it
+	 */
+		if (p[i] < p_top)
 		{
-			mr_sum += w_sat (dp[i], p[i]);
-			mr_count++;
+			pres = p_top;
+			frac = (p_top - pres_prev) / (p[i] - pres_prev);
+			theta = theta_prev + frac * (theta - theta_prev);
+			mr = mr_prev + frac * (mr - mr_prev);
 		}
-		if (t[i] != BADVAL)
-		{
-			theta_sum += theta_dry (t[i], p[i]);
-			theta_count++;
-		}
+	/*
+	 * Increment our sums
+	 */
+		delta = (pres - pres_prev);
+		mr_sum += 0.5 * (mr + mr_prev) * delta;
+		theta_sum += 0.5 * (theta + theta_prev) * delta;
+	/*
+	 * Quit when we hit the top
+	 */
+		if (pres == p_top)
+			break;
+	/*
+	 * Change the "prev" values
+	 */
+		pres_prev = pres;
+		theta_prev = theta;
+		mr_prev = mr;
 	}
+
+	mr = mr_sum / (pres - *p_sfc);
+	theta = theta_sum / (pres - *p_sfc);
 /*
  * Make sure we spanned 50 mb
  */
 	if (i == npts)
-		ui_error ("The sounding does not span 50 mb");
-
+		ui_warning ("The sounding does not span 50 mb");
 /*
- * Find the mean mixing ratio, then get the corresponding dewpoint.
+ * Get the dewpoint corresponding to the mean mixing ratio and the
+ * temperature corresponding to the mean potential temperature.
  */
-	mr = mr_sum / mr_count;
 	*dp_sfc = t_mr (*p_sfc, mr);
-/*
- * Find the mean theta and the corresponding surface temperature
- */
-	theta = theta_sum / theta_count;
 	*t_sfc = theta_to_t (theta, *p_sfc);
 /*
  * Done
