@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.3 $ $Date: 1990-01-23 09:16:12 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1990-02-08 16:12:16 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -18,6 +18,9 @@ static struct
 	{f_alt, "altitude AGL", "m",
 		{"alt", "altitude", ""},
 		0.0,	500.0	},
+	{f_azimuth, "balloon azimuth", "deg",
+		{"azimuth", "az", ""},
+		0.0,	10.0	},
 	{f_dp, "dewpoint", "deg C",
 		{"dp", "dewpoint", ""},
 		-10.0,	5.0	},
@@ -51,6 +54,9 @@ static struct
 	{f_qwind, "wind quality", "",
 		{"qwind", ""},
 		0.0,	0.1	},
+	{f_range, "balloon range", "km",
+		{"range", ""},
+		0.0,	1.0	},
 	{f_rh, "relative humidity", "%",
 		{"rh", ""},
 		50.0,	10.0	},
