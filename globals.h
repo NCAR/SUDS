@@ -2,6 +2,9 @@
  * Global parameters
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:14:17  burghart
+ * Initial revision
+ * 
  */
 # include <ui.h>
 # include <graphics.h>
@@ -37,3 +40,8 @@ var char	Out_dev[40], Dev_type[40];
  * Have we had a keyboard interrupt?
  */
 var int	Interrupt;
+
+/*
+ * Wind scale value
+ */
+var float	W_scale;
