@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.15 1995-10-02 20:23:26 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.16 1996-04-18 16:17:57 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -45,6 +45,7 @@ struct fldmatch
 	{f_alt,		"alt"		},
 	{f_pres,	"pres"		},
 	{f_temp,	"tdry"		},
+	{f_temp,	"temp"		},
 	{f_dp,		"dp"		},
 	{f_rh,		"rh"		},
 	{f_wspd,	"wspd"		},
