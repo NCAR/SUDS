@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.5 $ $Date: 1989-09-21 13:48:43 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-10-03 10:41:26 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -125,7 +125,7 @@ static struct
  * Forward declarations
  */
 void	edit_saveloc (), edit_show_region (), edit_draw_cursor ();
-void	edit_unpoint ();
+void	edit_unpoint (), edit_start_cursor ();
 
 
 
@@ -397,7 +397,7 @@ struct ui_command	*cmds;
 	int	i;
 	char	*id_name;
 	fldtype	fld;
-	struct snd_datum	*x_pt, *y_pt, *snd_data_ptr ();
+	struct snd_datum	*snd_data_ptr ();
 	char	*snd_default ();
 /*
  * Get the field
@@ -410,10 +410,6 @@ struct ui_command	*cmds;
 		id_name = UPTR (cmds[1]);
 	else
 		id_name = snd_default ();
-/*
- * Get a pointer to the data for the given sounding and field
- */
-	E_datum = snd_data_ptr (id_name, fld);
 /*
  * Save the sounding-id and field
  */
@@ -432,87 +428,20 @@ struct ui_command	*cmds;
 		if (strcmp (Trace[i].id, id_name))
 			continue;
 	/*
-	 * Does the x field for this trace match?
+	 * If the edit field is used in this trace, put up the cursor
 	 */
-		if (Trace[i].xfld == fld)
+		if (Trace[i].xfld == fld || Trace[i].yfld == fld)
 		{
-		/*
-		 * Save the trace number
-		 */
-			Editing_x = TRUE;
-			Etrace = i;
-			break;
-		}
-	/*
-	 * Does the y field for this trace match?
-	 */
-		else if (Trace[i].yfld == fld)
-		{
-		/*
-		 * Save the trace number
-		 */
-			Etrace = i;
-			Editing_x = FALSE;
+			edit_start_cursor (i);
 			break;
 		}
 	}
 /*
- * If we didn't find the field in the current plot, return now
+ * If the field was not in the current plot, we need to get a pointer 
+ * to the data for the given sounding and field anyway
  */
 	if (Etrace < 0)
-		return;
-/*
- * Get pointers to the data linked lists for the x and y fields
- */
-	x_pt = snd_data_ptr (id_name, Trace[Etrace].xfld);	
-	y_pt = snd_data_ptr (id_name, Trace[Etrace].yfld);
-/*
- * Assign the cursor data pointers based on whether we're editing x or y
- */
-	if (Editing_x)
-	{
-		Cursor_pri = x_pt;
-		Cursor_sec = y_pt;
-	}
-	else
-	{
-		Cursor_pri = y_pt;
-		Cursor_sec = x_pt;
-	}
-/*
- * Find the first plottable point (i.e., good data in both fields)
- */
-	while (Cursor_pri->index != Cursor_sec->index)
-	{
-	/*
-	 * Make sure we have points left to test
-	 */
-		if (! Cursor_pri || ! Cursor_sec)
-			return;
-	/*
-	 * Increment the point with the lower index
-	 */
-		if (Cursor_pri->index < Cursor_sec->index)
-			Cursor_pri = Cursor_pri->next;
-		else
-			Cursor_sec = Cursor_sec->next;
-	}
-/*
- * Forget the old edit region
- */
-	E_region.mark = 0;
-
-	if (Wkstn)
-	{
-		if (! E_region.ov || G_ov_to_ws (E_region.ov) != Wkstn)
-			E_region.ov = G_new_overlay (Wkstn, 1);
-		else
-			G_clear (E_region.ov);
-	}
-/*
- * Our cursor pointers are correct, put up the cursor
- */
-	edit_draw_cursor ();
+		E_datum = snd_data_ptr (Eid, Efld);
 }
 
 
@@ -578,6 +507,11 @@ int	ovcount;
 	E_region.mark = 0;
 	if (E_region.ov && G_ov_to_ws (E_region.ov) == Wkstn)
 		G_clear (E_region.ov);
+/*
+ * Remove the cursor from the screen
+ */
+	if (Cursor_ov && G_ov_to_ws (Cursor_ov) == Wkstn)
+		G_untarget (Cursor_ov);
 }
 
 
@@ -617,27 +551,85 @@ int	color;
  */
 	Trace[Ntrace].color = color;
 /*
- * See if the current edit field is in this trace
+ * If no current trace contains the edit field and this one does, use
+ * this as the edit trace
  */
-	if (Etrace < 0 && !strcmp (id_name, Eid) && 
-		(Efld == xf || Efld == yf))
-	{
-		Etrace = Ntrace;
-	/*
-	 * Remove the mark, for now.  In the future, this should draw the 
-	 * current edit region
-	 */
-		E_region.mark = 0;
-	/*
-	 * Put up the cursor
-	 */
-	}
-			
+	if (Etrace < 0 && !strcmp (id_name, Eid) && (xf == Efld || yf == Efld))
+		edit_start_cursor (Ntrace);
 /*
  * Increment the number of traces
  */
 	Ntrace++;
 }
+
+
+
+
+void
+edit_start_cursor (tndx)
+int	tndx;
+/*
+ * Put the cursor in its starting position.  'tndx' is the index of the
+ * trace containing the edit field
+ */
+{
+	struct snd_datum	*x_pt, *y_pt, *snd_data_ptr ();
+
+/*
+ * Save the trace number and whether we're editing the x or y field 
+ * of the trace
+ */
+	Etrace = tndx;
+	Editing_x = (Trace[tndx].xfld == Efld);
+/*
+ * Get the data pointer into the edit field
+ */
+	E_datum = snd_data_ptr (Eid, Efld);
+/*
+ * Get pointers to the data linked lists for the x and y fields
+ */
+	x_pt = snd_data_ptr (Eid, Trace[Etrace].xfld);	
+	y_pt = snd_data_ptr (Eid, Trace[Etrace].yfld);
+/*
+ * Assign the cursor data pointers based on whether we're editing x or y
+ */
+	Cursor_pri = Editing_x ? x_pt : y_pt;
+	Cursor_sec = Editing_x ? y_pt : x_pt;
+/*
+ * Find the first plottable point (i.e., good data in both fields)
+ */
+	while (Cursor_pri->index != Cursor_sec->index)
+	{
+	/*
+	 * Make sure we have points left to test
+	 */
+		if (! Cursor_pri || ! Cursor_sec)
+			return;
+	/*
+	 * Increment the point with the lower index
+	 */
+		if (Cursor_pri->index < Cursor_sec->index)
+			Cursor_pri = Cursor_pri->next;
+		else
+			Cursor_sec = Cursor_sec->next;
+	}
+/*
+ * Forget the old edit region, if any
+ */
+	E_region.mark = 0;
+	if (Wkstn)
+	{
+		if (! E_region.ov || G_ov_to_ws (E_region.ov) != Wkstn)
+			E_region.ov = G_new_overlay (Wkstn, 1);
+		else
+			G_clear (E_region.ov);
+	}
+/*
+ * Our cursor pointers are correct, put up the cursor
+ */
+	edit_draw_cursor ();
+}
+
 
 
 
