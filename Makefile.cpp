@@ -1,5 +1,5 @@
 TOP = ..
-LOCALCFLAGS = -Bstatic $(XINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG)
+LOCALCFLAGS = -Bstatic $(XINCLUDE) $(NETCDFINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG)
 
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	convert.o edit.o eformat.o \
@@ -11,7 +11,7 @@ OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 all:	suds suds.lf
 
 xsaber:	$(OBJS)
-	# load $(CFLAGS) $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB)
+	# load $(CFLAGS) $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB) /locallib/gcc-gnulib
 	# link
 	
 
@@ -21,7 +21,7 @@ install: suds suds.lf
 	ranlib libsuds.a
 
 suds:	$(OBJS)
-	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs -L$(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB)
+	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs $(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB)
 
 suds.lf: $(RDSSLIBRARIES)/suds.lf
 
