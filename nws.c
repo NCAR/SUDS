@@ -1,7 +1,7 @@
 /*
  * NWS format sounding access
  *
- * $Revision: 1.2 $ $Date: 1989-08-11 10:59:50 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1989-12-18 15:53:26 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -44,7 +44,7 @@ struct snd	*sounding;
 	int	i, year, month, day, rtype, status = 1;
 	int	ndx, time, did_sfc = FALSE;
 	struct snd_datum	*dptr[NFLD];
-	float	sitelat, sitelon, sfc_pres, sfc[NFLD], val[NFLD], pres;
+	float	sfc_pres, sfc[NFLD], val[NFLD], pres;
 	char	string[STRSIZE];
 	void	nws_insert_data ();
 /*
@@ -71,7 +71,9 @@ struct snd	*sounding;
 /*
  * Site info
  */
-	fscanf (sfile, "%f %f %f", &sitelat, &sitelon, &(sounding->sitealt));
+	fscanf (sfile, "%f %f %f", &sounding->sitelat, &sounding->sitelon, 
+		&sounding->sitealt);
+	sounding->sitelon *= -1.0;	/* Make west longitudes negative */
 /*
  * A record of stuff we don't use
  */
