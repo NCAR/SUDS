@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: flags.c,v 1.4 1991-10-21 21:40:04 burghart Exp $";
+static char *rcsid = "$Id: flags.c,v 1.5 1992-05-05 21:04:42 burghart Exp $";
 
 # include "globals.h"
 # include "flags.h"
@@ -49,8 +49,8 @@ struct flgst
 		"Show lifted parcel on skew-t"},
 	{ "theta_w",	&Flg_theta_w,	TRUE,
 		"Use equivalent wet-bulb temperature on skew-t"},
-	{ "vt",		&Flg_vt,	TRUE,
-		"Use virtual temperature on skew-t"},
+	{ "vt",		&Flg_vt,	FALSE,
+		"Use virtual temperature for analysis and skew-t"},
 	{ ___,		___,		___,		___ }
 };
 
