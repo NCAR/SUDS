@@ -20,9 +20,10 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.18 1991-12-05 22:26:21 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.19 1992-04-02 21:51:05 burghart Exp $";
 
 # include <stdio.h>
+# include <errno.h>
 # include <ui_param.h>
 # include <time.h>
 # include "sounding.h"
@@ -102,8 +103,13 @@ struct snd	*sounding;
 /*
  * Open the file
  */
-	if ((Sfile = fopen (fname, "r")) == 0)
-		ui_error ("Cannot open CLASS file '%s'", fname);
+	Sfile = NULL;
+
+	if (! strcmp (fname, "-") && (Sfile = fdopen (0, "r")) == 0)
+		ui_error ("Error %d reading CLASS sounding from stdin", errno);
+
+	if (! Sfile && (Sfile = fopen (fname, "r")) == 0)
+		ui_error ("Error %d opening CLASS file '%s'", errno, fname);
 /*
  * Read the location name
  *
