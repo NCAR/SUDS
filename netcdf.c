@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.12 1993-07-06 18:36:28 case Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.13 1993-07-23 19:57:14 case Exp $";
 
 # ifdef NETCDF
 
@@ -437,12 +437,7 @@ struct ui_command	*cmds;
 	t.tm_hour = sounding.rls_time.ds_hhmmss / 10000;
 	t.tm_min = (sounding.rls_time.ds_hhmmss / 100) % 100;
 	t.tm_sec = sounding.rls_time.ds_hhmmss % 100;
-#ifndef SVR4
-	t.tm_gmtoff = 0;
-	t.tm_zone = (char *) 0;
-	t.tm_wday = t.tm_isdst = t.tm_yday = 0;
-	base_time = timegm (&t) + offset * 3600;
-#else
+#ifdef SVR4
         strcpy (tz, "TZ=GMT");
         putenv (tz);
         timezone = 0;
@@ -451,6 +446,11 @@ struct ui_command	*cmds;
         t.tm_wday = t.tm_yday = 0;
         t.tm_isdst = -1;
         base_time = (long) mktime (&t) + offset * 3600;
+#else
+        t.tm_gmtoff = 0;
+        t.tm_zone = (char *) 0;
+        t.tm_wday = t.tm_isdst = t.tm_yday = 0;
+        base_time = timegm (&t) + offset * 3600;
 #endif
 	ncvarput1 (Sfile, v_base, 0, &base_time);
 /*
