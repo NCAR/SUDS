@@ -2,6 +2,9 @@
  * JAWS format sounding access
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:14:47  burghart
+ * Initial revision
+ * 
  */
 # include <stdio.h>
 # include <ui_param.h>
@@ -60,8 +63,8 @@ struct snd	*sounding;
 	sounding->fields[0] = f_time;	sounding->fields[1] = f_alt;
 	sounding->fields[2] = f_pres;	sounding->fields[3] = f_temp;
 	sounding->fields[4] = f_dp;	sounding->fields[5] = f_wdir;
-	sounding->fields[6] = f_wspd;	sounding->fields[7] = f_pt;
-	sounding->fields[8] = f_ept;	sounding->fields[9] = f_mr;
+	sounding->fields[6] = f_wspd;	sounding->fields[7] = f_theta;
+	sounding->fields[8] = f_theta_e;sounding->fields[9] = f_mr;
 	sounding->fields[10] = f_rh;	sounding->fields[11] = f_null;
 /*
  * Get the data
