@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.15 $ $Date: 1991-03-21 17:25:04 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1991-03-26 20:59:59 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -18,7 +18,7 @@
  * The cross-section plane array, its length, its height, 
  * its dimensions, and a macro to reference it two-dimensionally
  */
-static float	*Plane, *P_wgt, P_len, P_hgt = 12.0, P_bot = 0.0;
+static float	*Plane, *P_wgt, P_len, P_hgt, P_bot;
 
 # define HDIM	50
 # define VDIM	50
@@ -43,7 +43,7 @@ static date	T0;
 /*
  * Macro to identify points in the plot area
  */
-# define INPLOT(x,y)	((x)>=0.0 && (x)<=P_len && (y)>=0.0 && (y)<=P_hgt)
+# define INPLOT(x,y)	((x)>=0.0 && (x)<=P_len && ((y)*((y)-P_hgt)<=0.0))
 
 /*
  * The overlays for the plot
@@ -159,12 +159,26 @@ struct ui_command	*cmds;
  */
 {
 	int	i, j;
+	fldtype	vfld = Use_alt ? f_alt : f_pres;
 	void	contour (), contour_init ();
 	overlay ovlist[2];
 /*
  * Get the field to plot
  */
 	Fld = fd_num (UPTR (*cmds));
+/*
+ * Get the vertical limits
+ */
+	P_bot = fd_bot (vfld);
+	P_hgt = fd_top (vfld) - P_bot;
+/*
+ * If we're using altitude, convert to km
+ */
+	if (Use_alt)
+	{
+		P_bot *= 0.001;
+		P_hgt *= 0.001;
+	}
 /*
  * Reset the annotation position
  */
@@ -260,10 +274,10 @@ xs_put_data ()
  * Fill the cross-section array with data from the chosen soundings
  */
 {
-	int	snd, pt, npts, iz, zndx, zndx_prev, ih, iv;
+	int	snd, pt, npts, iz, zndx, zndx_prev, ih, iv, zlo, zhi;
 	float	val, x, y, z, t, val_prev, x_prev, y_prev, z_prev, t_prev;
-	float	zstep, site_alt, hlen, frac;
-	float	xhighest, yhighest, zhighest;
+	float	zstep, hlen, frac;
+	float	xhighest, yhighest, zhighest, xlowest, ylowest, zlowest;
 	float	*fdata, *xpos, *ypos, *zpos, *tpos;
 	float	snd_s_alt ();
 /*
@@ -288,12 +302,10 @@ xs_put_data ()
 		if (Interrupt)
 			xs_abort ();
 	/*
-	 * Initialize for keeping track of the highest point
+	 * Initialize for keeping track of the highest and lowest points
 	 */
-		if (Use_alt)
-			zhighest = -9999.0;
-		else
-			zhighest = 9999.0;
+		zhighest = (P_hgt > 0.0) ? -99999.0 : 99999.0;
+		zlowest = (P_hgt > 0.0) ? 99999.0 : -99999.0;
 	/*
 	 * Get the vertical (altitude or pressure) data
 	 */
@@ -304,7 +316,7 @@ xs_put_data ()
 		 */
 			npts = snd_get_data (S_id[snd], zpos, BUFLEN, f_alt, 
 				BADVAL);
-			site_alt = snd_s_alt (S_id[snd]);
+
 			for (pt = 0; pt < npts; pt++)
 				if (zpos[pt] != BADVAL)
 					zpos[pt] *= 0.001;
@@ -353,14 +365,22 @@ xs_put_data ()
 			if (fdata[pt] == BADVAL || zpos[pt] == BADVAL)
 				continue;
 		/*
-		 * Update the ceiling if this point is higher
+		 * Keep track of the highest and lowest points
 		 */
-			if ((Use_alt && zpos[pt] > zhighest) ||
-				(!Use_alt && zpos[pt] < zhighest))
+			if ((P_hgt > 0.0 && zpos[pt] > zhighest) ||
+				(P_hgt < 0.0 && zpos[pt] < zhighest))
 			{
 				xhighest = xpos[pt];
 				yhighest = ypos[pt];
 				zhighest = zpos[pt];
+			}
+
+			if ((P_hgt > 0.0 && zpos[pt] < zlowest) ||
+				(P_hgt < 0.0 && zpos[pt] > zlowest))
+			{
+				xlowest = xpos[pt];
+				ylowest = ypos[pt];
+				zlowest = zpos[pt];
 			}
 		/*
 		 * Special treatment for the first good point
@@ -382,20 +402,10 @@ xs_put_data ()
 					y_prev = ypos[pt];
 				}
 			/*
-			 * Use the point to help build the floor array
-			 */
-				xs_build_limits (Floor, F_wgt, xpos[pt], 
-					ypos[pt], zpos[pt]);
-			/*
 			 * Go on to the next point
 			 */
 				continue;
 			}
-		/*
-		 * Quit when we get above the grid
-		 */
-			if (zndx_prev >= VDIM)
-				break;
 		/*
 		 * Find the index of the next grid height at or above zpos[pt]
 		 */
@@ -404,13 +414,19 @@ xs_put_data ()
 		 * Assign values at grid levels between this point and the
 		 * previous one
 		 */
-			for (iz = zndx_prev; iz < zndx && iz < VDIM; iz++)
+			if (zndx_prev < zndx)
 			{
-			/*
-			 * Don't assign anything below the first grid level
-			 */
-				if (iz < 0)
-					continue;
+				zlo = MAX (zndx_prev, 0);
+				zhi = MIN (zndx, VDIM - 1);
+			}
+			else
+			{
+				zlo = MAX (zndx, 0);
+				zhi = MIN (zndx_prev, VDIM - 1);
+			}
+
+			for (iz = zlo; iz < zhi; iz++)
+			{
 			/*
 			 * Find the height of this grid index and interpolate
 			 * the data and position to this height
@@ -465,8 +481,11 @@ xs_put_data ()
 			}
 		}
 	/*
-	 * Use the highest point of this sounding to help build the 
-	 * ceiling array
+	 * Use the lowest point of this sounding to help build the floor array
+	 */
+		xs_build_limits (Floor, F_wgt, xlowest, ylowest, zlowest);
+	/*
+	 * Use the highest point to help build the ceiling array
 	 */
 		xs_build_limits (Ceiling, C_wgt, xhighest, yhighest, zhighest);
 	/*
@@ -835,7 +854,7 @@ xs_background ()
 		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 			GT_TOP, 0.5 * P_len, -0.06 * P_hgt, 0.0, "POS (KM)");
 /*
- * Get the lower and upper limits of the vertical axes
+ * Get the lower and upper limits of the vertical axis
  */
 	if (P_hgt > 0.0)
 	{
@@ -1066,34 +1085,16 @@ struct ui_command	*cmds;
 	fldtype	fld;
 
 	fld = fd_num (UPTR (cmds[0]));
-	if (fld == f_alt)
-	{
-		Use_alt = TRUE;
-	/*
-	 * Default bottom and height for the plane (in km MSL)
-	 */
-		P_bot = 0.0;
-		P_hgt = 12.0;
-	}
-	else if (fld == f_pres)
-	{
-		Use_alt = FALSE;
-	/*
-	 * Default bottom and height for the plane (in mb)
-	 */
-		P_bot = 1000.0;
-		P_hgt = 800.0;
-	}
-	else
+
+	if (fld != f_alt && fld != f_pres)
 		ui_error ("Only altitude or pressure can be used!");
+
+	Use_alt = (fld == f_alt);
 /*
- * See if the user has specified vertical limits
+ * If limits were specified, deal with them now
  */
 	if (cmds[1].uc_ctype != UTT_END)
-	{
-		P_bot = UFLOAT (cmds[1]);
-		P_hgt = UFLOAT (cmds[2]) - P_bot;
-	}
+		fd_set_limits (cmds);
 }
 
 
@@ -1454,7 +1455,7 @@ int	sndx;
  */
 {
 	char	*string;
-	float	label_x, label_y;
+	float	label_x, label_y, rot;
 	int	i;
 /*
  * Draw the trace
@@ -1486,13 +1487,18 @@ int	sndx;
 	G_clip_window (Xs_ov, -BORDER * P_len, -BORDER * P_hgt, 
 		(1.0 + BORDER) * P_len, (1.0 + BORDER) * P_hgt);
 /*
+ * Rotation we use depends on whether we're towards the top or the
+ * bottom of the plot
+ */
+	rot = (((label_y - P_bot) / P_hgt) < 0.5) ? -90.0 : 90.0;
+/*
  * Draw the label
  */
 	string = (char *) malloc ((2 + strlen (S_id[sndx])) * sizeof (char));
 	string[0] = ' ';
 	strcpyUC (string + 1, S_id[sndx]);
 	G_write (Xs_ov, C_BG1, GTF_MINSTROKE, 0.02 * P_hgt, GT_LEFT, 
-		GT_CENTER, label_x, label_y, -90.0, string);
+		GT_CENTER, label_x, label_y, rot, string);
 	free (string);
 /*
  * Restore the clipping
