@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.16 $ $Date: 1990-11-01 15:31:58 $ $Author: burghart $ 
+ * $Revision: 1.17 $ $Date: 1990-11-05 11:14:01 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -20,7 +20,7 @@
 /*
  * Forward declarations
  */
-float	an_lfc_calc (), an_area (), an_li (), an_shear ();
+float	an_lfc_calc (), an_area (), an_li (), an_li_ref (), an_shear ();
 void	an_surface (), an_printf (), an_do_analysis ();
 
 /*
@@ -43,7 +43,7 @@ struct ui_command	*cmds;
 {
 	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN], u[BUFLEN], v[BUFLEN];
 	float	t_sfc, p_sfc, dp_sfc, temp700, dp700;
-	int	npts, name_loc = 0, success, ndx700;
+	int	i, npts, name_loc = 0, success, ndx700;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
@@ -89,14 +89,18 @@ struct ui_command	*cmds;
 	else
 		Id_name = snd_default ();
 /*
- * Get the necessary sounding data
+ * Get the necessary sounding data (note that we use virtual temperature
+ * instead of temperature)
  */
-	npts = snd_get_data (Id_name, t, BUFLEN, f_temp, BADVAL);
+	npts = snd_get_data (Id_name, t, BUFLEN, f_vt, BADVAL);
 	snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
 	snd_get_data (Id_name, dp, BUFLEN, f_dp, BADVAL);
 /*
- * Get our surface points
+ * Convert the dewpoints to K so they're easier to deal with
  */
+	for (i = 0; i < npts; i++)
+		if (dp[i] != BADVAL)
+			dp[i] += T_K;
 /*
  * Begin printing info
  */
@@ -114,10 +118,10 @@ struct ui_command	*cmds;
 	an_surface (t, p, dp, npts, &t_sfc, &p_sfc, &dp_sfc);
 	an_printf ("\t Surface potential temperature%s: %.1f K\n", 
 		Flg_mli ? " (50 mb average)" : "",
-		theta_dry (t_sfc + T_K, p_sfc));
+		theta_dry (t_sfc, p_sfc));
 	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
-		w_sat (dp_sfc + T_K, p_sfc));
+		w_sat (dp_sfc, p_sfc));
 	an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc);
 /*
  * Do the forecast analysis (i.e., start from 700mb)
@@ -135,10 +139,10 @@ struct ui_command	*cmds;
 
 	an_printf (
 		"\t 700 mb temperature: %.1f K (potential temp.: %.1f K)\n",
-		temp700 + T_K, theta_dry (temp700 + T_K, 700.0));
+		temp700, theta_dry (temp700, 700.0));
 	an_printf ("\t Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
-		w_sat (dp_sfc + T_K, p_sfc));
+		w_sat (dp_sfc, p_sfc));
 	an_do_analysis (t + ndx700, p + ndx700, dp + ndx700, npts - ndx700, 
 		temp700, 700.0, dp700);
 }
@@ -164,8 +168,8 @@ int	npts;
  * Get the pressure, temperature, potential temp. and equivalent
  * potential temp. of the LCL
  */
-	p_lcl = lcl_pres (t_sfc + T_K, dp_sfc + T_K, p_sfc);
-	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
+	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
+	t_lcl = lcl_temp (t_sfc, dp_sfc);
 	an_printf ("\t LCL pressure: %.1f mb\n", p_lcl);
 	theta_lcl = theta_dry (t_lcl, p_lcl);
 	theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
@@ -181,7 +185,7 @@ int	npts;
  * Integrate the area (energy) from the surface up to the LCL
  */
 	p_lower = p_sfc;
-	t_lower = t_sfc + T_K;
+	t_lower = t_sfc;
 	dt_lower = t_lower - theta_lcl;
 
 	for (i = 1; p_lower > p_lcl; i++)
@@ -193,7 +197,7 @@ int	npts;
 			continue;
 
 		p_upper = p[i];
-		t_upper = t[i] + T_K;
+		t_upper = t[i];
 		dt_upper = t_upper - theta_to_t (theta_lcl, p_upper);
 	/*
 	 * See if we're changing from positive to negative area or vice-versa.
@@ -225,7 +229,7 @@ int	npts;
 		else if (p_upper < p_lcl)
 		{
 			p_upper = p_lcl;
-			t_upper = t_lower + (t[i] + T_K - t_lower) * 
+			t_upper = t_lower + (t[i] - t_lower) * 
 				log (p_lcl / p_lower) / log (p[i] / p_lower);
 			dt_upper = t_upper - theta_to_t (theta_lcl, p_lcl);
 		/*
@@ -254,7 +258,7 @@ int	npts;
 /*
  * Integrate the area (energy) from the LCL to the LFC
  */
-	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0);
+	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0, TRUE);
 
 	if (p_lfc != BADVAL)
 		an_printf ("\t LFC pressure: %.1f mb\n", p_lfc);
@@ -273,7 +277,7 @@ int	npts;
 			continue;
 
 		p_upper = p[i];
-		t_upper = t[i] + T_K;
+		t_upper = t[i];
 		dt_upper = t_upper - t_sat (theta_e_lcl, p_upper);
 	/*
 	 * See if we're changing from positive to negative area or vice-versa.
@@ -305,7 +309,7 @@ int	npts;
 		else if (p_upper < p_lfc)
 		{
 			p_upper = p_lfc;
-			t_upper = t_lower + (t[i] + T_K - t_lower) * 
+			t_upper = t_lower + (t[i] - t_lower) * 
 				log (p_lfc / p_lower) / log (p[i] / p_lower);
 			dt_upper = t_upper - t_sat (theta_e_lcl, p_lfc);
 		/*
@@ -364,7 +368,7 @@ int	npts;
 	 * Use this point for the upper limit of the next integration
 	 */
 		p_upper = p[i];
-		t_upper = t[i] + T_K;
+		t_upper = t[i];
 	/*
 	 * See if we're changing from positive to negative area or vice-versa
 	 * (i.e., does the temperature cross the moist adiabat?)
@@ -450,13 +454,13 @@ int	npts;
  */
 {
 	float	p_lcl, t_lcl, theta_e_lcl, dt_bot, dt_top, ln_p_lfc;
-	float	p_prev, t_prev, vt, e;
+	float	p_prev, t_prev;
 	int	i = 0;
 /*
  * Get LCL info
  */
-	p_lcl = lcl_pres (t_sfc + T_K, dp_sfc + T_K, p_sfc);
-	t_lcl = lcl_temp (t_sfc + T_K, dp_sfc + T_K);
+	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
+	t_lcl = lcl_temp (t_sfc, dp_sfc);
 	theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 /*
  * Search through the pressure array until we pass the LCL, then go
@@ -464,20 +468,17 @@ int	npts;
  */
 	while (p[i] > p_lcl || p[i] == BADVAL)
 		if (++i == npts)
-			ui_bailout ("Sounding has no points above the LCL");
+			return (BADVAL);
+
 	for (i--; p[i] == BADVAL || t[i] == BADVAL || dp[i] == BADVAL; i--)
 		/* nothing */;
+/*
+ * Go up from here until the temperature crosses the moist adiabat
+ */
 	p_prev = p[i];
 	t_prev = t[i];
-/*
- * Get the vapor pressure and the virtual temperature
- */
-	e = e_from_dp (dp[i] + T_K);
-	vt = t_v (t[i] + T_K, p[i], e);
-/*
- * Go up from here until the virtual temperature crosses the moist adiabat
- */
-	while (vt > t_sat (theta_e_lcl, p[i]))
+
+	while (t[i] > t_sat (theta_e_lcl, p[i]))
 	{
 	/*
 	 * Return if we pass the pressure limit
@@ -488,15 +489,11 @@ int	npts;
 	 * Move to the next good point
 	 */
 		p_prev = p[i];
+		t_prev = t[i];
 		while (p[i] >= p_prev || p[i] == BADVAL || t[i] == BADVAL ||
 			dp[i] == BADVAL)
 			if (++i == npts)
 				return (BADVAL);
-	/*
-	 * Get the vapor pressure and the virtual temperature
-	 */
-		e = e_from_dp (dp[i] + T_K);
-		vt = t_v (t[i] + T_K, p[i], e);
 	}
 /*
  * Check for super-adiabatic case (i.e. we didn't go anywhere because the
@@ -513,8 +510,8 @@ int	npts;
  * The LFC is between p_prev and p[i], calculate its pressure and temperature.
  * (Assume that the moist adiabat is straight between these two pressures)
  */
-	dt_bot = (t_prev + T_K) - t_sat (theta_e_lcl, p_prev);
-	dt_top = t_sat (theta_e_lcl, p[i]) - (t[i] + T_K);
+	dt_bot = t_prev - t_sat (theta_e_lcl, p_prev);
+	dt_top = t_sat (theta_e_lcl, p[i]) - t[i];
 
 	ln_p_lfc = (dt_bot * log (p[i]) + dt_top * log (p_prev)) / 
 		(dt_bot + dt_top);
@@ -652,12 +649,12 @@ int	npts;
 	 */
 		if (dp[i] != BADVAL)
 		{
-			mr_sum += w_sat (dp[i] + T_K, p[i]);
+			mr_sum += w_sat (dp[i], p[i]);
 			mr_count++;
 		}
 		if (t[i] != BADVAL)
 		{
-			theta_sum += theta_dry (t[i] + T_K, p[i]);
+			theta_sum += theta_dry (t[i], p[i]);
 			theta_count++;
 		}
 	}
@@ -671,12 +668,12 @@ int	npts;
  * Find the mean mixing ratio, then get the corresponding dewpoint.
  */
 	mr = mr_sum / mr_count;
-	*dp_sfc = t_mr (*p_sfc, mr) - T_K;
+	*dp_sfc = t_mr (*p_sfc, mr);
 /*
  * Find the mean theta and the corresponding surface temperature
  */
 	theta = theta_sum / theta_count;
-	*t_sfc = theta_to_t (theta, *p_sfc) - T_K;
+	*t_sfc = theta_to_t (theta, *p_sfc);
 /*
  * Done
  */
@@ -728,8 +725,8 @@ int	npts, *ndx700;
  * Find the mixing ratio of our surface dewpoint, then find the
  * corresponding 700 mb dewpoint
  */
-	w = w_sat (dp_sfc + T_K, p_sfc);
-	*dp700 = t_mr (700.0, w) - T_K;
+	w = w_sat (dp_sfc, p_sfc);
+	*dp700 = t_mr (700.0, w);
 	return (TRUE);
 }
 
@@ -744,8 +741,44 @@ int	npts, verbose;
  * Find the lifted index (or modified lifted index) for the sounding
  */
 {
+	float	ref, li;
+	float	ndx_level = Flg_mli ? 400.0 : 500.0;
+/*
+ * Get the lifted index using the reference temperature, and be verbose
+ * if requested
+ */
+	if ((ref = an_li_ref (p, t, npts)) == BADVAL)
+	{
+		an_printf ("\t Cannot find %d mb temp. for lifted index\n", 
+			(int) ndx_level);
+		return (BADVAL);
+	}
+
+	li = ref - t_sat (theta_e_lcl, ndx_level);
+	if (verbose)
+		an_printf (
+		"\t %d mb temperature: %.1f K (potential temp.: %.1f K)\n",
+			(int) ndx_level, ref, theta_dry (ref, ndx_level));
+/*
+ * Done
+ */
+	return (li);
+}
+
+
+
+
+float
+an_li_ref (p, t, npts)
+float	*p, *t;
+int	npts;
+/*
+ * Get the sounding temperature at 400 or 500 mb for use in lifted index
+ * calculations
+ */
+{
 	int	i;
-	float	p_prev = BADVAL, t_prev = BADVAL, temp, li;
+	float	p_prev = BADVAL, t_prev = BADVAL;
 	float	ndx_level = Flg_mli ? 400.0 : 500.0;
 /*
  * Move up until we cross the desired pressure (either 400.0 or 500.0)
@@ -768,28 +801,14 @@ int	npts, verbose;
  */
 	if (p_prev == BADVAL || i == npts)
 	{
-		an_printf ("\t Cannot calculate lifted index\n");
 		return (BADVAL);
 	}
 /*
- * Interpolate the temperature and find the lifted index
+ * Interpolate the temperature
  */
-	temp = t_prev + (t[i] - t_prev) * (ndx_level - p_prev) /
-		(p[i] - p_prev) + T_K;
-	li = temp - t_sat (theta_e_lcl, ndx_level);
-/*
- * Be verbose if requested
- */
-	if (verbose)
-		an_printf (
-		"\t %d mb temperature: %.1f K (potential temp.: %.1f K)\n",
-			(int) ndx_level, temp, theta_dry (temp, ndx_level));
-/*
- * Done
- */
-	return (li);
+	return (t_prev + (t[i] - t_prev) * (ndx_level - p_prev) /
+		(p[i] - p_prev));
 }
-
 
 
 
