@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: keywords.h,v 1.21 1992-09-18 16:06:09 carson Exp $
+ * $Id: keywords.h,v 1.22 1993-01-15 18:04:40 case Exp $
  */
 
 # define KW_SUGAR	0
@@ -106,8 +106,9 @@
 # define SFMT_NETCDF	11
 # define SFMT_CAPE	12
 # define SFMT_NSSL	13
+# define SFMT_DREXEL    14
 
-# define MAXFMT		13  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		14  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show
