@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.11 1992-03-13 22:54:30 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.12 1992-03-16 17:28:50 burghart Exp $";
 
 # include <math.h>
 # include <varargs.h>
@@ -401,7 +401,7 @@ int	npts;
 			buf[i] = badval;
 		else
 		{
-			e = rh[i] / 100.0 * e_w (temp[i] + T_K);
+			e = rh[i] / 100.0 * e_sw (temp[i] + T_K);
 			buf[i] = dewpoint (e) - T_K;
 		}
 	}
@@ -476,7 +476,7 @@ int	npts;
 			buf[i] = badval;
 		else
 			buf[i] = t_v (temp[i] + T_K, pres[i], 
-				0.01 * rh[i] * e_w (temp[i] + T_K));
+				0.01 * rh[i] * e_sw (temp[i] + T_K));
 	}
 }
 
@@ -533,7 +533,7 @@ int	npts;
 		}
 		else
 			buf[i] = 100.0 * e_from_dp (dp[i] + T_K) / 
-				e_w (temp[i] + T_K);
+				e_sw (temp[i] + T_K);
 	}
 }
 

@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: ncar.c,v 1.7 1992-03-13 22:56:44 burghart Exp $";
+static char *rcsid = "$Id: ncar.c,v 1.8 1992-03-16 17:29:19 burghart Exp $";
 
 # include <stdio.h>
 # include <math.h>
@@ -139,7 +139,7 @@ struct snd	*sounding;
 		rh = val[2];
 		if (temp < 8888. && rh < 8888.)
 		{
-			e = rh / 100.0 * e_w (temp + T_K);
+			e = rh / 100.0 * e_sw (temp + T_K);
 			dp = dewpoint (e) - T_K;
 			val[4] = dp;
 		}
