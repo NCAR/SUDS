@@ -1,7 +1,6 @@
 /*
  * UI keywords for SUDS
  *
- * $Log: not supported by cvs2svn $
  */
 # define KW_SUGAR	0
 # define KW_FILE	1
@@ -29,11 +28,12 @@
 # define KW_WSCALE	23
 # define KW_FOOTE	24
 # define KW_BRIEF	25
+# define KW_HODOGRAPH	26
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	25
+# define MAXKW	26
 
 
 /*
