@@ -2,6 +2,9 @@
  * Hodograph plotting module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/06/26  09:57:56  burghart
+ * Initial revision
+ * 
  */
 # include <math.h>
 # include <ui_date.h>
@@ -369,25 +372,27 @@ int	color, newline;
 /*
  * Set the clipping so we can annotate in the top margin
  */
-	G_clip_window (Hodo_ov, -W_scale, W_scale, W_scale, 1.25 * W_scale);
+	G_clip_window (Hodo_ov, -1.25 * W_scale, W_scale, 1.25 * W_scale, 
+		1.25 * W_scale);
 /*
  * Find out how the string fits on the current line
  */
-	G_tx_box (Hodo_ov, GTF_STROKE, 0.035 * 2 * W_scale, GT_LEFT, GT_TOP,
+	G_tx_box (Hodo_ov, GTF_MINSTROKE, 0.025 * 2 * W_scale, GT_LEFT, GT_TOP,
 		Xtxt_top, Ytxt_top, string, &x0, &y0, &x1, &y1);
 /*
  * Start a new line if necessary or requested
  */
-	if (Xtxt_top > -W_scale && (x1 > W_scale || newline))
+	if (Xtxt_top > -W_scale && (x1 > 1.25 * W_scale || newline))
 	{
 		Xtxt_top = -W_scale;
-		Ytxt_top -= 0.032 * 2 * W_scale;
+		Ytxt_top -= 0.03 * 2 * W_scale;
 	}
 /*
  * Write in the annotation
  */
-	G_text (Hodo_ov, Colorbase + color, GTF_STROKE, 0.035 * 2 * W_scale, 
-		GT_LEFT, GT_TOP, Xtxt_top, Ytxt_top, string);
+	G_text (Hodo_ov, Colorbase + color, GTF_MINSTROKE, 
+		0.025 * 2 * W_scale, GT_LEFT, GT_TOP, Xtxt_top, Ytxt_top, 
+		string);
 /*
  * Update the location for the next annotation
  */
@@ -489,10 +494,10 @@ int	plot_ndx;
 /*
  * Top annotation
  */
-	hd_top_text ("Site: ", H_color[plot_ndx], TRUE);
+	hd_top_text ("SITE: ", H_color[plot_ndx], TRUE);
 	site = snd_site (id_name);
 	hd_top_text (site, H_color[plot_ndx], FALSE);
-	hd_top_text ("  Time: ", H_color[plot_ndx], FALSE);
+	hd_top_text ("  TIME: ", H_color[plot_ndx], FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (temp, &sdate, UDF_FULL);
 	strcpyUC (string, temp);
