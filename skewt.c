@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.10 $ $Date: 1990-04-02 09:29:57 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-04-05 10:51:29 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -206,7 +206,14 @@ skt_background ()
 	char	string[64];
 	float	t, pt, p, annot_angle, slope, intercept, xloc, yloc;
 	static float	mr[] = {0.1, 0.2, 0.4, 1.0, 2.0, 3.0, 5.0, 8.0, 
-			12.0, 20.0, 0.0};
+				12.0, 20.0, 0.0};
+/*
+ * ICAO standard atmosphere pressures for altitudes from 0 km to 16 km
+ * every 1 km
+ */
+	static float	alt_pres[] = {1013.2, 898.8, 795.0, 701.2, 616.5,
+				540.3, 471.9, 410.7, 356.1, 307.6, 264.5,
+				226.3, 193.3, 165.1, 141.0, 120.4, 102.9};
 /*
  * Return if our old background is still good
  */
@@ -302,6 +309,32 @@ skt_background ()
 		sprintf (string, "%d\0", (int) p);
 		G_write (Skewt_bg_ov, C_WHITE, GTF_DEV, 0.025, GT_RIGHT, 
 			GT_CENTER, -0.01, y[0], 0.0, string);
+	}
+/*
+ * Standard atmosphere altitude scale
+ */
+	G_clip_window (Skewt_bg_ov, -BORDER, 0.0, 0.0, 1.0);
+
+	x[0] = x[1] = -BORDER / 2.0;
+	y[0] = 0.0;
+	y[1] = 1.0;
+	G_polyline (Skewt_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
+
+	x[0] = -BORDER / 2.0;
+	x[1] = x[0] - 0.01;
+	for (i = 0; i <= 16; i++)
+	{
+	/*
+	 * Tick mark
+	 */
+		y[0] = y[1] = YPOS (alt_pres[i]);
+		G_polyline (Skewt_bg_ov, GPLT_SOLID, C_BG2, 2, x, y);
+	/*
+	 * Label
+	 */
+		sprintf (string, "%d \0", i);
+		G_write (Skewt_bg_ov, C_BG2, GTF_DEV, 0.02, GT_RIGHT,
+			GT_CENTER, x[1], y[1], 0.0, string);
 	}
 /*
  * Saturation mixing ratio lines
