@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: hodograph.c,v 1.14 1992-03-13 22:55:40 burghart Exp $";
+static char *rcsid = "$Id: hodograph.c,v 1.15 1992-03-31 16:16:19 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -243,7 +243,7 @@ int	plot_ndx;
 	/*
 	 * Put in a mark if we passed the mark altitude
 	 */
-		if (alt[i] > mark_alt)
+		while (alt[i] > mark_alt)
 		{
 		/*
 		 * Interpolate to the mark altitude
