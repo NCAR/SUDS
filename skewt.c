@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.7 $ $Date: 1989-08-23 10:49:35 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1989-10-09 15:53:25 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -13,7 +13,8 @@
 # include "flags.h"
 
 # define T_K	273.15
-# define DEG_TO_RAD(x)	((x) * .017453292)
+# define DEG_TO_RAD(x)	((x) * 0.017453292)
+# define RAD_TO_DEG(x)	((x) * 57.29577951)
 
 /*
  * Plot limits (initialized in skt_init below)
@@ -203,7 +204,7 @@ skt_background ()
 	int	i;
 	float	x[128], y[128];
 	char	string[64];
-	float	t, pt, p;
+	float	t, pt, p, annot_angle, slope, intercept, xloc, yloc;
 	static float	mr[] = {0.1, 0.2, 0.4, 1.0, 2.0, 3.0, 5.0, 8.0, 
 			12.0, 20.0, 0.0};
 /*
@@ -230,6 +231,9 @@ skt_background ()
  */
 	y[0] = 0.0;
 	y[1] = 1.0;
+
+	annot_angle = RAD_TO_DEG (atan (SKEWSLOPE));
+
 	for (t = -120; t <= 50; t += Tstep)
 	{
 	/*
@@ -258,15 +262,16 @@ skt_background ()
 		sprintf (string, "%d\0", (int) t);
 
 		if (x[1] <= 1.0)
-			G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
-				GT_CENTER, GT_BOTTOM, x[1], 1.01, string);
+			G_write (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+				GT_LEFT, GT_CENTER, x[1] + 0.01 * SKEWSLOPE,
+				1.01, annot_angle, string);
 		else
 		{
-			float	intercept = SKEWSLOPE * (1.0 - x[0]);
+			float	intercept = SKEWSLOPE * (1.01 - x[0]);
 			if (intercept > 0.0)
-				G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 
+				G_write (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 
 					0.025, GT_LEFT, GT_CENTER, 1.01, 
-					intercept, string);
+					intercept, annot_angle, string);
 		}
 		G_clip_window (Skewt_bg_ov, 0.0, 0.0, 1.0, 1.0);
 	}
@@ -295,8 +300,8 @@ skt_background ()
 	 * Annotate along the left side
 	 */
 		sprintf (string, "%d\0", (int) p);
-		G_text (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_RIGHT, 
-			GT_CENTER, -0.01, y[0], string);
+		G_write (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_RIGHT, 
+			GT_CENTER, -0.01, y[0], 0.0, string);
 	}
 /*
  * Saturation mixing ratio lines
@@ -317,12 +322,16 @@ skt_background ()
 		x[0] = XPOS (t_mr (Pmax, mr[i]) - T_K, y[0]);
 		x[1] = XPOS (t_mr ((Pmin + Pmax) / 2.0, mr[i]) - T_K, y[1]);
 	/*
+	 * Find the angle for the annotation
+	 */
+		annot_angle = RAD_TO_DEG (atan ((y[1] - y[0])/(x[1] - x[0])));
+	/*
 	 * Plot the line and annotate just above the top of the line
 	 */
 		G_polyline (Skewt_bg_ov, GPLT_DASH, C_BG2, 2, x, y);
 		sprintf (string, "%03.1f\0", mr[i]);
-		G_text (Skewt_bg_ov, C_BG2, GTF_MINSTROKE, 0.02, GT_CENTER, 
-			GT_BOTTOM, x[1], y[1] + 0.01, string);
+		G_write (Skewt_bg_ov, C_BG2, GTF_MINSTROKE, 0.02, GT_LEFT, 
+			GT_CENTER, x[1], y[1] + 0.01, annot_angle, string);
 	}
 /*
  * Saturated adiabats
@@ -358,10 +367,13 @@ skt_background ()
 
 		if (x[0] > 0.0 && x[0] < 1.0)
 		{
+			slope = (y[1] - y[0]) / (x[1] - x[0]);
+			annot_angle = RAD_TO_DEG (atan (slope));
+
 			sprintf (string, "%d\0", (int) t);
-			G_text (Skewt_bg_ov, C_BG3, GTF_MINSTROKE, 0.02, 
-				GT_CENTER, GT_BOTTOM, x[0], y[0] + 0.01,
-				string);
+			G_write (Skewt_bg_ov, C_BG3, GTF_MINSTROKE, 0.02, 
+				GT_RIGHT, GT_CENTER, x[0], y[0] + 0.01,
+				annot_angle, string);
 		}
 	}
 /*
@@ -392,24 +404,53 @@ skt_background ()
 		G_polyline (Skewt_bg_ov, GPLT_DOT, C_BG4, npts, x, y);
 
 		sprintf (string, "%d\0", (int) pt);
+
 		if (x[0] > 0.0 && x[0] <= 1.0)
-			G_text (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 0.02, 
-				GT_LEFT, GT_TOP, x[0], y[0] - 0.01, string);
+		{
+			slope = (y[1] - y[0]) / (x[1] - x[0]);
+			annot_angle = RAD_TO_DEG (atan (slope));
+		/*
+		 * Nasty stuff for annotation positioning
+		 */
+			xloc = x[0] - 0.02 / slope;
+			xloc -= 0.005 * slope / sqrt (1.0 + slope * slope);
+
+			yloc = 0.98;
+			yloc += 0.005 / sqrt (1.0 + slope * slope);
+		/*
+		 * Write the number
+		 */
+			G_write (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 0.02, 
+				GT_LEFT, GT_BOTTOM, xloc, yloc, annot_angle, 
+				string);
+		}
 		else if (x[0] <= 0.0)
 		{
-			float	slope, intercept;
-
 			for (i = 0; i < npts; i++)
 				if (x[i] > 0.0)
 					break;
 
 			if (i != npts)
 			{
+			/*
+			 * Nasty stuff for the annotation positioning
+			 */
 				slope = (y[i] - y[i-1]) / (x[i] - x[i-1]);
+				annot_angle = RAD_TO_DEG (atan (slope));
+
 				intercept = y[i] - slope * x[i];
-				G_text (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 
-					0.02, GT_LEFT, GT_CENTER, 0.01, 
-					intercept + 0.01 * slope, string);
+				xloc = 0.0;
+				xloc -= 0.005 * 
+					slope / sqrt (1.0 + slope * slope);
+
+				yloc = intercept;
+				yloc += 0.005 / sqrt (1.0 + slope * slope);
+			/*
+			 * Write the number
+			 */
+				G_write (Skewt_bg_ov, C_BG4, GTF_MINSTROKE, 
+					0.02, GT_LEFT, GT_BOTTOM, xloc, 
+					yloc, annot_angle, string);
 			}
 		}
 	}
@@ -505,8 +546,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
-		Xtxt_bot, Ytxt_bot, string);
+	G_write (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_bot, Ytxt_bot, 0.0, string);
 /*
  * Update the location for the next annotation
  */
@@ -549,8 +590,8 @@ int	color, newline;
 /*
  * Write in the annotation
  */
-	G_text (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
-		Xtxt_top, Ytxt_top, string);
+	G_write (Skewt_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
  */
@@ -1013,10 +1054,10 @@ int	plot_ndx, nplots;
  */
 	if (plot_ndx == 0)
 	{
-		G_text (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
-			GT_TOP, 0.5, -0.01, "WINDS PROFILE");
-		G_text (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.02, GT_LEFT, 
-			GT_CENTER, 0.5, -0.06, " = 10 M/S");
+		G_write (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
+			GT_TOP, 0.5, -0.01, 0.0, "WINDS PROFILE");
+		G_write (Winds_ov, C_WHITE, GTF_MINSTROKE, 0.02, GT_LEFT, 
+			GT_CENTER, 0.5, -0.06, 0.0, " = 10 M/S");
 
 		xov[0] = 0.5 - (10.0 * xscale);
 		xov[1] = 0.5;

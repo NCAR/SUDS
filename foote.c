@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.6 $ $Date: 1989-08-23 10:48:57 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1989-10-09 15:52:33 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>
@@ -29,7 +29,7 @@ static float	Foote_height = 3.0;
 /*
  * Current text position for top annotation
  */
-static float	Xtxt_top = 0.0, Ytxt_top = 1.19;
+static float	Xtxt_top = -0.5 * BORDER, Ytxt_top = 1.0 + 0.95 * BORDER;
 
 /*
  * Forward declarations
@@ -196,7 +196,7 @@ ft_reset_annot ()
  * Reset the annotation location
  */
 {
-	Xtxt_top = -0.75 * BORDER;
+	Xtxt_top = -0.5 * BORDER;
 	Ytxt_top = 1.0 + 0.95 * BORDER;
 }
 
@@ -245,7 +245,7 @@ ft_background ()
  */
 {
 	float	height, li, x[2], y[2];
-	char	string[20];
+	char	string[50];
 /*
  * Unclip so we can annotate outside the main portion
  */
@@ -264,8 +264,8 @@ ft_background ()
 		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
 		sprintf (string, "%.1f", height);
-		G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
-			GT_CENTER, GT_TOP, x[0], -0.01, string);
+		G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+			GT_CENTER, GT_TOP, x[0], -0.01, 0.0, string);
 	/*
 	 * Draw a horizontal line for this height (up to Foote_height km)
 	 */
@@ -277,21 +277,17 @@ ft_background ()
 		y[0] = y[1] = height / Foote_height;
 		G_polyline (Foote_ov, GPLT_SOLID, C_BG2, 2, x, y);
 
-		G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
-			GT_RIGHT, GT_CENTER, -0.01, y[0], string);
+		G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
+			GT_RIGHT, GT_CENTER, -0.01, y[0], 0.0, string);
 	}
 /*
  * Text blurbs
  */
-	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
-		-0.19, 0.535, "DISTANCE");
-	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
-		-0.19, 0.50, "TO");
-	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_LEFT, GT_CENTER, 
-		-0.19, 0.465, "LFC (KM)");
+	G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
+		GT_BOTTOM, -0.1, 0.5, 90.0, "DISTANCE TO LFC (KM)");
 
-	G_text (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, GT_CENTER,
-		0.5, -.05, "PARCEL HEIGHT (KM)");
+	G_write (Foote_ov, C_WHITE, GTF_MINSTROKE, 0.025, GT_CENTER, 
+		GT_CENTER, 0.5, -.1, 0.0, "PARCEL HEIGHT (KM)");
 /*
  * Lifted index scale
  */
@@ -308,20 +304,14 @@ ft_background ()
 		G_polyline (Foote_ov, GPLT_DOT, C_BG4, 2, x, y);
 
 		sprintf (string, "%.1f", li);
-		G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_LEFT, 
-			GT_CENTER, 1.01, y[0], string);
+		G_write (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_LEFT, 
+			GT_CENTER, 1.01, y[0], 0.0, string);
 	}
 
-	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
-		1.19, 0.535, "PARCEL");
-	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
-		1.19, 0.50, "LIFTED");
-	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
-		1.19, 0.465, "INDEX");
-
-	sprintf (string, "(AT %d MB)", Flg_mli ? 400 : 500);
-	G_text (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_RIGHT, GT_CENTER, 
-		1.19, 0.43, string);
+	sprintf (string, "PARCEL LIFTED INDEX (AT %d MB)", 
+		Flg_mli ? 400 : 500);
+	G_write (Foote_ov, C_BG4, GTF_MINSTROKE, 0.025, GT_CENTER, GT_BOTTOM, 
+		1.1, 0.5, -90.0, string);
 /*
  * Restore the original clipping
  */
@@ -413,14 +403,14 @@ int     color, newline;
  */
         if (Xtxt_top > 0.0 && (x1 > 1.0 + 0.75 * BORDER || newline))
         {
-                Xtxt_top = -0.75 * BORDER;
+                Xtxt_top = -0.5 * BORDER;
                 Ytxt_top -= 0.028;
         }
 /*
  * Write in the annotation
  */
-        G_text (Foote_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
-		Xtxt_top, Ytxt_top, string);
+        G_write (Foote_ov, color, GTF_MINSTROKE, 0.025, GT_LEFT, GT_TOP, 
+		Xtxt_top, Ytxt_top, 0.0, string);
 /*
  * Update the location for the next annotation
  */
