@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.5 $ $Date: 1989-09-19 09:17:37 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-09-21 16:18:47 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -319,6 +319,7 @@ fldtype fld;
 
 date
 snd_time (id_name)
+char	*id_name;
 /*
  * Return the start time of the sounding
  */
@@ -678,4 +679,45 @@ struct snd_datum	*ptr;
  * Change the head
  */
 	sounding->dlists[i] = ptr;
+}
+
+
+
+
+void
+snd_bump_indices (id_name, newindex)
+char	*id_name;
+int	newindex;
+/*
+ * For all data associated with the given sounding, increment all indices
+ * which are greater than or equal to 'newindex'.  This is to open up an
+ * index for a point to be inserted.
+ */
+{
+	struct snd		*prev, *sounding = Snd_list;
+	struct snd_datum	*dat;
+	int			fpos;
+
+/*
+ * Find the sounding in the list
+ */
+	while (sounding)
+	{
+		if (! strcmp (id_name, sounding->name))
+			break;
+		prev = sounding;
+		sounding = sounding->next;
+	}
+
+	if (! sounding)
+		ui_error ("There is no sounding with name '%s'", id_name);
+/*
+ * Increment the indices and maxndx
+ */
+	for (fpos = 0; sounding->fields[fpos] != f_null; fpos++)
+		for (dat = sounding->dlists[fpos]; dat; dat = dat->next)
+			if (dat->index >= newindex)
+				dat->index++;
+
+	sounding->maxndx++;
 }
