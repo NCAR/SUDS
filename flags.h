@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: flags.h,v 1.7 1993-04-28 16:19:21 carson Exp $
+ * $Id: flags.h,v 1.8 2004-06-02 21:57:21 burghart Exp $
  */
 
 # ifndef var
@@ -30,16 +30,18 @@
 #	endif
 # endif
 
-var char	Flg_mli;	/* Modified lifted index	*/
-var char	Flg_winds;	/* Winds in skew-t plot?	*/
-var char	Flg_lift;	/* Show the lifted parcel?	*/
-var char	Flg_theta_w;	/* Theta_w on skew-t plots?	*/
-var char	Flg_vt;		/* Virtual temperature on skew-t plots?	*/
-var char	Flg_hodo_msl;	/* Altitudes MSL in hodographs?	*/
-var char	Flg_barb;	/* Plot wind barbs on skew-t? */
-var char	Flg_logp;	/* Plot log(p) for xyplot and xsect plots */
-var char	Flg_datalim;	/* Use data to define interpolation limits */
-var char	Flg_lsqfit;	/* Use least squares fit for interpolation */
-var char	Flg_annotate;	/* Annotate on xsect plot? */
-var char	Flg_oldCLASS;	/* Write files in old class format? */
-var char	Flg_uwind;	/* Compute moisture flux in u-wind direction */
+# include <ui_param.h>	/* for bool */
+
+var bool	Flg_mli;	/* Modified lifted index	*/
+var bool	Flg_winds;	/* Winds in skew-t plot?	*/
+var bool	Flg_lift;	/* Show the lifted parcel?	*/
+var bool	Flg_theta_w;	/* Theta_w on skew-t plots?	*/
+var bool	Flg_vt;		/* Virtual temperature on skew-t plots?	*/
+var bool	Flg_hodo_msl;	/* Altitudes MSL in hodographs?	*/
+var bool	Flg_barb;	/* Plot wind barbs on skew-t? */
+var bool	Flg_logp;	/* Plot log(p) for xyplot and xsect plots */
+var bool	Flg_datalim;	/* Use data to define interpolation limits */
+var bool	Flg_lsqfit;	/* Use least squares fit for interpolation */
+var bool	Flg_annotate;	/* Annotate on xsect plot? */
+var bool	Flg_oldCLASS;	/* Write files in old class format? */
+var bool	Flg_uwind;	/* Compute moisture flux in u-wind direction */

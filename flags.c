@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: flags.c,v 1.8 1993-04-28 16:18:56 carson Exp $";
+static char *rcsid = "$Id: flags.c,v 1.9 2004-06-02 21:57:21 burghart Exp $";
 
 # include "globals.h"
 # include "flags.h"
@@ -34,7 +34,7 @@ static char *rcsid = "$Id: flags.c,v 1.8 1993-04-28 16:18:56 carson Exp $";
 struct flgst
 {
 	char	*flg_name;	/* Name of this flag	*/
-	char	*flg_value;	/* Pointer to the flag	*/
+	bool	*flg_value;	/* Pointer to the flag	*/
 	char	flg_default;	/* Default value for this flag	*/
 	char	*flg_desc;	/* Description of this flag	*/
 } Flg_tbl[] =
