@@ -1,6 +1,6 @@
 /*
  * Fields derivation module
- * $Revision: 1.6 $ $Date: 1991-01-16 21:54:53 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1991-03-21 17:12:06 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
@@ -95,7 +95,7 @@ fdd_dt_init ()
 	int	i;
 	void	fdd_mr (), fdd_u_wind (), fdd_v_wind (), fdd_theta ();
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
-	void	fdd_wdir (), fdd_vt ();
+	void	fdd_wdir (), fdd_vt (), fdd_ascent ();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -115,6 +115,7 @@ fdd_dt_init ()
 	fdd_add_derivation (f_wspd, fdd_wspd, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_wdir, fdd_wdir, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_dp);
+	fdd_add_derivation (f_dz, fdd_ascent, 2, f_time, f_alt);
 /*
  * Mark the initialization as done
  */
@@ -316,6 +317,9 @@ float	*buf, **dbufs, badval;
 int	npts;
 /*
  * altitude derivation routine
+ *
+ * IMPORTANT NOTE:  The altitudes returned are not MSL!  The heights returned
+ * are relative to the first good point (essentially AGL).
  */
 {
 	float	*dp = dbufs[0], *temp = dbufs[1], *pres = dbufs[2];
@@ -455,3 +459,32 @@ int	npts;
 	}
 }
 
+
+
+
+void
+fdd_ascent (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * ascent rate derivation routine
+ */
+{
+	float	*time = dbufs[0], *alt = dbufs[1];
+	float	prevtime, prevalt = badval;
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (time[i] == badval || alt[i] == badval)
+		{
+			buf[i] = badval;
+			continue;
+		}
+		else if (prevalt != badval)
+			buf[i] = (alt[i] - prevalt) / (time[i] - prevtime);
+
+		prevtime = time[i];
+		prevalt = alt[i];
+	}
+}
