@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: globals.h,v 1.7 1993-04-28 16:19:54 carson Exp $
+ * $Id: globals.h,v 1.8 1993-10-01 15:48:29 case Exp $
  */
 
 # include <ui.h>
@@ -29,6 +29,18 @@
 #	define TRUE	1
 #	define FALSE	0
 # endif
+
+
+/*
+ * A macro to make function prototypes a little easier across both STDC and
+ * non-STDC implementations.
+ */
+# ifdef __STDC__
+#  define FP(stuff) stuff
+# else
+#  define FP(stuff) ()
+# endif
+
 
 # define BADVAL	-999.
 # define BUFLEN	2048
