@@ -1,5 +1,9 @@
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  89/05/19  14:33:11  burghart
+ * Added bulk Richardson number calculation and positive energy is
+ * now labeled as CAPE.
+ * 
  * Revision 1.3  89/05/09  15:06:04  burghart
  * Added code to separate positive and negative area below the LFC.
  * (Previously, only the total area was reported)
@@ -199,16 +203,19 @@ struct ui_command	*cmds;
 
 	if (Flg_mli)
 	{
-		an_printf ("Modified lifted index: %.2f\n", li);
+		if (li != BADVAL)
+			an_printf ("Modified lifted index: %.2f\n", li);
 	/*
 	 * Get the forecasted modified lifted index, too
 	 */
 		fmli = an_fmli (p, t, npts, p_sfc, dp_sfc);
-		an_printf ("Forecasted modified lifted index: %.2f\n", 
-			fmli);
+		if (fmli != BADVAL)
+			an_printf ("Forecasted modified lifted index: %.2f\n", 
+				fmli);
 	}
 	else
-		an_printf ("Lifted index: %.2f\n", li);
+		if (li != BADVAL)
+			an_printf ("Lifted index: %.2f\n", li);
 /*
  * Integrate the area (energy) from the LCL to the LFC
  */
@@ -668,7 +675,7 @@ int	npts, verbose;
 /*
  * Sanity check
  */
-	if (p_prev == BADVAL)
+	if (p_prev == BADVAL || i == npts)
 	{
 		an_printf ("Cannot calculate lifted index\n");
 		return (BADVAL);
@@ -723,7 +730,7 @@ int	npts;
 /*
  * Make sure we have two good points to interpolate between
  */
-	if (p_prev == BADVAL)
+	if (p_prev == BADVAL || i == npts)
 	{
 		an_printf ("Unable to find 700 mb temperature\n");
 		return (BADVAL);
