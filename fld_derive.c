@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.17 2004-06-02 21:48:35 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.18 2005-03-25 21:57:57 burghart Exp $";
 
 # include <math.h>
 # include <stdarg.h>
@@ -120,7 +120,7 @@ fdd_dt_init ()
 	void	fdd_wdir (), fdd_vt (), fdd_ascent (), fdd_rh ();
 	void	fdd_theta_v (), fdd_ri(), fdd_mflux(), fdd_mflux_uv();
 	void	fdd_t_wet ();
-	void	fdd_add_derivation ();
+	void	fdd_add_derivation (fldtype fld, ...);
 /*
  * Start out with null lists for each field
  */
