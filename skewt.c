@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.16 $ $Date: 1990-11-12 09:38:02 $ $Author: burghart $
+ * $Revision: 1.17 $ $Date: 1990-12-13 14:15:58 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -269,7 +269,7 @@ skt_background ()
 	 * Write the number either on the top or on the right side depending
 	 * on the isotherm
 	 */
-		sprintf (string, "%d\0", (int) t);
+		sprintf (string, "%d", (int) t);
 
 		if (x[1] <= 1.0)
 			G_write (Skewt_bg_ov, C_WHITE, GTF_MINSTROKE, 0.025, 
@@ -309,7 +309,7 @@ skt_background ()
 	/*
 	 * Annotate along the left side
 	 */
-		sprintf (string, "%d\0", (int) p);
+		sprintf (string, "%d", (int) p);
 		G_write (Skewt_bg_ov, C_WHITE, GTF_DEV, 0.025, GT_RIGHT, 
 			GT_CENTER, -0.01, y[0], 0.0, string);
 	}
@@ -335,7 +335,7 @@ skt_background ()
 	/*
 	 * Label
 	 */
-		sprintf (string, "%d \0", i);
+		sprintf (string, "%d ", i);
 		G_write (Skewt_bg_ov, C_BG2, GTF_DEV, 0.02, GT_RIGHT,
 			GT_CENTER, x[1], y[1], 0.0, string);
 	}
@@ -365,7 +365,7 @@ skt_background ()
 	 * Plot the line and annotate just above the top of the line
 	 */
 		G_polyline (Skewt_bg_ov, GPLT_DASH, C_BG2, 2, x, y);
-		sprintf (string, "%03.1f\0", mr[i]);
+		sprintf (string, "%03.1f", mr[i]);
 		G_write (Skewt_bg_ov, C_BG2, GTF_MINSTROKE, 0.02, GT_LEFT, 
 			GT_CENTER, x[1], y[1] + 0.01, annot_angle, string);
 	}
@@ -375,8 +375,8 @@ skt_background ()
  */
 	if (Flg_theta_w)
 	{
-		min = T_K;
-		max = T_K + 32;
+		min = 273;
+		max = 305;
 		step = 4;
 	}
 	else
@@ -427,8 +427,8 @@ skt_background ()
 			if (annot_angle > 0.0)
 				annot_angle -= 180.0;
 
-			sprintf (string, "%d\0", 
-				Flg_theta_w ? (int)(t - T_K) : (int)(t));
+			sprintf (string, "%d", 
+				Flg_theta_w ? (int)(t - 273) : (int)(t));
 			G_write (Skewt_bg_ov, C_BG3, GTF_MINSTROKE, 0.02, 
 				GT_RIGHT, GT_CENTER, x[0], y[0] + 0.01,
 				annot_angle, string);
@@ -461,7 +461,7 @@ skt_background ()
 	 */
 		G_polyline (Skewt_bg_ov, GPLT_DOT, C_BG4, npts, x, y);
 
-		sprintf (string, "%d\0", (int) pt);
+		sprintf (string, "%d", (int) pt);
 
 		if (x[0] > 0.0 && x[0] <= 1.0)
 		{
