@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.19 1992-04-02 21:51:05 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.20 1992-04-09 21:58:10 burghart Exp $";
 
 # include <stdio.h>
 # include <errno.h>
@@ -181,7 +181,7 @@ struct snd	*sounding;
 			(char *) 0, -180.0, 180.0, 0.0);
 	}
 
-	if (sounding->sitelat == 0.0)
+	if (sounding->sitealt == 0.0)
 	{
 		ui_printf ("Site altitude in file is zero\n");
 		sounding->sitealt = ui_float_prompt (
