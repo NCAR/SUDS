@@ -1,6 +1,6 @@
 /*
  * Fields derivation module
- * $Revision: 1.3 $ $Date: 1990-05-11 14:35:07 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1990-11-05 11:15:23 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
@@ -84,7 +84,7 @@ fdd_dt_init ()
 	int	i;
 	void	fdd_mr (), fdd_u_wind (), fdd_v_wind (), fdd_theta ();
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
-	void	fdd_wdir ();
+	void	fdd_wdir (), fdd_vt ();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -102,6 +102,7 @@ fdd_dt_init ()
 	fdd_add_derivation (f_alt, fdd_alt, 3, f_dp, f_temp, f_pres);
 	fdd_add_derivation (f_wspd, fdd_wspd, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_wdir, fdd_wdir, 2, f_u_wind, f_v_wind);
+	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_dp);
 /*
  * Mark the initialization as done
  */
@@ -417,3 +418,28 @@ int	npts;
 			buf[i] = hypot (u_wind[i], v_wind[i]);
 	}
 }
+
+
+
+
+void
+fdd_vt (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * virtual temperature derivation routine
+ */
+{
+	float	*temp = dbufs[0], *pres = dbufs[1], *dp = dbufs[2];
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (temp[i] == badval || pres[i] == badval || dp[i] == badval)
+			buf[i] = badval;
+		else
+			buf[i] = t_v (temp[i] + T_K, pres[i], 
+				e_from_dp (dp[i] + T_K));
+	}
+}
+
