@@ -1,7 +1,7 @@
 /*
  * Contour a rectangular array
  *
- * $Revision: 1.3 $ $Date: 1990-03-06 11:24:28 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1990-05-29 10:27:47 $ $Author: burghart $
  */
 # include <errno.h>
 # include <math.h>
@@ -100,7 +100,7 @@ static char	*Did_tri;
  */
 # define MAXPTS	512
 static float	Xpt[MAXPTS], Ypt[MAXPTS];
-static int	Npt;
+static int	Npt = 0;
 
 /*
  * Color stuff
@@ -129,7 +129,7 @@ static overlay	C_ov;
  * Forward declarations
  */
 void	con_minmax (), con_do_contour (), con_draw_contour ();
-void	con_graze (), con_test ();
+void	con_graze (), con_addpoint ();
 
 
 
@@ -338,7 +338,7 @@ float	cval;
 {
 	int	end_side = -1, lower_right, i;
 	int	side, ep0, ep1;
-	float	v_val[3], val0, val1, frac;
+	float	v_val[3], val0, val1, frac, xpt, ypt;
 	vertex	v[3];
 	triangle	next;
 /*
@@ -446,12 +446,11 @@ float	cval;
 	/*
 	 * Add a point to the list for this contour
 	 */
-		Xpt[Npt] = Xbottom + v[ep0].i * Xstep + 
+		xpt = Xbottom + v[ep0].i * Xstep + 
 			(v[ep1].i - v[ep0].i) * frac * Xstep;
-		Ypt[Npt] = Ybottom + v[ep0].j * Ystep + 
+		ypt = Ybottom + v[ep0].j * Ystep + 
 			(v[ep1].j - v[ep0].j) * frac * Ystep;
-		Npt++;
-		con_test ();
+		con_addpoint (xpt, ypt);
 	/*
 	 * Remember the last side to which we add a point
 	 */
@@ -504,7 +503,7 @@ float	cval;
  */
 {
 	int		n, next, prev, side;
-	float		val0, val1, frac, x_in, y_in;
+	float		val0, val1, frac, x_in, y_in, xpt, ypt;
 	vertex		v[6];
 	triangle	t[6], next_tri;
 /*
@@ -515,12 +514,7 @@ float	cval;
 	y_in = Ybottom + v_in.j * Ystep;
 
 	if (Xpt[Npt-1] != x_in || Ypt[Npt-1] != y_in)
-	{
-		Xpt[Npt] = x_in;
-		Ypt[Npt] = y_in;
-		Npt++;
-		con_test ();
-	}
+		con_addpoint (x_in, y_in);
 /*
  * We index the adjacent triangles and vertices thus:
  *
@@ -588,10 +582,9 @@ float	cval;
 	/*
 	 * Add the point at v_in to the polyline list
 	 */
-		Xpt[Npt] = Xbottom + v_in.i * Xstep;
-		Ypt[Npt] = Ybottom + v_in.j * Ystep;
-		Npt++;
-		con_test ();
+		xpt = Xbottom + v_in.i * Xstep;
+		ypt = Ybottom + v_in.j * Ystep;
+		con_addpoint (xpt, ypt);
 	/*
 	 * If the contour passes through one of the triangle's outside
 	 * vertices, mark the adjacent triangles as done and make a 
@@ -605,10 +598,7 @@ float	cval;
 			con_graze (v[n], cval);
 
 			con_draw_contour ();
-			Xpt[Npt] = x_in;
-			Ypt[Npt] = y_in;
-			Npt++;
-			con_test ();
+			con_addpoint (x_in, y_in);
 		}
 		else if (val1 == cval)
 		{
@@ -618,10 +608,7 @@ float	cval;
 			con_graze (v[next], cval);
 
 			con_draw_contour ();
-			Xpt[Npt] = x_in;
-			Ypt[Npt] = y_in;
-			Npt++;
-			con_test ();
+			con_addpoint (x_in, y_in);
 		}
 	/*
 	 * Otherwise, see if the contour passes through the side 
@@ -633,12 +620,11 @@ float	cval;
 		/*
 		 * Add a point to the list
 		 */
-			Xpt[Npt] = Xbottom + v[n].i * Xstep + 
+			xpt = Xbottom + v[n].i * Xstep + 
 				(v[next].i - v[n].i) * frac * Xstep;
-			Ypt[Npt] = Ybottom + v[n].j * Ystep + 
+			ypt = Ybottom + v[n].j * Ystep + 
 				(v[next].j - v[n].j) * frac * Ystep;
-			Npt++;
-			con_test ();
+			con_addpoint (xpt, ypt);
 		/*
 		 * Find the side we're going through and the triangle
 		 * we're entering.  (The equations are not obvious, 
@@ -655,10 +641,7 @@ float	cval;
 			con_do_contour (next_tri, cval, side);
 
 			con_draw_contour ();
-			Xpt[Npt] = x_in;
-			Ypt[Npt] = y_in;
-			Npt++;
-			con_test ();
+			con_addpoint (x_in, y_in);
 		}
 	}
 /*
@@ -671,21 +654,31 @@ float	cval;
 
 
 void
-con_test ()
+con_addpoint (x, y)
+float	x, y;
 /*
- * Draw now if we hit the max number of points we can put
- * into a polyline
+ * Add a point to the polyline for the contour
  */
 {
-	float	last_x = Xpt[Npt-1], last_y = Ypt[Npt-1];
-
+/*
+ * Put the point in the list
+ */
+	Xpt[Npt] = x;
+	Ypt[Npt] = y;
+	Npt++;
+/*
+ * If the list isn't full, return
+ */
 	if (Npt < MAXPTS)
 		return;
-
+/*
+ * The list is full, so draw the contour and make the current point
+ * the first point of the next polyline
+ */
 	con_draw_contour ();
 
-	Xpt[0] = last_x;
-	Ypt[0] = last_y;
+	Xpt[0] = x;
+	Ypt[0] = y;
 	Npt = 1;
 }
 
