@@ -1,5 +1,5 @@
 TOP = ..
-LOCALCFLAGS = -Bstatic $(XINCLUDE) $(NETCDFINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG) $(SUNVIEWFLAG)
+LOCALCFLAGS = -Bstatic $(XINCLUDE) $(NETCDFINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG) 
 
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	convert.o edit.o eformat.o \
@@ -21,7 +21,7 @@ install: suds suds.lf
 	ranlib libsuds.a
 
 suds:	$(OBJS)
-	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs $(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB)
+	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs $(XLIBRARIES) XLibrary -ltermcap -lm $(NETCDFLIB) $(SUNVIEWFLAG)
 
 suds.lf: $(RDSSLIBRARIES)/suds.lf
 
