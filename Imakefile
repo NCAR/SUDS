@@ -1,4 +1,4 @@
-MFVERSION="$Id: Imakefile,v 1.1 1993-07-23 19:56:57 case Exp $"
+MFVERSION="$Id: Imakefile,v 1.2 1993-07-27 21:59:26 case Exp $"
 /*		Copyright (C) 1987,88,89,90,91 by UCAR
  *	University Corporation for Atmospheric Research
  *		   All rights reserved
@@ -19,7 +19,11 @@ MFVERSION="$Id: Imakefile,v 1.1 1993-07-23 19:56:57 case Exp $"
 
 LOCALLIB = libsuds.a
 
+#if SystemV4
+LIBS = $(LIBRDSSGRAPH) $(LIBRDSSUI) $(LIBRDSSUTIL) $(LIBNETCDF) $(XLIBS) $(SUNVIEWLIBS) -lgen
+#else
 LIBS = $(LIBRDSSGRAPH) $(LIBRDSSUI) $(LIBRDSSUTIL) $(LIBNETCDF) $(XLIBS) $(SUNVIEWLIBS)
+#endif
 
 INCLUDES = $(XINCLUDES) $(NETCDFINCLUDES)
 
