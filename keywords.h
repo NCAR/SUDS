@@ -39,11 +39,13 @@
 # define KW_FROM	35
 # define KW_VSCALE	36
 # define KW_TIMHGT	37
+# define KW_STEP	38
+# define KW_TOP		39
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	37
+# define MAXKW	39
 
 /*
  * Threshold criteria keywords
