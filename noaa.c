@@ -1,7 +1,7 @@
 /*
  * NOAA format sounding access
  *
- * $Revision: 1.5 $ $Date: 1989-12-18 15:38:46 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-12-19 15:52:25 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -89,6 +89,12 @@ struct snd	*sounding;
 
 		if (status == EOF || status == 0)
 			break;
+	/*
+	 * Convert the time (if good) from mmss to seconds
+	 */
+		minute = (int) val[0] / 100;
+		second = (int) val[0] % 100;
+		val[0] = 60 * minute + second;
 	/*
 	 * Put the eight data points into their respective data lists
 	 */
