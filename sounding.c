@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.3 $ $Date: 1989-08-11 11:04:33 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1989-08-11 14:19:49 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -44,15 +44,12 @@ snd_init ()
  * Initialize the array of format-dependent read routines
  */
 {
-	void	cls_read_file (), ef_read_file (), jaw_read_file ();
+	void	cls_read_file (), jaw_read_file ();
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
-
-	Read_file[SFMT_EFMT]	= ef_read_file;
-	Fmt_name[SFMT_EFMT]	= "E-format";
 
 	Read_file[SFMT_JAWS]	= jaw_read_file;
 	Fmt_name[SFMT_JAWS]	= "JAWS";
