@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.9 $ $Date: 1991-03-26 20:55:13 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1991-03-27 20:41:28 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -22,7 +22,7 @@ static struct
 	{f_azimuth, "balloon azimuth", "deg",
 		{"azimuth", "az", ""},
 		0.0,	360.0,	0.0,	10.0	},
-	{f_dp, "dewpoint", "deg C",
+	{f_dp, "dewpoint", "C",
 		{"dp", "dewpoint", ""},
 		-70.0,	30.0,	-10.0,	5.0	},
 	{f_ascent, "ascent rate", "m/s",
@@ -61,19 +61,19 @@ static struct
 	{f_range, "balloon range", "km",
 		{"range", ""},
 		0.0,	10000.0,	0.0,	1.0	},
-	{f_rh, "relative humidity", "%",
+	{f_rh, "relative humidity", "percent",
 		{"rh", ""},
 		0.0,	100.0,	50.0,	10.0	},
 	{f_rtype, "record type", "",
 		{"rtype", ""},
 		0.0,	10.0,	0.0,	1.0	},
-	{f_temp, "temperature", "deg C",
+	{f_temp, "temperature", "C",
 		{"temp", "temperature", "tdry", ""},
 		-60.0,	40.0,	0.0,	5.0	},
-	{f_theta, "potential temperature", "deg K",
+	{f_theta, "potential temperature", "K",
 		{"theta", "pt", ""},
 		300.0,	350.0,	300.0,	5.0	},
-	{f_theta_e, "equivalent potential temperature", "deg K",
+	{f_theta_e, "equivalent potential temperature", "K",
 		{"theta_e", "ept", ""},
 		300.0,	350.0,	300.0,	5.0	},
 	{f_time, "time from start", "s", 	
