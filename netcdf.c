@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.14 1993-12-29 17:05:32 case Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.15 1995-10-02 20:23:26 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -83,10 +83,13 @@ struct snd	*sounding;
  */
 {
 	int	len, status, ndx, npts, fld, nflds, id;
-	int	v_id[MAXFLDS];
+	int	v_id[MAXFLDS], dims[MAX_VAR_DIMS], ndims, natts;
         long    zero = 0;
 	long	basetime;
-	float	v, flag[MAXFLDS], *data;
+	float	v, flag[MAXFLDS], *fdata;
+	double	*ddata;
+	void	*dptr;
+	nc_type	datatype;
 	char	string[80];
 	struct tm		*t;
 	struct snd_datum	*pt, *prevpt;
@@ -103,9 +106,11 @@ struct snd	*sounding;
 /*
  * Get 'platform' or 'site_name' attribute
  */
-	if ((ncattget (Sfile, NC_GLOBAL, "platform", (void *) string) == -1) &&
+	if ((ncattget (Sfile, NC_GLOBAL, "zeb_platform", 
+		       (void *) string) == -1) &&
+	    (ncattget (Sfile, NC_GLOBAL, "platform", (void *) string) == -1) &&
 	    (ncattget (Sfile, NC_GLOBAL, "site_name", (void *) string) == -1))
-		ui_error ("Can't find 'platform' or 'site_name'!", ncerr);
+		ui_error ("Can't find 'zeb_platform' or 'site_name'!", ncerr);
 
 	sounding->site = (char *) 
 		malloc ((1 + strlen (string)) * sizeof (char));
@@ -168,7 +173,7 @@ struct snd	*sounding;
 	 * Get the missing value flag for this field
 	 */
 		status = ncattget (Sfile, id, "missing_value", 
-			(void *)(&flag[nflds]));
+				   (void *)(&flag[nflds]));
 		if (status == -1)
 		{
 			ui_warning ("No missing value flag for %s, using %.1f",
@@ -185,21 +190,41 @@ struct snd	*sounding;
 /*
  * Get an array to hold the data temporarily
  */
-	data = (float *) malloc (npts * sizeof (float));
+	fdata = (float *) malloc (npts * sizeof (float));
+	ddata = (double *) malloc (npts * sizeof (double));
 /*
  * Deal with each field
  */
-
 	for (fld = 0; fld < nflds; fld++)
 	{
 	/*
+	 * We only deal with float or double data, dimensioned only by time...
+	 */
+		status = ncvarinq (Sfile, v_id[fld], NULL, &datatype, &ndims, 
+				   dims, &natts);
+		if (status == -1 || ndims != 1 ||
+		    (datatype != NC_FLOAT && datatype != NC_DOUBLE))
+			ui_error ("Dimension or data type problem with '%s'!",
+				  fd_name (sounding->fields[fld]));
+	/*
 	 * Get the data for this field
 	 */
+		dptr = (datatype == NC_FLOAT) ? (void *)fdata : (void *)ddata;
+		
 		status = ncvarget (Sfile, v_id[fld], &zero, (long *) &npts, 
-			(void *) data);
+				   dptr);
+
 		if (status == -1)
 			ui_error ("Error reading %s data from file", 
 				fd_name (sounding->fields[fld]));
+	/*
+	 * Go from double to float if necessary (Of course we're assuming here
+	 * that none of the data *require* the extra range available in a
+	 * double...)
+	 */
+		if (datatype == NC_DOUBLE)
+			for (ndx = 0; ndx < npts; ndx++)
+				fdata[ndx] = ddata[ndx];
 	/*
 	 * Build the list of snd_datum structures
 	 */
@@ -210,7 +235,7 @@ struct snd	*sounding;
 		/*
 		 * Skip bad points
 		 */
-			if (data[ndx] == flag[fld])
+			if (fdata[ndx] == flag[fld])
 				continue;
 		/*
 		 * Allocate a new structure
@@ -231,11 +256,11 @@ struct snd	*sounding;
 		 * Change altitude to meters
 		 */
 			if (sounding->fields[fld] == f_alt)
-				data[ndx] *= 1000;
+				fdata[ndx] *= 1000;
 		/*
 		 * Assign the value and index
 		 */
-			pt->value = data[ndx];
+			pt->value = fdata[ndx];
 			pt->index = ndx;
 		/*
 		 * Reassign the previous point
@@ -244,9 +269,10 @@ struct snd	*sounding;
 		}
 	}
 /*
- * Free the temporary data vector
+ * Free the temporary data vectors
  */
-	free (data);
+	free (fdata);
+	free (ddata);
 /*
  * Set the max index for these data
  */
