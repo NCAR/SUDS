@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.5 $ $Date: 1989-08-11 11:02:54 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1989-08-14 15:08:54 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -720,7 +720,7 @@ float	*pres, *temp, *dp;
  * and dp data
  */
 {
-	int	npts, ndx_700;
+	int	npts, ndx_700, do_700;
 	float	x[200], y[200];
 	float	p_lcl, t_lcl, pt, w, t_sfc, p_sfc, dp_sfc, ept;
 	float	t_700, dp_700, p_lcl700, t_lcl700, ept_700, pt_700;
@@ -750,10 +750,19 @@ float	*pres, *temp, *dp;
 /*
  * Get the forecasted (700 mb) LCL pressure, temp, and ept
  */
-	pt_700 = theta_dry (t_700, 700.0);
-	p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
-	t_lcl700 = lcl_temp (t_700, dp_700);
-	ept_700 = theta_w (t_lcl700, p_lcl700);
+	if (t_700 > dp_700)
+	{
+		pt_700 = theta_dry (t_700, 700.0);
+		p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
+		t_lcl700 = lcl_temp (t_700, dp_700);
+		ept_700 = theta_w (t_lcl700, p_lcl700);
+		do_700 = TRUE;
+	}
+	else
+	{
+		do_700 = FALSE;
+		ui_warning ("Unable to calculate forecasted lifted parcel");
+	}
 /*
  * Draw the saturated adiabat from the LCL up
  */
@@ -771,17 +780,20 @@ float	*pres, *temp, *dp;
 /*
  * Draw the saturated adiabat from the forecasted LCL up
  */
-	npts = 0;
-
-	for (p = p_lcl700; p >= Pmin - pstep; p -= pstep)
+	if (do_700)
 	{
-		t = t_sat (ept_700, p) - T_K;
-		y[npts] = YPOS (p);
-		x[npts] = XPOS ((float) t, y[npts]);
-		npts++;
-	}
+		npts = 0;
 
-	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+		for (p = p_lcl700; p >= Pmin - pstep; p -= pstep)
+		{
+			t = t_sat (ept_700, p) - T_K;
+			y[npts] = YPOS (p);
+			x[npts] = XPOS ((float) t, y[npts]);
+			npts++;
+		}
+
+		G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+	}
 /*
  * Draw the dry adiabat from the LCL down
  */
@@ -810,33 +822,39 @@ float	*pres, *temp, *dp;
 /*
  * Draw the dry adiabat from the forecasted LCL down
  */
-	npts = 0;
-
-	for (p = p_lcl700; p < 700.0 + pstep; p += pstep)
+	if (do_700)
 	{
-	/*
-	 * Stop at 700 mb
-	 */
-		if (p > 700.0)
-			p = 700.0;
-	/*
-	 * Get the temp corresponding to our theta at this pressure
-	 */
-		t = theta_to_t (pt_700, p) - T_K;
-	/*
-	 * Translate into overlay coordinates
-	 */
-		y[npts] = YPOS (p);
-		x[npts] = XPOS ((float) t, y[npts]);
-		npts++;
-	}
+		npts = 0;
 
-	G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+		for (p = p_lcl700; p < 700.0 + pstep; p += pstep)
+		{
+		/*
+		 * Stop at 700 mb
+		 */
+			if (p > 700.0)
+				p = 700.0;
+		/*
+		 * Get the temp corresponding to our theta at this pressure
+		 */
+			t = theta_to_t (pt_700, p) - T_K;
+		/*
+		 * Translate into overlay coordinates
+		 */
+			y[npts] = YPOS (p);
+			x[npts] = XPOS ((float) t, y[npts]);
+			npts++;
+		}
+
+		G_polyline (Skewt_ov, GPLT_DOT, Colorbase + C_BG1, npts, x, y);
+	}
 /*
  * Draw the saturation mixing ratio line from the surface up to the LCL
  * with the lower pressure
  */
-	min_lcl = (p_lcl < p_lcl700 ? p_lcl : p_lcl700);
+	if (do_700)
+		min_lcl = (p_lcl < p_lcl700 ? p_lcl : p_lcl700);
+	else
+		min_lcl = p_lcl;
 
 	t = t_mr (min_lcl, w) - T_K;
 	y[0] = YPOS ((float) min_lcl);
