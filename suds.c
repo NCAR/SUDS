@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.4 $ $Date: 1989-08-02 14:41:27 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1989-08-11 10:37:30 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -39,7 +39,6 @@ char	**argv;
 	void	main_finish (), main_interrupt (), main_cmd_init();
 	int	main_dispatch ();
 	int	status, read_init = TRUE;
-	stbl	tag;
 	union usy_value	helpdir;
 
 # ifdef VMS

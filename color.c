@@ -1,7 +1,7 @@
 /*
  * Handle initialization and changing of colors
  *
- * $Revision: 1.1 $ $Date: 1989-08-03 09:47:01 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1989-08-11 10:40:57 $ $Author: burghart $
  */
 # include <stdio.h>
 # include "globals.h"
@@ -291,7 +291,7 @@ color_loadmap ()
  * Initialize the colors on our workstation
  */
 {
-	int	devmax, base, i;
+	int	devmax;
 
 	G_w_inquire (Wkstn, GIW_NCOLOR, &devmax);
 /*

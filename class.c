@@ -1,9 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  89/03/16  15:12:01  burghart
- * Initial revision
+ * $Revision: 1.3 $ $Date: 1989-08-11 10:40:00 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -48,7 +46,7 @@ struct snd	*sounding;
 	int	ndx, npts, n_fld, n_sfc_fld, status, pos;
 	fldtype	sfc_fld[MAXFLDS];
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
-	float	sitelat, sitelon, sitealt, val;
+	float	val;
 	char	string[STRSIZE], character;
 /*
  * Open the file
@@ -274,7 +272,7 @@ struct snd	*sounding;
  */
 {
 	FILE	*sfile;
-	int	i, j, year, month, day, hour, minute, second, dummy;
+	int	i, j, year, month, day, hour, minute, second;
 	int	ndx, nflds;
 	long	current_time;
 	float	val;

@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.7 $ $Date: 1989-07-26 15:56:20 $ $Author: burghart $ 
+ * $Revision: 1.8 $ $Date: 1989-08-11 10:38:03 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -42,7 +42,7 @@ struct ui_command	*cmds;
 {
 	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN], u[BUFLEN], v[BUFLEN];
 	float	t_sfc, p_sfc, dp_sfc, temp700, dp700;
-	int	i, npts, name_loc = 0, success, ndx700;
+	int	npts, name_loc = 0, success, ndx700;
 	char	*snd_default (), *snd_site (), string[80];
 	date	sdate, snd_time ();
 /*
@@ -436,7 +436,7 @@ int	npts;
  */
 {
 	float	p_lcl, t_lcl, theta_e_lcl, dt_bot, dt_top, ln_p_lfc;
-	float	p_prev, t_prev, vt, vt_prev, e;
+	float	p_prev, t_prev, vt, e;
 	int	i = 0;
 /*
  * Get LCL info
@@ -460,7 +460,6 @@ int	npts;
  */
 	e = e_from_dp (dp[i] + T_K);
 	vt = t_v (t[i] + T_K, p[i], e);
-	vt_prev = vt;
 /*
  * Go up from here until the virtual temperature crosses the moist adiabat
  */
@@ -475,7 +474,6 @@ int	npts;
 	 * Move to the next good point
 	 */
 		p_prev = p[i];
-		vt_prev = vt;
 		while (p[i] >= p_prev || p[i] == BADVAL || t[i] == BADVAL ||
 			dp[i] == BADVAL)
 			if (++i == npts)
