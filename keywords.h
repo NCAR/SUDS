@@ -50,14 +50,13 @@
  * Sounding format keywords
  */
 # define SFMT_CLASS	0
-# define SFMT_EFMT	1
-# define SFMT_JAWS	2
-# define SFMT_NOAA	3
-# define SFMT_NWS	4
-# define SFMT_FGGE	5
-# define SFMT_RSANAL	6
+# define SFMT_JAWS	1
+# define SFMT_NOAA	2
+# define SFMT_NWS	3
+# define SFMT_FGGE	4
+# define SFMT_RSANAL	5
 
-# define MAXFMT		6  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		5  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show
