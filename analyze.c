@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.33 1994-06-24 21:51:00 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.34 1995-09-14 20:51:07 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -590,10 +590,15 @@ int	npts;
  * Bulk Richardson number
  */
 	shear = an_shear ();
-	an_printf ("\t Shear over lowest %.1f km: %.1f m/s\n", Shear_depth,
-		   shear);
+	if (shear >= 0.0)
+		an_printf ("\t Shear over lowest %.1f km: %.1f m/s\n", 
+			   Shear_depth, shear);
+	else
+		an_printf ("\t Shear over lowest %.1f km: <BAD>\n", 
+			   Shear_depth);
+	
 
-	if (shear != 0.0)
+	if (shear > 0.0)
 		an_printf ("\t Bulk Richardson number: %.1f\n", 
 			2.0 * R_D * area_pos / (shear * shear));
 	else
@@ -604,7 +609,11 @@ int	npts;
 	an_mlvw (&mspd, &mdir);
 	an_printf ("\t MLVW between %.0f mb and %.0f mb: ", Mlvw_bot, 
 		Mlvw_top);
-	an_printf ("%.1f m/s from %.0f deg.\n", mspd, mdir);
+
+	if (mspd >= 0.0)
+		an_printf ("%.1f m/s from %.0f deg.\n", mspd, mdir);
+	else
+		an_printf ("<BAD>\n");
 
 	an_printf ("\n");
 }
@@ -1059,7 +1068,8 @@ va_dcl
 double
 an_shear ()
 /*
- * Find a shear value for use in the Bulk Richardson number calculation
+ * Find a shear value for use in the Bulk Richardson number calculation.
+ * Return a negative value if a good shear cannot be calculated.
  */
 {
 	float	u_wind[BUFLEN], v_wind[BUFLEN], alt[BUFLEN];
@@ -1079,7 +1089,7 @@ an_shear ()
 		snd_get_data (Id_name, v_wind, BUFLEN, f_v_wind, BADVAL);
 		snd_get_data (Id_name, alt, BUFLEN, f_alt, BADVAL);
 	ON_ERROR
-		return (0.0);
+		return (-1.0);
 	ENDCATCH
 /*
  * Get the site altitude for conversion of altitudes to AGL
@@ -1109,7 +1119,7 @@ an_shear ()
 	if (npts == 0)
 	{
 		ui_warning ("Unable to calculate shear");
-		return (0.0);
+		return (-1.0);
 	}
 /*
  * Find the density weighted vector mean wind speeds up to 500m and up to the
@@ -1137,7 +1147,7 @@ an_shear ()
 			{
 				ui_warning ("Sounding shallower than 500m.");
 				ui_warning ("Unable to calculate shear.");
-				return (0.0);
+				return (-1.0);
 			}
 			else
 			{
@@ -1174,7 +1184,7 @@ an_shear ()
 			if (wgt_sum == 0.0)
 			{
 				ui_warning ("Unable to calculate shear");
-				return (0.0);
+				return (-1.0);
 			}
 			sfc_u = u_sum / wgt_sum;
 			sfc_v = v_sum / wgt_sum;
@@ -1186,7 +1196,7 @@ an_shear ()
 	if (wgt_sum == 0.0)
 	{
 		ui_warning ("Unable to calculate shear");
-		return (0.0);
+		return (-1.0);
 	}
 
 	delta_u = u_sum / wgt_sum - sfc_u;
@@ -1215,7 +1225,7 @@ float	*speed, *dir;
 		snd_get_data (Id_name, wspd, BUFLEN, f_wspd, BADVAL);
 		snd_get_data (Id_name, wdir, BUFLEN, f_wdir, BADVAL);
 	ON_ERROR
-		*speed = 0.0;
+		*speed = -1.0;
 		*dir = 0.0;
 		return;
 	ENDCATCH
@@ -1259,7 +1269,7 @@ float	*speed, *dir;
 	else
 	{
 		ui_warning ("No good winds in MLVW interval");
-		*speed = 0.0;
+		*speed = -1.0;
 		*dir = 0.0;
 	}
 
