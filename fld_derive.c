@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.14 1993-04-28 16:19:39 carson Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.15 1993-07-21 21:49:57 burghart Exp $";
 
 # include <math.h>
 # include <varargs.h>
@@ -118,6 +118,7 @@ fdd_dt_init ()
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
 	void	fdd_wdir (), fdd_vt (), fdd_ascent (), fdd_rh ();
 	void	fdd_theta_v (), fdd_ri(), fdd_mflux(), fdd_mflux_uv();
+	void	fdd_t_wet ();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -140,9 +141,12 @@ fdd_dt_init ()
 	fdd_add_derivation (f_ascent, fdd_ascent, 2, f_time, f_alt);
 	fdd_add_derivation (f_rh, fdd_rh, 2, f_temp, f_dp);
 	fdd_add_derivation (f_theta_v, fdd_theta_v, 3, f_temp, f_pres, f_rh);
-	fdd_add_derivation (f_ri, fdd_ri, 4, f_u_wind, f_v_wind, f_theta, f_alt);
+	fdd_add_derivation (f_ri, fdd_ri, 4, f_u_wind, f_v_wind, f_theta, 
+			    f_alt);
 	fdd_add_derivation (f_mflux, fdd_mflux, 2, f_mr, f_wspd);
-	fdd_add_derivation (f_mflux_uv, fdd_mflux_uv, 3, f_mr, f_u_wind, f_v_wind);
+	fdd_add_derivation (f_mflux_uv, fdd_mflux_uv, 3, f_mr, f_u_wind, 
+			    f_v_wind);
+	fdd_add_derivation (f_t_wet, fdd_t_wet, 3, f_temp, f_pres, f_rh);
 /*
  * Mark the initialization as done
  */
@@ -656,5 +660,28 @@ int	npts;
 			else
 				buf[i] = v_wind[i] * ( mr[i]/(1.0+mr[i]) );
 		}
+	}
+}
+
+
+
+
+void
+fdd_t_wet (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * wet bulb temperature derivation routine
+ */
+{
+	float	*temp = dbufs[0], *pres = dbufs[1], *rh = dbufs[2];
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (temp[i] == badval || pres[i] == badval || rh[i] == badval)
+			buf[i] = badval;
+		else
+			buf[i] = t_wet (temp[i] + T_K, pres[i], rh[i]) - T_K;
 	}
 }
