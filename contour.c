@@ -1,7 +1,7 @@
 /*
  * Contour a rectangular array
  *
- * $Revision: 1.2 $ $Date: 1990-01-23 09:07:45 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1990-03-06 11:24:28 $ $Author: burghart $
  */
 # include <errno.h>
 # include <math.h>
@@ -698,7 +698,7 @@ con_draw_contour ()
  * Draw the contour polyline which has been built
  */
 {
-	int	prev, start, i, label_now, count, vjust;
+	int	prev, start, i, label_now, count, hjust;
 	float	width = ((Nx - 1) * Xstep);
 	float	height = ((Ny - 1) * Ystep);
 	float	angle, charsize, dist, del_x, del_y, x0, y0, x1, y1;
@@ -774,20 +774,20 @@ con_draw_contour ()
 
 			if (angle > PI/2)
 			{
-				vjust = GT_RIGHT;
+				hjust = GT_RIGHT;
 				angle -= PI;
 			}
 			else if (angle < -PI/2)
 			{
-				vjust = GT_RIGHT;
+				hjust = GT_RIGHT;
 				angle += PI;
 			}
 			else
-				vjust = GT_LEFT;
+				hjust = GT_LEFT;
 		/*
 		 * Get the text box that would result if we put the label here
 		 */
-			G_wr_box (C_ov, GTF_MINSTROKE, charsize, vjust, 
+			G_wr_box (C_ov, GTF_MINSTROKE, charsize, hjust, 
 				GT_CENTER, Xpt[start], Ypt[start], 
 				RAD_TO_DEG (angle), Label, &x0, &y0, &x1, &y1);
 		/*
@@ -815,10 +815,10 @@ con_draw_contour ()
 		 * line from just after the label
 		 */
 			G_write (C_ov, C_color, GTF_MINSTROKE, charsize,
-				vjust, GT_CENTER, Xpt[start], Ypt[start],
+				hjust, GT_CENTER, Xpt[start], Ypt[start],
 				RAD_TO_DEG (angle), Label);
 
-			if (vjust == GT_LEFT)
+			if (hjust == GT_LEFT)
 			{
 				Xpt[i-1] = x1 + 0.5 * charsize * sin (angle) *
 					width / height;
