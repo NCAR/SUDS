@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.18 1991-12-10 23:42:57 case Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.19 1992-08-10 16:14:57 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -711,6 +711,7 @@ xs_background ()
 	int	i, dolabel, seconds;
 	char	*snd_site ();
 	date	sdate, del_time, end_time, snd_time ();
+	long	curtime;
 
 	G_clear (Xs_bg_ov);
 	G_set_coords (Xs_bg_ov, -BORDER * P_len, -BORDER * P_hgt, 
@@ -775,6 +776,16 @@ xs_background ()
 		G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
 			GT_BOTTOM, 0.5 * P_len, 1.04 * P_hgt, 0.0, string);
 	}
+/*
+ * Plot generation time
+ */
+	time (&curtime);
+	strcpy (string, "PLOT GENERATED: ");
+	strftime (string + 16, sizeof (string) - 16, "%e-%b-%Y,%T", 
+		gmtime (&curtime));
+	strcpyUC (string, string);
+	G_write (Xs_bg_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER,
+		GT_BOTTOM, 0.5 * P_len, 1.01 * P_hgt, 0.0, string);
 /*
  * Soundings used
  */
