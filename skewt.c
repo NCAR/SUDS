@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.26 1993-03-26 00:54:31 burghart Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.27 1993-04-28 16:23:08 carson Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -43,16 +43,6 @@ static float	Pmin, Pmax;
 static int	Pstep;
 static float	Tmin, Tmax;
 static int	Tstep;
-
-/* 
- * Wind barb resolution (one barb = Wb_res)
- */
-static float Wb_res;
-
-/*
- * Wind Plot interval (each Mark_inc sample plotted)
- */
-static int Mark_inc;
 
 /*
  * Slope of the isotherms
@@ -290,10 +280,6 @@ struct ui_command	*cmds;
  * Make the last sounding our default
  */
 	snd_set_default (id_name);
-/* 
- * Reset the wind interval mark for the next plot
- */
-	Mark_inc = 1;
 }
 
 
@@ -1197,12 +1183,12 @@ int	plot_ndx, nplots;
  * Calculate the x starting position and the x and y scaling factors
  */
 	xstart = (float) (plot_ndx + 0.5) / (float) (nplots);
-	xscale = 1.0 / (W_scale * 2 * nplots);
+	xscale = 2.0*(4-nplots) / (W_scale );
 	yscale = W_aspect * xscale;
 /*
  * Set size parameters for wind barbs
  */
-        size = 0.8 * xscale * W_scale;
+        size = 0.8 * xscale;
         blen = size * 0.4;
         tlen = size * 1.0;
         sp   = size * 0.15;
@@ -1486,8 +1472,6 @@ skt_init ()
 	Tmin = -40.;
 	Tmax = 35.;
 	Tstep = 10;
-	Mark_inc = 1;
-	Wb_res = 10.0;
 /*
  * Create UI indirect variables
  */

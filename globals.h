@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: globals.h,v 1.6 1992-06-05 19:27:25 burghart Exp $
+ * $Id: globals.h,v 1.7 1993-04-28 16:19:54 carson Exp $
  */
 
 # include <ui.h>
@@ -60,9 +60,15 @@ var char	Out_dev[40], Dev_type[40];
 var int	Interrupt;
 
 /*
- * Wind scale value
+ * Wind scale value and wind barb resolution
  */
 var float	W_scale;
+var float	Wb_res;
+
+/* 
+ * Wind barb plotting step value (plot each Nth wind sample)
+ */
+var int		Mark_inc;
 
 /*
  * Pressure value to use for forecast analyses

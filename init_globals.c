@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: init_globals.c,v 1.5 1991-10-21 21:48:16 burghart Exp $";
+static char *rcsid = "$Id: init_globals.c,v 1.6 1993-04-28 16:20:15 carson Exp $";
 
 # ifdef VMS
 #	define var	globaldef
@@ -40,6 +40,8 @@ init_globals ()
 	Wkstn = 0;
 	Interrupt = FALSE;
 	W_scale = 25.0;
+	Mark_inc = 1;
+	Wb_res = 10.0;
 	Forecast_pres = 700.0;
 /*
  * Set the flags and initialize the skew-t package
