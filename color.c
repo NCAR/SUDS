@@ -1,7 +1,7 @@
 /*
  * Handle initialization and changing of colors
  *
- * $Revision: 1.4 $ $Date: 1989-09-05 17:02:41 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1990-01-23 09:03:57 $ $Author: burghart $
  */
 # include <stdio.h>
 # include "globals.h"
@@ -161,12 +161,15 @@ color_init ()
 	color_new (C_BG2 - Colorbase, "bg2", "gray45");
 	color_new (C_BG3 - Colorbase, "bg3", "steel blue");
 	color_new (C_BG4 - Colorbase, "bg4", "sienna");
-	color_new (C_TRACE1 - Colorbase, "trace1", "red");
-	color_new (C_TRACE2 - Colorbase, "trace2", "cyan");
-	color_new (C_TRACE3 - Colorbase, "trace3", "magenta");
-	color_new (C_TRACE4 - Colorbase, "trace4", "medium slate blue");
-	color_new (C_TRACE5 - Colorbase, "trace5", "yellow");
-	color_new (C_TRACE6 - Colorbase, "trace6", "green");
+	color_new (C_DATA1 - Colorbase, "data1", "red");
+	color_new (C_DATA2 - Colorbase, "data2", "cyan");
+	color_new (C_DATA3 - Colorbase, "data3", "magenta");
+	color_new (C_DATA4 - Colorbase, "data4", "medium slate blue");
+	color_new (C_DATA5 - Colorbase, "data5", "yellow");
+	color_new (C_DATA6 - Colorbase, "data6", "green");
+	color_new (C_DATA7 - Colorbase, "data7", "gold");
+	color_new (C_DATA8 - Colorbase, "data8", "dark orchid");
+	color_new (C_DATA9 - Colorbase, "data9", "pale green");
 }
 
 
