@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.8 $ $Date: 1989-08-11 10:38:03 $ $Author: burghart $ 
+ * $Revision: 1.9 $ $Date: 1989-09-19 14:39:41 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -66,6 +66,11 @@ struct ui_command	*cmds;
 			strcpy (Outfile_name, UPTR (cmds[1]));
 			Outfile = fopen (Outfile_name, "w");
 		}
+	/*
+	 * Otherwise, put a form feed between soundings
+	 */
+		else
+			fprintf (Outfile, "\f");
 	}
 	else
 		Write_to_file = FALSE;
