@@ -2,9 +2,13 @@
  * CLASS format sounding access
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:12:01  burghart
+ * Initial revision
+ * 
  */
 # include <stdio.h>
 # include <ui_param.h>
+# include <time.h>
 # include "sounding.h"
 
 # define TRUE	1
@@ -14,17 +18,18 @@
 
 struct fldmatch
 {
-	char	*string;
-	fldtype	fld;
+	fldtype	fld;	/* SUDS field identifier	*/
+	char	*name;	/* CLASS name for this field	*/
+	char	*units;	/* CLASS Units string		*/
 };
 
 struct fldmatch	F_match_tbl[] =
 {
-	{"Tim", f_time}, {"Lat", f_lat}, {"Lon", f_lon},	
-	{"Alt", f_alt}, {"Prs", f_pres}, {"Tmp", f_temp},
-	{"Dpt", f_dp}, {"RH", f_rh}, {"WS", f_wspd},	
-	{"WD", f_wdir}, {"Qp", f_qpres}, {"Qt", f_qtemp},
-	{"Qh", f_qrh}, {"Quv", f_qwind}, {"", f_null}
+	{f_time, "Tim", ":s"}, {f_lat, "Lat", ":d"}, {f_lon, "Lon", ":d"},
+	{f_alt, "Alt", ":m"}, {f_pres, "Prs", ":mb"}, {f_temp, "Tmp", ":C"},
+	{f_dp, "Dpt", ":C"}, {f_rh, "RH", ":%"}, {f_wspd, "WS", ":m/s"},
+	{f_wdir, "WD", ":d"}, {f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""},
+	{f_qrh, "Qh", ""}, {f_qwind, "Quv", ""}, {f_null, "", ""}
 };
 
 
@@ -67,7 +72,8 @@ struct snd	*sounding;
 /*
  * Read the lat, lon, and alt
  */
-	fscanf (sfile, "%f,%f,%f\n", &sitelon, &sitelat, &(sounding->sitealt));
+	fscanf (sfile, "%f,%f,%f\n", &(sounding->sitelon), 
+		&(sounding->sitelat), &(sounding->sitealt));
 
 	sounding->site = (char *) 
 		malloc ((1 + strlen (string)) * sizeof (char));
@@ -102,8 +108,8 @@ struct snd	*sounding;
 	/*
 	 * Search the fields table for a match
 	 */
-		for (j = 0; *F_match_tbl[j].string; j++)
-			if (! strcmp (F_match_tbl[j].string, string))
+		for (j = 0; *F_match_tbl[j].name; j++)
+			if (! strcmp (F_match_tbl[j].name, string))
 				break;
 	/*
 	 * Did we get a field?
@@ -137,8 +143,8 @@ struct snd	*sounding;
 	/*
 	 * Search the fields table for a match
 	 */
-		for (j = 0; *F_match_tbl[j].string; j++)
-			if (! strcmp (F_match_tbl[j].string, string))
+		for (j = 0; *F_match_tbl[j].name; j++)
+			if (! strcmp (F_match_tbl[j].name, string))
 				break;
 	/*
 	 * Did we get a field?
@@ -255,3 +261,149 @@ struct snd	*sounding;
 	fclose (sfile);
 	return;
 }
+
+
+
+
+void
+cls_write_file (fname, sounding)
+char	*fname;
+struct snd	*sounding;
+/*
+ * Write the given sounding into file 'fname' using the CLASS data format
+ */
+{
+	FILE	*sfile;
+	int	i, j, year, month, day, hour, minute, second, dummy;
+	int	ndx, nflds;
+	long	current_time;
+	float	val;
+	char	string[20], fldstring[150];
+	fldtype	fld, classfld;
+	struct snd_datum	*data[MAXFLDS];
+/*
+ * Open the file
+ */
+	if ((sfile = fopen (fname, "w")) == 0)
+		ui_error ("Cannot create file '%s'", fname);
+/*
+ * Write:
+ *	site name,lat,lon,altitude
+ *	year,month,day,hh:mm:ss
+ *	blurb,npts
+ */
+	fprintf (sfile, "%s,%.5f,%.5f,%d\n", sounding->site, sounding->sitelat,
+		sounding->sitelon, (int) sounding->sitealt);
+
+	year = 1900 + sounding->rls_time.ds_yymmdd / 10000;
+	month = (sounding->rls_time.ds_yymmdd / 100) % 100;
+	day = sounding->rls_time.ds_yymmdd % 100;
+	hour = sounding->rls_time.ds_hhmmss / 10000;
+	minute = (sounding->rls_time.ds_hhmmss / 100) % 100;
+	second = sounding->rls_time.ds_hhmmss % 100;
+	fprintf (sfile, "%d,%02d,%02d,%02d:%02d:%02d\n", year, month, day, 
+		hour, minute, second);
+
+	fprintf (sfile, "SUDS edited data,%d\n", sounding->maxndx);
+/*
+ * Write the fields and units into a string
+ */
+	strcpy (fldstring, "");
+
+	for (i = 0; sounding->fields[i] != f_null; i++)
+	{
+		fld = sounding->fields[i];
+	/*
+	 * Search the CLASS fields table for a match
+	 */
+		for (j = 0; F_match_tbl[j].fld != f_null; j++)
+		{
+			classfld = F_match_tbl[j].fld;
+			if (classfld == fld)
+				break;
+		}
+	/*
+	 * Did we get a field?
+	 */
+		if (classfld == f_null)
+			ui_error ("No CLASS name for field '%s'", 
+				fd_name (fld));
+	/*
+	 * Write the CLASS field name and the units
+	 */
+		sprintf (string, ",%s%s", F_match_tbl[j].name, 
+			F_match_tbl[j].units);
+		strcat (fldstring, string);
+	}
+
+	nflds = i;
+/*
+ * Now write two lines with the field names into the output file
+ */
+	fprintf (sfile, "SURFACE:%s\n", fldstring);
+	fprintf (sfile, "FLIGHT: %s\n", fldstring);
+/*
+ * Four lines for comments
+ */
+	current_time = time (0);
+	fprintf (sfile, "SUDS edited sounding file, created by %s %s",
+		getenv ("USER"), ctime (&current_time));
+	fprintf (sfile, "/\n");
+	fprintf (sfile, "/\n");
+	fprintf (sfile, "/\n");
+/*
+ * Establish our pointers into the data lists
+ */
+	for (i = 0; i < nflds; i++)
+		data[i] = sounding->dlists[i];
+/*
+ * Write the data
+ */
+	for (ndx = 0; ndx <= sounding->maxndx; ndx++)
+	{
+	/*
+	 * Look for a value for each field at this index
+	 */
+		for (i = 0; i < nflds; i++)
+		{
+			fld = sounding->fields[i];
+		/*
+		 * If the index matches, get the value and move to the next
+		 * datum in the list for this field, otherwise put in a bad 
+		 * value
+		 */
+			if (data[i] && data[i]->index == ndx)
+			{
+				val = data[i]->value;
+				data[i] = data[i]->next;
+			/*
+			 * Adjust altitude to MSL
+			 */
+				if (fld == f_alt)
+					val += sounding->sitealt;
+			}
+			else
+				val = 9999.99;
+		/*
+		 * Write the datum (5 places after the decimal 
+		 * for lat and lon only)
+		 */
+			if (fld == f_lat || fld == f_lon)
+				fprintf (sfile, "%.5f", val);
+			else
+				fprintf (sfile, "%.2f", val);
+		/*
+		 * Put in a comma or end the line
+		 */
+			if (nflds - i > 1)
+				fprintf (sfile, ",");
+			else
+				fprintf (sfile, "\n");
+		}
+	}
+/*
+ * Close the file
+ */
+	fclose (sfile);
+}
+					
