@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.4 $ $Date: 1989-09-25 10:16:53 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1989-10-20 14:57:36 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -195,8 +195,10 @@ struct snd	*sounding;
 		/*
 		 * Higher threshold for some fields
 		 */
-			if (fld == f_pres || fld == f_alt || fld == f_time)
-				badthresh = 9999.0;
+			if (fld == f_pres || fld == f_time)
+				badthresh = 9990.0;
+			else if (fld == f_alt)
+				badthresh = 99900.0;
 		/*
 		 * Bypass the comma
 		 */
@@ -400,7 +402,7 @@ struct snd	*sounding;
 					val += sounding->sitealt;
 			}
 			else
-				val = 9999.99;
+				val = 99999.;
 		/*
 		 * Write the datum (5 places after the decimal 
 		 * for lat and lon only)
