@@ -1,7 +1,7 @@
 /*
  * lat,lon <-> x,y conversion utilities
  *
- * $Revision: 1.2 $ $Date: 1990-01-23 09:11:51 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1991-07-05 17:56:15 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui.h>
@@ -126,14 +126,28 @@ void
 cvt_origin (cmds)
 struct ui_command	*cmds;
 /*
+ * Handle the "origin" command
+ */
+{
+	float	lat, lon;
+	void	cvt_set_origin ();
+
+	lat = UFLOAT (cmds[0]);
+	lon = UFLOAT (cmds[1]);
+
+	cvt_set_origin (lat, lon);
+}
+
+
+
+void
+cvt_set_origin (lat, lon)
+float	lat, lon;
+/*
  * Use lat,lon (deg) as the reference location for 
  * latitude,longitude <-> x,y conversions
  */
 {
-	float	lat, lon;
-
-	lat = UFLOAT (cmds[0]);
-	lon = UFLOAT (cmds[1]);
 /*
  * Test that the values are in range
  */
