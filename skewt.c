@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.25 1992-09-18 16:06:44 carson Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.26 1993-03-26 00:54:31 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -907,6 +907,7 @@ float	*pres, *temp, *dp;
  */
 {
 	int	npts, ndx_fore, do_fore;
+	bool	stop;
 	float	x[200], y[200];
 	float	p_lcl, t_lcl, pt, w, t_sfc, p_sfc, dp_sfc, ept;
 	float	t_fore, dp_fore, p_lcl_fore, t_lcl_fore, ept_fore, pt_fore;
@@ -982,13 +983,17 @@ float	*pres, *temp, *dp;
  */
 	npts = 0;
 
-	for (p = p_lcl; p < p_sfc + pstep; p += pstep)
+	stop = FALSE;
+	for (p = p_lcl; ! stop; p += pstep)
 	{
 	/*
 	 * Stop at the surface pressure
 	 */
 		if (p > p_sfc)
+		{
 			p = p_sfc;
+			stop = TRUE;
+		}
 	/*
 	 * Get the temp corresponding to our theta at this pressure
 	 */
