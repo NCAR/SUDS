@@ -1,7 +1,7 @@
 /*
  * Fields handling
  *
- * $Revision: 1.6 $ $Date: 1990-06-14 10:28:11 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1990-11-02 16:15:04 $ $Author: burghart $
  * 
  */
 # include <ui.h>
@@ -24,6 +24,9 @@ static struct
 	{f_dp, "dewpoint", "deg C",
 		{"dp", "dewpoint", ""},
 		-10.0,	5.0	},
+	{f_dz, "ascent rate", "m/s",
+		{"dz", "ascent", ""},
+		0.0, 1.0	},
 	{f_lat, "latitude", "deg",
 		{"lat", "latitude", ""},
 		0.0,	1.0	},
@@ -78,6 +81,9 @@ static struct
 	{f_u_wind, "u wind component", "m/s",
 		{"u_wind", ""},
 		0.0,	5.0	},
+	{f_vt, "virtual temperature", "K",
+		{"vt", "t_v", ""},
+		0.0,	5.0	},
 	{f_v_wind, "v wind component", "m/s",
 		{"v_wind", ""},
 		0.0,	5.0	},
@@ -93,9 +99,6 @@ static struct
 	{f_v_prime, "v' wind component", "m/s",
 		{"v_prime", ""},
 		0.0,	5.0	},
-	{f_dz, "ascent rate", "m/s",
-		{"dz", "ascent", ""},
-		0.0, 1.0	},
 	{f_null, "null field", "",
 		{""},
 		0.0,	0.0	}

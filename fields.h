@@ -1,7 +1,7 @@
 /*
  * Fields information
  *
- * $Revision: 1.6 $ $Date: 1990-06-14 10:28:02 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1990-11-02 16:15:17 $ $Author: burghart $
  */
 typedef enum FLDTYPE		fldtype;
 
@@ -12,9 +12,9 @@ enum FLDTYPE
 /* 10 */	f_wdir, f_u_wind, f_v_wind, f_theta, f_theta_e,
 /* 15 */	f_mr, f_qpres, f_qtemp, f_qrh, f_qu,
 /* 20 */	f_qv, f_qwind, f_rtype, f_range, f_azimuth,
-/* 25 */	f_u_prime, f_v_prime, f_dz
+/* 25 */	f_u_prime, f_v_prime, f_dz, f_vt
 };
-# define TOTAL_FLDS 28
+# define TOTAL_FLDS 29
 
 /*
  * forward declarations
