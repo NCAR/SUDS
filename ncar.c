@@ -1,7 +1,7 @@
 /*
  * NCAR format sounding access
  *
- * $Revision: 1.1 $ $Date: 1989-11-21 14:45:18 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1989-12-18 15:10:17 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -79,9 +79,9 @@ struct snd	*sounding;
 	fscanf (Tfile, "%s", string);
 	fscanf (Tfile, "%f", &sounding->sitealt);
 /*
- * Read and save the winds data and get the sounding site
+ * Read and save the winds data and get the sounding site, lat, and lon
  */
-	ncar_w_init (&sounding->site);
+	ncar_w_init (&sounding->site, &sounding->sitelat, &sounding->sitelon);
 /*
  * Initialize the data pointers
  */
@@ -215,15 +215,17 @@ struct snd	*sounding;
 
 
 void
-ncar_w_init (site)
+ncar_w_init (site, lat, lon)
 char	**site;
+float	*lat, *lon;
 /*
  * Get everything from the winds file and save it in the winds array
- * Also create a "site" name, since that info is in the winds file
+ * Also create a "site" name, since that info is in the winds file, and
+ * derive the sounding latitude and longitude.
  */
 {
 	float	az, el, alt;
-	float	steptime, dummy, sitealt;
+	float	steptime, xpos, ypos, sitealt;
 	int	index, status;
 	char	id1[20], id2[20];
 /*
@@ -232,7 +234,17 @@ char	**site;
 	fscanf (Wfile, "%s %s", id1, id2);
 	fscanf (Wfile, "%f %f", &sitealt, &Steptime);
 	fscanf (Wfile, "%f %f", &Sfc_wdir, &Sfc_wspd);
-	fscanf (Wfile, "%f %f", &dummy, &dummy);
+/*
+ * Get the x and y distances from the project origin in statute miles
+ * and convert to kilometers
+ */
+	fscanf (Wfile, "%f %f", &xpos, &ypos);
+	xpos *= 1.609344;
+	ypos *= 1.609344;
+/*
+ * Get the position in lat,lon
+ */
+	cvt_to_latlon (xpos, ypos, lat, lon);
 /*
  * Use the sounding id as the "site"
  */
