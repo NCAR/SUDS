@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.5 $ $Date: 1990-05-09 14:16:43 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1990-05-11 15:48:44 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -620,7 +620,7 @@ xs_background ()
 
 	G_polyline (Xs_bg_ov, GPLT_SOLID, C_WHITE, 5, x, y);
 /*
- * Label the horizontal axes
+ * Figure out where to put ticks on horizontal axes
  */
 	tickinc = pow (10.0, floor (log10 (P_len)));
 
@@ -630,7 +630,14 @@ xs_background ()
 		tickinc *= 0.2;
 	else if ((P_len / tickinc) < 8.0)
 		tickinc *= 0.5;
-
+/*
+ * Kluge: don't make tick increment finer than 1/2 hour on time-height plots
+ */
+	if (Time_height && tickinc < 0.5)
+		tickinc = 0.5;
+/*
+ * Label the horizontal axes
+ */
 	dolabel = TRUE;
 
 	for (tick = 0.0; tick <= P_len; tick += tickinc)
@@ -685,7 +692,7 @@ xs_background ()
 		hilim = P_bot;
 	}
 /*
- * Label the vertical axes
+ * Figure out where to put ticks on the vertical axes
  */
 	tickinc = pow (10.0, floor (log10 (fabs (P_hgt))));
 
@@ -700,7 +707,7 @@ xs_background ()
  */
 	lolim = tickinc * ceil (lolim / tickinc);
 /*
- * Loop to put on tick marks and labels
+ * Loop to put tick marks and labels on vertical axes
  */
 	dolabel = ((int)(lolim / tickinc) % 2) == 0;
 
