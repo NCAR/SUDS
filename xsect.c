@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.6 $ $Date: 1990-05-11 15:48:44 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1990-05-22 13:24:27 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -376,7 +376,8 @@ xs_put_data ()
 		/*
 		 * Put the value in the grid
 		 */
-			PDATA (i, j) = fval[j];
+			if (i >= 0 && i < HDIM)
+				PDATA (i, j) = fval[j];
 		}
 	/*
 	 * Draw the trace for this sounding
