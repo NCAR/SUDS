@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.10 $ $Date: 1990-06-14 14:07:43 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-11-26 11:11:21 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -26,8 +26,8 @@ struct fldmatch	F_match_tbl[] =
 	{f_wdir, "WD", ":d"}, {f_u_wind, "U", ":m/s"}, {f_v_wind, "V", ":m/s"},
 	{f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""}, {f_qrh, "Qh", ""}, 
 	{f_qwind, "Quv", ""}, {f_qu, "Qu", ""}, {f_qv, "Qv", ""}, 
-	{f_rtype, "Rtype", ""}, {f_range, "Rng", ":km"}, 
-	{f_azimuth, "Ang", ":deg"}, {f_dz, "dZ", ":m/s"},
+	{f_rtype, "Rtype", ""}, {f_dz, "dZ", ":m/s"}, {f_mr, "MR", ":g/kg"},
+	{f_azimuth, "Ang", ":deg"}, {f_range, "Rng", ":km"}, 
 	{f_null, "", ""}
 };
 
