@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.19 $ $Date: 1991-03-21 15:48:07 $ $Author: burghart $
+ * $Revision: 1.20 $ $Date: 1991-03-26 20:56:48 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -77,6 +77,7 @@ struct ui_command	*cmds;
  * UI dispatch handler for skewt commands
  */
 {
+	float	min, max;
 /*
  * Command switch table
  */
@@ -85,10 +86,28 @@ struct ui_command	*cmds;
 	    switch (UKEY (cmds[0]))
 	    {
 		case KW_PLIMITS:
-			skt_limits (cmds);
+		/*
+		 * Make this look like a "limits pres" command and
+		 * ship it off
+		 */
+			cmds[0].uc_ctype = UTT_VALUE;
+			cmds[0].uc_vptype = SYMT_STRING;
+			cmds[0].uc_v.us_v_ptr = "pres";
+			fd_set_limits (cmds);
 			return;
 		case KW_TLIMITS:
-			skt_limits (cmds);
+			min = UFLOAT (cmds[1]);
+			max = UFLOAT (cmds[2]);
+
+			if (min >= max)
+				ui_error ("The min must be less than the max");
+
+			Tmin = min;
+			Tmax = max;
+		/*
+		 * We'll need to redraw the background
+		 */
+			Redraw = TRUE;
 			return;
 		default:
 			for (;; cmds++)
@@ -121,6 +140,7 @@ struct ui_command	*cmds;
 {
 	char	*id_name;
 	int	plot_ndx = 0, nplots;
+	float	pmin, pmax;
 	overlay ovlist[3];
 	char	*snd_default ();
 /*
@@ -141,6 +161,16 @@ struct ui_command	*cmds;
 	G_clear (Skewt_ov);
 	G_clip_window (Skewt_ov, 0.0, 0.0, 1.0, 1.0);
 	G_clear (Winds_ov);
+/*
+ * Get our pressure limits
+ */
+	pmin = fd_top (f_pres);
+	pmax = fd_bot (f_pres);
+
+	Redraw = Redraw || (pmin != Pmin) || (pmax != Pmax);
+
+	Pmin = pmin;
+	Pmax = pmax;
 /*
  * Plot the background
  */
@@ -532,14 +562,6 @@ struct ui_command	*cmds;
 
 	if (UKEY (cmds[0]) == KW_TLIMITS)
 	{
-		min = UFLOAT (cmds[1]);
-		max = UFLOAT (cmds[2]);
-
-		if (min >= max)
-			ui_error ("The min must be less than the max");
-
-		Tmin = min;
-		Tmax = max;
 	}
 	else
 	{
