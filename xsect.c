@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.10 $ $Date: 1990-10-31 13:46:32 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-11-15 14:50:58 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -220,6 +220,7 @@ struct ui_command	*cmds;
  * Release the arrays and exit
  */
 	free (Plane);
+	free (P_wgt);
 	return;
 }
 
