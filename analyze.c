@@ -1,23 +1,7 @@
 /*
- * $Log: not supported by cvs2svn $
- * Revision 1.5  89/05/25  10:43:04  burghart
- * Added test in an_li() to make sure the sounding actually reaches the
- * pressure for which the index is calculated.
- * 
- * Revision 1.4  89/05/19  14:33:11  burghart
- * Added bulk Richardson number calculation and positive energy is
- * now labeled as CAPE.
- * 
- * Revision 1.3  89/05/09  15:06:04  burghart
- * Added code to separate positive and negative area below the LFC.
- * (Previously, only the total area was reported)
- * 
- * Revision 1.2  89/03/24  14:52:56  burghart
- * Added "TO filename" capability to the ANALYZE command
- * 
- * Revision 1.1  89/03/16  15:11:33  burghart
- * Initial revision
- * 
+ * Sounding analysis module
+ *
+ * $Revision: 1.7 $ $Date: 1989-07-26 15:56:20 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -28,7 +12,6 @@
 # include "flags.h"
 # include "derive.h"
 
-# define MIN(x,y)	((x) < (y)) ? (x) : (y)
 # define R_D	287.
 
 # define DEG_TO_RAD	0.017453293
