@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: fields.h,v 1.12 1993-04-28 16:18:29 carson Exp $
+ * $Id: fields.h,v 1.13 1993-07-13 19:23:50 case Exp $
  */
 
 typedef enum
@@ -33,7 +33,7 @@ typedef enum
 /* 30 */	f_ri, f_mflux, f_mflux_uv
 } fldtype;
 
-# define TOTAL_FLDS 32
+# define TOTAL_FLDS 33
 
 /*
  * prototypes
