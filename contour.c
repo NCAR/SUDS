@@ -1,7 +1,7 @@
 /*
  * Contour a rectangular array
  *
- * $Revision: 1.4 $ $Date: 1990-05-29 10:27:47 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-03-25 20:59:42 $ $Author: burghart $
  */
 # include <errno.h>
 # include <math.h>
@@ -128,7 +128,8 @@ static overlay	C_ov;
 /*
  * Forward declarations
  */
-void	con_minmax (), con_do_contour (), con_draw_contour ();
+int	con_minmax ();
+void	con_do_contour (), con_draw_contour ();
 void	con_graze (), con_addpoint ();
 
 
@@ -165,7 +166,9 @@ overlay	ov;
 /*
  * Traverse the array to find the min and max
  */
-	con_minmax (&min, &max);
+	if (! con_minmax (&min, &max))
+		return;
+
 	if (max == min)
 	{
 		ui_warning ("Constant surface in contour, nothing drawn");
@@ -280,11 +283,12 @@ float	flagval;
 
 
 
-void
+int
 con_minmax (min, max)
 float	*min, *max;
 /*
- * Find the min and max values in the data array
+ * Find the min and max values in the data array.
+ * Return TRUE iff we are able to find min and max values.
  */
 {
 	int	i;
@@ -304,7 +308,10 @@ float	*min, *max;
 	}
 
 	if (i == Nx * Ny)
-		ui_error ("No good values in array to be contoured!");
+	{
+		ui_warning ("No good values in array to be contoured!");
+		return (FALSE);
+	}
 /*
  * Find the max and min
  */
@@ -318,7 +325,7 @@ float	*min, *max;
 			*min = Data[i];
 	}
 
-	return;
+	return (TRUE);
 }
 
 
