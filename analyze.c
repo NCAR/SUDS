@@ -1,5 +1,8 @@
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  89/03/24  14:52:56  burghart
+ * Added "TO filename" capability to the ANALYZE command
+ * 
  * Revision 1.1  89/03/16  15:11:33  burghart
  * Initial revision
  * 
@@ -36,10 +39,10 @@ struct ui_command	*cmds;
  */
 {
 	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN];
-	float	t_sfc, p_sfc, dp_sfc, li, fmli;
+	float	t_sfc, p_sfc, dp_sfc, li, fmli, area;
 	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
 	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
-	float	area_below = 0.0, area_pos = 0.0, area_neg = 0.0;
+	float	area_pos = 0.0, area_neg = 0.0;
 	int	sfc = 0, i, npts, trop = 0, name_loc = 0;
 	char	*snd_default (), *snd_site (), *id_name, string[80];
 	date	sdate, snd_time ();
@@ -112,6 +115,7 @@ struct ui_command	*cmds;
  */
 	p_lower = p_sfc;
 	t_lower = t_sfc + T_K;
+	dt_lower = t_lower - theta_lcl;
 
 	for (i = sfc + 1; p_lower > p_lcl; i++)
 	{
@@ -123,25 +127,62 @@ struct ui_command	*cmds;
 
 		p_upper = p[i];
 		t_upper = t[i] + T_K;
+		dt_upper = t_upper - theta_to_t (theta_lcl, p_upper);
 	/*
-	 * Stop at the LCL
+	 * See if we're changing from positive to negative area or vice-versa.
+	 * If there is a change, use the point of change for the top of the
+	 * current integration step.
 	 */
-		if (p_upper < p_lcl)
+		if (dt_lower * dt_upper < 0)
+		{
+			float	tslope = (t_upper - t_lower) / 
+				log (p_upper / p_lower);
+		/*
+		 * Find the pressure and temperature at the intersection
+		 */
+			ln_p = (dt_lower * log (p_upper) -
+				dt_upper * log (p_lower)) / 
+				(dt_lower - dt_upper);
+			p_upper = exp (ln_p);
+			t_upper = tslope * (ln_p - log (p_lower)) + t_lower;
+			dt_upper = 0.0;
+		/*
+		 * We aren't using the ith point this time, but we still
+		 * want it next time, so decrement i
+		 */
+			i--;
+		}
+	/*
+	 * Stop at the LCL if we're crossing it
+	 */
+		else if (p_upper < p_lcl)
 		{
 			p_upper = p_lcl;
 			t_upper = t_lower + (t[i] + T_K - t_lower) * 
 				log (p_lcl / p_lower) / log (p[i] / p_lower);
+			dt_upper = t_upper - theta_to_t (theta_lcl, p_lcl);
+		/*
+		 * We aren't using the ith point this time, but we still
+		 * want it next time, so decrement i
+		 */
+			i--;
 		}
 	/*
 	 * Numerical integration between the last two good points
 	 */
-		area_below += an_area (p_upper, p_lower, t_upper, t_lower, 
+		area = an_area (p_upper, p_lower, t_upper, t_lower, 
 			theta_lcl, FALSE);
+
+		if (area > 0.0)
+			area_pos += area;
+		else
+			area_neg += area;
 	/*
-	 * Update p_lower and t_lower
+	 * Update p_lower, t_lower, and dt_lower
 	 */
 		p_lower = p_upper;
 		t_lower = t_upper;
+		dt_lower = dt_upper;
 	}
 /*
  * Print the lifted index info
@@ -164,12 +205,13 @@ struct ui_command	*cmds;
  * Integrate the area (energy) from the LCL to the LFC
  */
 	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0);
+
 	if (p_lfc != BADVAL)
 		an_printf ("LFC pressure: %.1f mb\n", p_lfc);
 	else
 		an_printf ("No LFC\n");
 
-	for (i--; p_lower > p_lfc && i < npts; i++)
+	for (; p_lower > p_lfc && i < npts; i++)
 	{
 	/*
 	 * Make sure we have a good point
@@ -179,35 +221,78 @@ struct ui_command	*cmds;
 
 		p_upper = p[i];
 		t_upper = t[i] + T_K;
+		dt_upper = t_upper - t_sat (theta_e_lcl, p_upper);
 	/*
-	 * Stop at the LFC
+	 * See if we're changing from positive to negative area or vice-versa.
+	 * If there is a change, use the point of change for the top of the
+	 * current integration step.
 	 */
-		if (p_upper < p_lfc)
+		if (dt_lower * dt_upper < 0)
+		{
+			float	tslope = (t_upper - t_lower) / 
+				log (p_upper / p_lower);
+		/*
+		 * Find the pressure and temperature at the intersection
+		 */
+			ln_p = (dt_lower * log (p_upper) -
+				dt_upper * log (p_lower)) / 
+				(dt_lower - dt_upper);
+			p_upper = exp (ln_p);
+			t_upper = tslope * (ln_p - log (p_lower)) + t_lower;
+			dt_upper = 0.0;
+		/*
+		 * We aren't using the ith point this time, but we still
+		 * want it next time, so decrement i
+		 */
+			i--;
+		}
+	/*
+	 * Stop at the LFC if we're crossing it
+	 */
+		else if (p_upper < p_lfc)
 		{
 			p_upper = p_lfc;
 			t_upper = t_lower + (t[i] + T_K - t_lower) * 
 				log (p_lfc / p_lower) / log (p[i] / p_lower);
+			dt_upper = t_upper - t_sat (theta_e_lcl, p_lfc);
+		/*
+		 * We aren't using the ith point this time, but we still
+		 * want it next time, so decrement i
+		 */
+			i--;
 		}
 	/*
 	 * Numerical integration between the last two good points
 	 */
-		area_below += an_area (p_upper, p_lower, t_upper, t_lower, 
+		area = an_area (p_upper, p_lower, t_upper, t_lower, 
 			theta_e_lcl, TRUE);
+
+		if (area > 0.0)
+			area_pos += area;
+		else
+			area_neg += area;
 	/*
 	 * Update p_lower and t_lower
 	 */
 		p_lower = p_upper;
 		t_lower = t_upper;
+		dt_lower = dt_upper;
 	}
-	an_printf ("The area below the LFC is %.0f J/kg\n", area_below * R_D);
 /*
- * Now integrate up to the tropopause, separating positive and negative area
+ * Print the total areas from the surface to the LFC
  */
-	dt_lower = t_lower - t_sat (theta_e_lcl, p_lower);
+	an_printf ("The positive area below the LFC is %.0f J/kg\n", 
+		area_pos * R_D);
+	an_printf ("The negative area below the LFC is %.0f J/kg\n", 
+		area_neg * R_D);
+/*
+ * Now integrate up to the tropopause
+ */
+	area_pos = 0.0;
+	area_neg = 0.0;
 
-	for (i--; i < npts && !trop; i++)
+	for (; i < npts && !trop; i++)
 	{
-		float	area;
 	/*
 	 * Make sure we have a good point
 	 */
@@ -248,7 +333,8 @@ struct ui_command	*cmds;
 			t_upper = tslope * (ln_p - log (p_lower)) + t_lower;
 			dt_upper = 0.0;
 		/*
-		 * Are we at the tropopause?
+		 * Choose the pressure where we cross the moist adiabat
+		 * as the tropopause if it's <= 300 mb.
 		 */
 			trop = p_upper <= 300.0;
 		/*
@@ -258,7 +344,8 @@ struct ui_command	*cmds;
 			i--;
 		}
 	/*
-	 * Stop at 300mb if we have crossed into negative area
+	 * If we crossed into negative area before we reached 300 mb, just
+	 * stop at 300 mb.
 	 */
 		trop = trop || (dt_upper > 0.0 && p_upper <= 300.0);
 	/*
