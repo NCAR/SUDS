@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: foote.c,v 1.18 1992-03-13 22:55:10 burghart Exp $";
+static char *rcsid = "$Id: foote.c,v 1.19 1992-08-10 15:28:12 burghart Exp $";
 
 # include <ui_param.h>
 # include <ui_date.h>
@@ -252,6 +252,7 @@ int	color;
 {
 	char	site[40], string[100], *snd_site ();
 	date	sdate, snd_time ();
+	long	curtime;
 /*
  * Unclip so we can annotate outside the main portion
  */
@@ -262,9 +263,9 @@ int	color;
 	ft_top_text ("SITE: ", C_WHITE, TRUE);
 	ft_top_text (snd_site (id_name), C_WHITE, FALSE);
 /*
- * Time
+ * Data time
  */
-	ft_top_text ("  TIME: ", C_WHITE, FALSE);
+	ft_top_text ("  DATA TIME: ", C_WHITE, FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (string, &sdate, UDF_FULL);
 	strcpyUC (string, string);
@@ -276,6 +277,14 @@ int	color;
 	strcpyUC (string + 4, id_name);
 	strcat (string, ")");
 	ft_top_text (string, color, FALSE);
+/*
+ * Plot generation time
+ */
+	ft_top_text ("PLOT GENERATED: ", C_WHITE, TRUE);
+	time (&curtime);
+	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
+	strcpyUC (string, string);
+	ft_top_text (string, C_WHITE, FALSE);
 }
 
 

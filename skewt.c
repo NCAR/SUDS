@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.22 1992-03-13 22:57:19 burghart Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.23 1992-08-10 15:28:46 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -157,8 +157,8 @@ struct ui_command	*cmds;
  * Plot a skewt of the soundings in the command list
  */
 {
-	char	*id_name;
-	int	plot_ndx = 0, nplots;
+	char	*id_name, string[25];
+	int	plot_ndx = 0, nplots, curtime;
 	float	pmin, pmax;
 	overlay ovlist[3];
 	char	*snd_default ();
@@ -234,6 +234,14 @@ struct ui_command	*cmds;
 		if (Flg_winds)
 			skt_winds (id_name, plot_ndx, nplots);
 	}
+/*
+ * Put on the plot generation time
+ */
+	skt_bot_text ("PLOT GENERATED: ", C_WHITE, TRUE);
+	time (&curtime);
+	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
+	strcpyUC (string, string);
+	skt_bot_text (string, C_WHITE, FALSE);
 /*
  * Update the display
  */
@@ -714,7 +722,7 @@ skt_reset_annot ()
 	Xtxt_top = -0.5 * BORDER;
 	Ytxt_top = 1.0 + 0.95 * BORDER;
 	Xtxt_bot = -0.5 * BORDER;
-	Ytxt_bot = -0.05 * BORDER;
+	Ytxt_bot = -0.1 * BORDER;
 }
 
 

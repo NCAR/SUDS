@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xyplot.c,v 1.3 1991-12-16 21:02:43 burghart Exp $";
+static char *rcsid = "$Id: xyplot.c,v 1.4 1992-08-10 15:28:53 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -86,6 +86,7 @@ struct ui_command	*cmds;
 	int	plot_ndx = 0, nplots;
 	float	width, height;
 	char	*snd_default ();
+	long	curtime;
 /*
  * Make sure the graphics stuff is ready
  */
@@ -136,8 +137,13 @@ struct ui_command	*cmds;
 /*
  * Plot title
  */
-	sprintf (string, "X-Y plot of %s vs. %s", fd_name (Xfld), 
-		fd_name (Yfld));
+	sprintf (string, "X-Y plot of %s vs. %s     Plot generated: ", 
+		fd_name (Xfld), fd_name (Yfld));
+	xy_top_text (string, C_WHITE, FALSE);
+
+	time (&curtime);
+	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
+	strcpyUC (string, string);
 	xy_top_text (string, C_WHITE, FALSE);
 /*
  * Loop until we plot all of the requested soundings

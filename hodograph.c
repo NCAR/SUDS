@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: hodograph.c,v 1.16 1992-08-05 19:06:11 burghart Exp $";
+static char *rcsid = "$Id: hodograph.c,v 1.17 1992-08-10 15:28:28 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -572,23 +572,41 @@ int	color;
 {
 	char	temp[50], string[100], *site, *snd_site ();
 	date	sdate, snd_time ();
+	long	curtime;
 /*
- * Top annotation
+ * Title
  */
 	hd_top_text ("HODOGRAPH ", C_WHITE, TRUE);
 	hd_top_text (
 		Flg_hodo_msl ? "(ALTITUDES KM MSL)" : "(ALTITUDES KM AGL)", 
 		C_WHITE, FALSE);
+/*
+ * Site name
+ */
 	hd_top_text ("SITE: ", C_WHITE, TRUE);
 	site = snd_site (id_name);
 	hd_top_text (site, C_WHITE, FALSE);
+/*
+ * Data time
+ */
 	hd_top_text ("  TIME: ", C_WHITE, FALSE);
 	sdate = snd_time (id_name);
 	ud_format_date (temp, &sdate, UDF_FULL);
 	strcpyUC (string, temp);
 	hd_top_text (string, C_WHITE, FALSE);
+/*
+ * Sounding ID
+ */
 	strcpy (string, "  (");
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")");
 	hd_top_text (string, color, FALSE);
+/*
+ * Plot generation time
+ */
+	hd_top_text ("PLOT GENERATED: ", C_WHITE, TRUE);
+	time (&curtime);
+	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
+	strcpyUC (string, string);
+	hd_top_text (string, C_WHITE, FALSE);
 }
