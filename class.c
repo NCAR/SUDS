@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.12 $ $Date: 1991-01-07 15:14:40 $ $Author: burghart $
+ * $Revision: 1.13 $ $Date: 1991-01-31 15:22:48 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -9,7 +9,7 @@
 # include <time.h>
 # include "sounding.h"
 
-# define STRSIZE	200
+# define STRSIZE	400	/* Big to allow for oversized comments */
 
 struct fldmatch
 {
@@ -304,7 +304,7 @@ struct snd	*sounding;
 			if (val < badthresh && ! end_of_file)
 			{
 			/*
-			 * Change altitude to ground relative
+			 * Change altitude to AGL
 			 */
 				if (fld == f_alt)
 					val -= sounding->sitealt;
@@ -628,6 +628,11 @@ struct snd	*sounding;
 		 */
 			if (val[i] == badval[i])
 				continue;
+		/*
+		 * Convert altitudes to AGL
+		 */
+			if (sounding->fields[i] == f_alt)
+				val[i] -= sounding->sitealt;
 		/*
 		 * Get a new point
 		 */
