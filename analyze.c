@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.26 1992-07-20 15:21:01 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.27 1992-07-21 22:22:34 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -1078,9 +1078,6 @@ an_shear ()
 		ui_warning ("Unable to calculate shear");
 		return (0.0);
 	}
-
-	an_printf ("\t 500 m: (%.2f,%.2f)\n", sfc_u, sfc_v);
-	an_printf ("\t  6 km: (%.2f,%.2f)\n", u_sum/wgt_sum, v_sum/wgt_sum);
 
 	delta_u = u_sum / wgt_sum - sfc_u;
 	delta_v = v_sum / wgt_sum - sfc_v;
