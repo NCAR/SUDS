@@ -1,7 +1,7 @@
 /*
  * Sounding analysis module
  *
- * $Revision: 1.9 $ $Date: 1989-09-19 14:39:41 $ $Author: burghart $ 
+ * $Revision: 1.10 $ $Date: 1989-09-26 17:02:44 $ $Author: burghart $ 
  */
 # include <math.h>
 # include <stdio.h>
@@ -453,10 +453,10 @@ int	npts;
  * Search through the pressure array until we pass the LCL, then go
  * back to the previous good point
  */
-	while (p[i] > p_lcl || p[i] == BADVAL || t[i] == BADVAL)
+	while (p[i] > p_lcl || p[i] == BADVAL)
 		if (++i == npts)
 			ui_bailout ("Sounding has no points above the LCL");
-	for (i--; p[i] == BADVAL || t[i] == BADVAL; i--)
+	for (i--; p[i] == BADVAL || t[i] == BADVAL || dp[i] == BADVAL; i--)
 		/* nothing */;
 	p_prev = p[i];
 	t_prev = t[i];
