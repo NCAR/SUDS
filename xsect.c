@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xsect.c,v 1.24 1996-04-18 18:33:01 burghart Exp $";
+static char *rcsid = "$Id: xsect.c,v 1.25 1998-05-15 21:44:27 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -330,6 +330,7 @@ xs_put_data ()
  */
 	for (snd = 0; snd < Nsnd; snd++)
 	{
+		int gooddata;
 	/*
 	 * Check for an interrupt
 	 */
@@ -340,6 +341,7 @@ xs_put_data ()
 	 */
 		zhighest = (P_hgt > 0.0) ? -99999.0 : 99999.0;
 		zlowest = (P_hgt > 0.0) ? 99999.0 : -99999.0;
+		gooddata = FALSE;
 	/*
 	 * Get the vertical (altitude or pressure) data
 	 */
@@ -398,6 +400,8 @@ xs_put_data ()
 
 			if (fdata[pt] == BADVAL || zpos[pt] == BADVAL)
 				continue;
+
+			gooddata = TRUE;
 		/*
 		 * Keep track of the highest and lowest points
 		 */
@@ -513,6 +517,15 @@ xs_put_data ()
 				x_prev = xpos[pt];
 				y_prev = ypos[pt];
 			}
+		}
+	/*
+	 * Make sure we had at least one good data point for this sounding
+	 */
+		if (! gooddata)
+		{
+		    ui_warning ("No usable points for sounding '%s'", 
+				S_id[snd]);
+		    continue;
 		}
 	/*
 	 * Use the lowest point of this sounding to help build the floor array
