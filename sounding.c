@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.7 $ $Date: 1989-09-27 13:19:49 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-01-23 09:29:12 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>		/* for date formatting stuff */
@@ -270,6 +270,32 @@ struct ui_command	*cmds;
 
 
 int
+snd_has_field (id_name, fld)
+char	*id_name;
+fldtype	fld;
+/*
+ * Return TRUE if the named sounding has data for the chosen field,
+ * otherwise return FALSE
+ */
+{
+	struct snd	sounding;
+	int	fpos;
+
+	sounding = snd_find_sounding (id_name);
+/*
+ * Try to find the field in the list
+ */
+	for (fpos = 0; sounding.fields[fpos] != f_null; fpos++)
+		if (sounding.fields[fpos] == fld)
+			return (TRUE);
+
+	return (FALSE);
+}
+
+
+
+
+int
 snd_get_data (id_name, buf, buflen, fld, badval)
 char	*id_name;
 float	*buf, badval;
@@ -279,10 +305,48 @@ fldtype fld;
  * Stuff data from the chosen sounding and field into 'buf'
  */
 {
-	int	i;
+	int	npts;
+
+	npts = snd_derive_data (id_name, buf, buflen, fld, badval, 0, 0);
+
+	if (! npts)
+		ui_error ("Unable to obtain or derive '%s' in sounding '%s'", 
+			fd_name (fld), id_name);
+	else
+		return (npts);
+}
+
+
+
+
+int
+snd_derive_data (id_name, buf, buflen, fld, badval, chain, chainlen)
+char	*id_name;
+float	*buf, badval;
+int	buflen, chainlen;
+fldtype fld, *chain;
+/*
+ * Attempt to get (or derive) data for the chosen field.
+ * ON ENTRY:
+ *	id_name		the name of the sounding to be used
+ *	buf		the buffer to hold the data values
+ *	buflen		the length of buf
+ *	fld		the field to get
+ *	badval		value to insert for non-existent or bad data
+ *	chain		list of fields currently being derived
+ *	chainlen	the length of chain
+ * ON EXIT:
+ *	The return value is the number of data points written 
+ *	into buf (success) or zero (couldn't derive the field)
+ */
+{
+	int		i, d, fndx, ic, gotfld;
 	struct snd	sounding;
 	struct snd_datum	*datum;
-	int	fpos, npts;
+	fldtype		*dfld, *dchain;
+	int		fpos, npts = 0, ndflds, dchainlen;
+	float		*dbufs[5];	/* Up to 5 fields in a derivation */
+	void		(* dfunc)();
 
 	sounding = snd_find_sounding (id_name);
 /*
@@ -292,29 +356,112 @@ fldtype fld;
 		if (sounding.fields[fpos] == fld)
 			break;
 
-	if (sounding.fields[fpos] == f_null)
-		ui_error ("No sounding data for field '%s'", fd_name (fld));
-/*
- * Initialize the buffer to bad values
- */
-	npts = sounding.maxndx + 1;
-
-	for (i = 0; i < npts && i < buflen; i++)
-		buf[i] = badval;
-/*
- * Grab the data from the datalist and put it into the buffer
- */
-	datum = sounding.dlists[fpos];
-	while (datum)
+	if (sounding.fields[fpos] != f_null)
 	{
-		if (datum->index < buflen)
-			buf[datum->index] = datum->value;
-		datum = datum->next;
+	/*
+	 * If we made it here, the field already exists in this sounding.
+	 * Initialize the buffer to bad values
+	 */
+		npts = sounding.maxndx + 1;
+
+		for (i = 0; i < npts && i < buflen; i++)
+			buf[i] = badval;
+	/*
+	 * Grab the data from the datalist and put it into the buffer
+	 */
+		datum = sounding.dlists[fpos];
+		while (datum)
+		{
+			if (datum->index < buflen)
+				buf[datum->index] = datum->value;
+			else
+				ui_error (
+				"*BUG* Buffer too small in snd_derive_data");
+
+			datum = datum->next;
+		}
+	/*
+	 * Return the number of points
+	 */
+		return (npts);
+	}
+	else
+	{
+	/*
+	 * We don't have a raw field, see if we can derive it
+	 */
+		if (fdd_derive (fld, &dfld, &ndflds, &dfunc))
+		{
+		/*
+		 * Allocate space to hold the fields for the derivation
+		 */
+			for (fndx = 0; fndx < ndflds; fndx++)
+				dbufs[fndx] = (float *) 
+					malloc (buflen * sizeof (float));
+		/*
+		 * Build a new derivation chain
+		 */
+			dchain = (fldtype *) 
+				malloc ((chainlen + 1) * sizeof (fldtype));
+
+			memcpy (dchain, chain, chainlen * sizeof (fldtype));
+
+			dchain[chainlen] = fld;
+			dchainlen = chainlen + 1;
+		/*
+		 * Try to get all of the fields for this derivation
+		 */
+			gotfld = 0;
+
+			for (fndx = 0; fndx < ndflds; fndx++)
+			{
+			/*	
+			 * Make sure this field isn't in the chain already
+			 */
+				for (ic = 0; ic < chainlen; ic++)
+					if (chain[ic] == dfld[fndx])
+						break;
+			/*
+			 * Get the data for this field
+			 */
+				npts = snd_derive_data (id_name, 
+					dbufs[fndx], buflen, dfld[fndx], 
+					badval, dchain, dchainlen);
+				if (npts > 0)
+					gotfld++;
+				else
+					break;
+			}
+		/*
+		 * If we got data for all of the fields, perform the 
+		 * derivation, free allocated space, and return the data.  
+		 */
+			if (gotfld == ndflds)
+			{
+				(* dfunc)(buf, dbufs, npts, badval);
+
+				for (fndx = 0; fndx < ndflds; fndx++)
+					free (dbufs[fndx]);
+				free (dchain);
+
+				return (npts);
+			}
+		/*
+		 * We didn't get all needed fields, free allocated space
+		 * and go to the next possible derivation.
+		 */
+			else
+			{
+				for (fndx = 0; fndx < ndflds; fndx++)
+					free (dbufs[fndx]);
+				free (dchain);
+			}
+		}
 	}
 /*
- * Return the number of points
+ * If we get here, the field isn't in the sounding and can't be derived
  */
-	return (npts);
+	return (0);
 }
 
 
@@ -362,6 +509,36 @@ char	*id_name;
 
 	sounding = snd_find_sounding (id_name);
 	return (sounding.sitealt);
+}
+
+
+
+float
+snd_s_lat (id_name)
+char	*id_name;
+/*
+ * Return the site latitude
+ */
+{
+	struct snd	sounding;
+
+	sounding = snd_find_sounding (id_name);
+	return (sounding.sitelat);
+}
+
+
+
+float
+snd_s_lon (id_name)
+char	*id_name;
+/*
+ * Return the site longitude
+ */
+{
+	struct snd	sounding;
+
+	sounding = snd_find_sounding (id_name);
+	return (sounding.sitelon);
 }
 
 
