@@ -1,6 +1,27 @@
 /*
  * UI keywords for SUDS
  */
+/*
+ *		Copyright (C) 1988-91 by UCAR
+ *	University Corporation for Atmospheric Research
+ *		   All rights reserved
+ *
+ * No part of this work covered by the copyrights herein may be reproduced
+ * or used in any form or by any means -- graphic, electronic, or mechanical,
+ * including photocopying, recording, taping, or information storage and
+ * retrieval systems -- without permission of the copyright owner.
+ * 
+ * This software and any accompanying written materials are provided "as is"
+ * without warranty of any kind.  UCAR expressly disclaims all warranties of
+ * any kind, either express or implied, including but not limited to the
+ * implied warranties of merchantibility and fitness for a particular purpose.
+ * UCAR does not indemnify any infringement of copyright, patent, or trademark
+ * through use or modification of this software.  UCAR does not provide 
+ * maintenance or updates for its software.
+ *
+ * $Id: keywords.h,v 1.18 1991-10-21 22:18:56 burghart Exp $
+ */
+
 # define KW_SUGAR	0
 # define KW_FILE	1
 # define KW_OUTPUT	2
@@ -81,8 +102,9 @@
 # define SFMT_GALE	9
 # define SFMT_NMC	10
 # define SFMT_NETCDF	11
+# define SFMT_CAPE	12
 
-# define MAXFMT		11  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		12  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show
