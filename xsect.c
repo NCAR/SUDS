@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.9 $ $Date: 1990-10-26 11:05:14 $ $Author: burghart $
+ * $Revision: 1.10 $ $Date: 1990-10-31 13:46:32 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -18,12 +18,13 @@
  * The cross-section plane array, its length, its height, 
  * its dimensions, and a macro to reference it two-dimensionally
  */
-static float	*Plane, P_len, P_hgt = 12.0, P_bot = 0.0;
+static float	*Plane, *P_wgt, P_len, P_hgt = 12.0, P_bot = 0.0;
 
 # define HDIM	50
 # define VDIM	50
 
-# define PDATA(i,j)	(Plane[(i*VDIM)+j])
+# define PLANE(i,j)	(Plane[((i)*VDIM)+(j)])
+# define P_WGT(i,j)	(P_wgt[((i)*VDIM)+(j)])
 
 /*
  * The endpoints of the plane for a spatial cross-section, and the starting
@@ -77,7 +78,7 @@ void	xs_abort (), xs_ov_check (), xs_background (), xs_side_text ();
 void	xs_reset_annot (), xs_plot (), xs_vscale ();
 void	xs_from_to (), xs_pos (), xs_timepos (), xs_time_height ();
 void	xs_spatial (), xs_special_data (), xs_extend_trace ();
-void	xs_draw_trace (), xs_center_angle ();
+void	xs_draw_trace (), xs_center_angle (), xs_add_to_level ();
 
 
 
@@ -180,9 +181,10 @@ struct ui_command	*cmds;
 	ovlist[1] = Xs_bg_ov;
 	edit_set_plot (xs_plot, 0, cmds, ovlist, 2);
 /*
- * Allocate space for the plane array
+ * Allocate space for the plane and weight arrays
  */
 	Plane = (float *) malloc (HDIM * VDIM * sizeof (float));
+	P_wgt = (float *) malloc (HDIM * VDIM * sizeof (float));
 /*
  * Get the overlays ready and draw the background
  */
@@ -193,11 +195,15 @@ struct ui_command	*cmds;
 
 	xs_background ();
 /*
- * Fill the arrays with BADVALs, then put the real data in
+ * Fill the plane with BADVALs and set the weights to zero, then put the 
+ * real data in
  */
 	for (i = 0; i < HDIM; i++)
 		for (j = 0; j < VDIM; j++)
-			PDATA (i, j) = BADVAL;
+		{
+			PLANE (i, j) = BADVAL;
+			P_WGT (i, j) = 0.0;
+		}
 
 	xs_put_data ();
 /*
@@ -225,12 +231,11 @@ xs_put_data ()
  * Fill the cross-section array with data from the chosen soundings
  */
 {
-	int	i, j, snd, pt, npts, ok, ngood, level;
-	float	zstep, w, fval[VDIM], weight[VDIM], hdis[VDIM];
-	float	*fdata, *sval, *spos;
-	float	*xpos, *ypos, *zpos, *tpos;
-	float	site_alt, plane_ang, val, x, y, dis, hlen, pt_ang;
-	float	snd_s_alt (), spline_eval ();
+	int	i, j, snd, pt, npts, iz, zndx, zndx_prev;
+	float	val, x, y, z, t, val_prev, x_prev, y_prev, z_prev, t_prev;
+	float	zstep, site_alt, hlen, frac;
+	float	*fdata, *xpos, *ypos, *zpos, *tpos;
+	float	snd_s_alt ();
 /*
  * Array allocation
  */
@@ -238,11 +243,6 @@ xs_put_data ()
 	xpos = tpos = (float *) malloc (BUFLEN * sizeof (float));
 	ypos = (float *) malloc (BUFLEN * sizeof (float));
 	zpos = (float *) malloc (BUFLEN * sizeof (float));
-/*
- * Get the angle of the plane
- */
-	if (! Time_height)
-		plane_ang = atan2 (Y1 - Y0, X1 - X0);
 /*
  * Vertical grid spacing
  */
@@ -279,15 +279,8 @@ xs_put_data ()
 		/*
 		 * Get the pressure data
 		 */
-			npts = snd_get_data (S_id[snd], zpos, BUFLEN, f_pres,
+			npts = snd_get_data (S_id[snd], zpos, BUFLEN, f_pres, 
 				BADVAL);
-	/*
-	 * We want the vertical data to be relative to the bottom 
-	 * value of the plane
-	 */
-		for (pt = 0; pt < npts; pt++)
-			if (zpos[pt] != BADVAL)
-				zpos[pt] -= P_bot;
 	/*
 	 * Put together the x,y position data
 	 */
@@ -303,187 +296,123 @@ xs_put_data ()
 		else
 			snd_get_data (S_id[snd], fdata, BUFLEN, Fld, BADVAL);
 	/*
-	 * Initialize the value and weight arrays to zero
-	 */
-		for (j = 0; j < VDIM; j++)
-		{
-			fval[j] = 0.0;
-			weight[j] = 0.0;
-		}
-	/*
 	 * Loop through the points
 	 */
+		val_prev = BADVAL;
+
 		for (pt = 0; pt < npts; pt++)
 		{
 		/*
 		 * Bag this point if the datum or position is bad
 		 */
-			if (fdata[pt] == BADVAL || xpos[pt] == BADVAL ||
-				ypos[pt] == BADVAL || zpos[pt] == BADVAL)
-				continue;
-		/*
-		 * Project this data point onto the plane, finding the 
-		 * horizontal distance along the plane and the distance
-		 * from the point to the plane
-		 */
 			if (Time_height)
 			{
-				hlen = tpos[pt] / 3600.0; /* convert to hrs */
-				dis = 0.0;
+				if (tpos[pt] == BADVAL)
+					continue;
 			}
 			else
 			{
-				x = xpos[pt];
-				y = ypos[pt];
-
-				if (x != 0.0 || y != 0.0)
-					pt_ang = atan2 (y, x) - plane_ang;
-				else
-					pt_ang = 0.0;
-
-				hlen = hypot (x, y) * cos (pt_ang);
-				dis = fabs (hypot (x, y) * sin (pt_ang));
+				if (xpos[pt] == BADVAL || ypos[pt] == BADVAL)
+					continue;
 			}
-		/*
-		 * Add a point to the trace for this sounding
-		 */
-			xs_extend_trace (hlen, zpos[pt]);
-		/*
-		 * Find the closest vertical grid level to the z position
-		 * of this point
-		 */
-			level = (int)(zpos[pt] / zstep + 0.5);
-		/*
-		 * If the grid level is reasonable, add this point to
-		 * the weighted average for the level
-		 */
-			if (level >= 0 && level < VDIM)
-			{
-				w = 1.0 - 2.0 * 
-					fabs (zpos[pt] - level*zstep) / zstep;
 
-				fval[level] = (fval[level] * weight[level] +
-					fdata[pt] * w) / (weight[level] + w);
-				hdis[level] = (hdis[level] * weight[level] +
-					hlen * w) / (weight[level] + w);
-				weight[level] += w;
-			}
-		}
-	/*
-	 * Move the weighted averages into the grid
-	 */
-		for (j = 0; j < VDIM; j++)
-		{
-			if (weight[j] == 0.0)
+			if (fdata[pt] == BADVAL || zpos[pt] == BADVAL)
 				continue;
 		/*
-		 * Find our horizontal grid location
+		 * Make sure we have a good previous point before we
+		 * get any further
 		 */
-			i = (int)((HDIM - 1) * hdis[j] / P_len + 0.5);
+			if (val_prev == BADVAL)
+			{
+				val_prev = fdata[pt];
+				z_prev = zpos[pt];
+				zndx_prev = xs_zindex (zpos[pt]);
+
+				if (Time_height)
+					t_prev = tpos[pt];
+				else
+				{
+					x_prev = xpos[pt];
+					y_prev = ypos[pt];
+				}
+				
+				continue;
+			}
 		/*
-		 * Put the value in the grid
+		 * Quit when we get above the grid
 		 */
-			if (i >= 0 && i < HDIM)
-				PDATA (i, j) = fval[j];
+			if (zndx_prev >= VDIM)
+				break;
+		/*
+		 * Find the index of the next grid height at or above zpos[pt]
+		 */
+			zndx = xs_zindex (zpos[pt]);
+		/*
+		 * Assign values at grid levels between this point and the
+		 * previous one
+		 */
+			for (iz = zndx_prev; iz < zndx && iz < VDIM; iz++)
+			{
+			/*
+			 * Don't assign anything below the first grid level
+			 */
+				if (iz < 0)
+					continue;
+			/*
+			 * Find the height of this grid index and interpolate
+			 * the data and position to this height
+			 */
+				z = iz * zstep + P_bot;
+				frac = (z - z_prev) / (zpos[pt] - z_prev);
+
+				val = val_prev + frac * (fdata[pt] - val_prev);
+
+				if (Time_height)
+					t = (t_prev + frac * 
+						(tpos[pt] - t_prev)) / 3600.0;
+				else
+				{
+					x = x_prev + frac * (xpos[pt]-x_prev);
+					y = y_prev + frac * (ypos[pt]-y_prev);
+				}
+			/*
+			 * Add this datum in at the current height index
+			 */
+				if (Time_height)
+					xs_add_to_level (iz, t, 0.0, val);
+				else
+					xs_add_to_level (iz, x, y, val);
+			}
+		/*
+		 * Project this point onto the plane, and add a point to 
+		 * the trace for this sounding
+		 */
+			if (Time_height)
+				hlen = tpos[pt] / 3600.0;	/* to hours */
+			else
+				hlen = hypot (xpos[pt] - X0, ypos[pt] - Y0) *
+					cos (atan2 (ypos[pt]-Y0, xpos[pt]-X0) -
+					atan2 (Y1-Y0, X1-X0));
+
+			xs_extend_trace (hlen, zpos[pt] - P_bot);
+		/*
+		 * Make this the previous point
+		 */
+			val_prev = fdata[pt];
+			z_prev = zpos[pt];
+			zndx_prev = zndx;
+			if (Time_height)
+				t_prev = tpos[pt];
+			else
+			{
+				x_prev = xpos[pt];
+				y_prev = ypos[pt];
+			}
 		}
 	/*
 	 * Draw the trace for this sounding
 	 */
 		xs_draw_trace (snd);
-	}
-/*
- * We have the "raw" data in the array, now apply splines horizontally
- * to fill in missing data areas
- */
-	sval = (float *) malloc (MAX (HDIM, VDIM) * sizeof (float));
-	spos = (float *) malloc (MAX (HDIM, VDIM) * sizeof (float));
-
-	for (j = 0; j < VDIM; j++)
-	{
-		ngood = 0;
-	/*
-	 * Check for an interrupt
-	 */
-		if (Interrupt)
-			xs_abort ();
-	/*
-	 * Build vectors of good data points and their positions in this row
-	 */
-		for (i = 0; i < HDIM; i++)
-		{
-			if (PDATA (i,j) != BADVAL)
-			{
-				sval[ngood] = PDATA (i,j);
-				spos[ngood] = (float) i;
-				ngood++;
-			}
-		}
-	/*
-	 * Don't do the spline if we don't have enough points
-	 */
-		if (ngood < 2)
-			continue;
-	/*
-	 * Do the cubic spline fit for this row
-	 */
-		spline (spos, sval, ngood);
-	/*
-	 * Evaluate the spline at the bad value points in this row
-	 */
-		for (i = 0; i < HDIM; i++)
-		{
-			if (PDATA (i,j) == BADVAL)
-			{
-				val = spline_eval ((float) i, &ok);
-				if (ok)
-					PDATA (i,j) = val;
-			}
-		}
-	}
-/*
- * Repeat the above steps to interpolate vertically
- */
-	for (i = 0; i < HDIM; i++)
-	{
-		ngood = 0;
-	/*
-	 * Check for an interrupt
-	 */
-		if (Interrupt)
-			xs_abort ();
-	/*
-	 * Build vectors of good data points and their positions in this column
-	 */
-		for (j = 0; j < VDIM; j++)
-		{
-			if (PDATA (i,j) != BADVAL)
-			{
-				sval[ngood] = PDATA (i,j);
-				spos[ngood] = (float) j;
-				ngood++;
-			}
-		}
-	/*
-	 * Don't do the spline if we don't have enough points
-	 */
-		if (ngood < 2)
-			continue;
-	/*
-	 * Do the cubic spline fit for this column
-	 */
-		spline (spos, sval, ngood);
-	/*
-	 * Evaluate the spline at the bad value points in this row
-	 */
-		for (j = 0; j < VDIM; j++)
-		{
-			if (PDATA (i,j) == BADVAL)
-			{
-				val = spline_eval ((float) j, &ok);
-				if (ok)
-					PDATA (i,j) = val;
-			}
-		}
 	}
 /*
  * The plane array is populated, free the allocated memory and return
@@ -492,10 +421,89 @@ xs_put_data ()
 	free (xpos);
 	free (ypos);
 	free (zpos);
-	free (sval);
-	free (spos);
 
 	return;
+}
+
+
+
+
+int
+xs_zindex (z)
+float	z;
+/*
+ * Return the index of the first grid level at or above z
+ */
+{
+	float	fndx = (z - P_bot) / P_hgt * (VDIM - 1);
+
+	if ((float)((int) fndx) == fndx)
+		return ((int) fndx);	
+	else
+		return ((int) fndx + 1);
+}
+
+
+
+
+void
+xs_add_to_level (iz, xdat, ydat, vdat)
+int	iz;
+float	vdat, xdat, ydat;
+/*
+ * Apply the point with value vdat located at (xdat,ydat) to the grid 
+ * at height index iz.  (For time-height plots, xdat should be the time 
+ * position and ydat should be zero)
+ */
+{
+	int	ih;
+	float	x, y, d, xstep, ystep, tstep, wgt;
+/*
+ * Sanity check
+ */
+	if (iz < 0 || iz >= VDIM)
+		ui_error ("*BUG* Bad vertical index in xs_add_to_level");
+/*
+ * Step through the grid horizontally at height index iz and use a distance
+ * weighting scheme to apply the given point
+ */
+	if (Time_height)
+		tstep = P_len / (HDIM - 1);
+	else
+	{
+		xstep = (X1 - X0) / (HDIM - 1);
+		ystep = (Y1 - Y0) / (HDIM - 1);
+	}
+
+
+	for (ih = 0; ih < HDIM; ih++)
+	{
+		if (Time_height)
+		{
+			x = ih * tstep;
+			y = 0.0;
+		}
+		else
+		{
+			x = X0 + ih * xstep;
+			y = Y0 + ih * ystep;
+		}
+
+		d = sqrt ((xdat - x) * (xdat - x) + (ydat - y) * (ydat - y));
+	/*
+	 * Use a 1/d^2 weighting scheme, truncated at a weight of 100
+	 */
+		if (d < 0.1)
+			wgt = 100;
+		else
+			wgt = 1.0 / (d * d);
+	/*
+	 * Apply the point
+	 */
+		PLANE(ih,iz) = (PLANE(ih,iz) * P_WGT(ih,iz) + vdat * wgt) /
+			(P_WGT(ih,iz) + wgt);
+		P_WGT(ih,iz) = P_WGT(ih,iz) + wgt;
+	}
 }
 
 
@@ -906,9 +914,6 @@ struct ui_command	*cmds;
 	angle = DEG_TO_RAD (90.0 - UFLOAT (cmds[2]));
 	length = UFLOAT (cmds[3]);
 
-	ui_printf ("center (%.1f,%.1f), angle %.1f, length %.1f", xc, yc,
-		UFLOAT (cmds[2]), length);
-
 	if (length == 0.0)
 		ui_error ("The length must be greater than zero!");
 
@@ -1072,8 +1077,7 @@ xs_pos (sid, xpos, ypos)
 char	*sid;
 float	*xpos, *ypos;
 /*
- * Return the x and y positions of the data for sounding 'sid' relative 
- * to X0,Y0
+ * Return the x and y positions of the data for sounding 'sid'
  */
 {
 	float	*lat, *lon, *wspd, *wdir, *time, *dummy;
@@ -1084,9 +1088,6 @@ float	*xpos, *ypos;
  * Get the site location in (x,y) coordinates
  */
 	cvt_to_xy (snd_s_lat (sid), snd_s_lon (sid), &site_x, &site_y);
-
-	site_x -= X0;
-	site_y -= Y0;
 /*
  * Derive the (x,y) positions from (lat,lon) if possible
  */
@@ -1107,8 +1108,8 @@ float	*xpos, *ypos;
 			else
 			{
 				cvt_to_xy (lat[pt], lon[pt], &x, &y);
-				xpos[pt] = x - X0;
-				ypos[pt] = y - Y0;
+				xpos[pt] = x;
+				ypos[pt] = y;
 			}
 	/*
 	 * Free the data arrays
