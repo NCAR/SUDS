@@ -1,7 +1,7 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
  *
- * $Revision: 1.15 $ $Date: 1991-03-21 17:23:51 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1991-06-26 16:10:34 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -34,7 +34,7 @@ static int	Init = FALSE;
  * Forward declarations
  */
 struct snd	snd_find_sounding ();
-void	snd_set_default ();
+void	snd_load_file (), snd_set_default ();
 
 
 
@@ -100,13 +100,21 @@ struct ui_command	*cmds;
  * Handle the FILE command to get a new sounding
  */
 {
-	char	*id_name, *fname;
-	int	type;
-	struct snd	*sounding = Snd_list, *prev = 0;
+	snd_load_file (UPTR (cmds[0]), UKEY (cmds[1]), UKEY (cmds[2]));
+}
 
-	fname = UPTR (cmds[0]);
-	type = UKEY (cmds[1]);
-	id_name = UPTR (cmds[2]);
+
+
+
+void
+snd_load_file (fname, type, id_name)
+char	*fname, *id_name;
+int	type;
+/*
+ * Load a sounding, given the filename, type, and id name
+ */
+{
+	struct snd	*sounding = Snd_list, *prev = 0;
 /*
  * Initialize if necessary
  */
