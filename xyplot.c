@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xyplot.c,v 1.2 1991-10-21 21:59:24 burghart Exp $";
+static char *rcsid = "$Id: xyplot.c,v 1.3 1991-12-16 21:02:43 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -87,16 +87,6 @@ struct ui_command	*cmds;
 	float	width, height;
 	char	*snd_default ();
 /*
- * Get the two fields and their limits
- */
-	Xfld = fd_num (UPTR (*cmds++));
-	Xmin = fd_bot (Xfld);
-	Xmax = fd_top (Xfld);
-
-	Yfld = fd_num (UPTR (*cmds++));
-	Ymin = fd_bot (Yfld);
-	Ymax = fd_top (Yfld);
-/*
  * Make sure the graphics stuff is ready
  */
 	out_ws_check ();
@@ -108,6 +98,16 @@ struct ui_command	*cmds;
  * Let edit know about this plot
  */
 	edit_set_plot (xy_plot, xy_coords, cmds, &XYplot_ov, 1);
+/*
+ * Get the two fields and their limits
+ */
+	Xfld = fd_num (UPTR (*cmds++));
+	Xmin = fd_bot (Xfld);
+	Xmax = fd_top (Xfld);
+
+	Yfld = fd_num (UPTR (*cmds++));
+	Ymin = fd_bot (Yfld);
+	Ymax = fd_top (Yfld);
 /*
  * Set the plot limits and plot the background
  */
