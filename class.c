@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.15 $ $Date: 1991-03-22 18:22:54 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1991-08-07 14:19:01 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -49,12 +49,18 @@ struct fldmatch	F_match_tbl[] =
 /*
  * Forward declarations
  */
-void	cls_newclass ();
+void	cls_newclass (), cls_lowell (), cls_ncbody ();
 
 /*
  * The sounding file
  */
 static FILE	*Sfile;
+
+/*
+ * Lowell sounding?
+ */
+static bool	Lowell;
+
 
 
 
@@ -93,6 +99,8 @@ struct snd	*sounding;
  *	2) If the first ten characters are "Data Type:", assume it is
  *	   a new CLASS format file.
  */
+	Lowell = FALSE;
+
 	pos = 0;
 	while ((character = fgetc (Sfile)) != ',' && character != '\n')
 	{
@@ -104,6 +112,16 @@ struct snd	*sounding;
 		if (pos == 10 && ! strncmp (string, "Data Type:", 10))
 		{
 			cls_newclass (sounding);
+			return;
+		}
+	/*
+	 * Extra kluge for U. Lowell soundings, which have some
+	 * extra garbage in the headers
+	 */
+		if (pos == 2 && ! strncmp (string, " #", 2))
+		{
+			Lowell = TRUE;
+			cls_lowell (sounding);
 			return;
 		}
 	}
@@ -504,7 +522,7 @@ struct snd	*sounding;
  */
 	fclose (Sfile);
 }
-					
+
 
 
 
@@ -516,12 +534,9 @@ struct snd	*sounding;
  * characters ("Data Type:") have been read already.  Read
  * the rest and stuff the info into 'sounding'.
  */
-{
-	char	string[STRSIZE], c;
-	int	year, month, day, hour, minute, second;
-	int	i, status = 0, ndx;
-	struct snd_datum	*dptr[MAXFLDS], *prevpt;
-	float	val[MAXFLDS], badval[MAXFLDS];
+{				
+	char	string[STRSIZE];
+	int	i, year, month, day, hour, minute, second;
 /*
  * Ignore the first and second lines
  */
@@ -559,6 +574,83 @@ struct snd	*sounding;
 	for (i = 0; i < 11; i++)
 		fgets (string, STRSIZE, Sfile);
 /*
+ * Read the body of the file
+ */
+	cls_ncbody (sounding);
+}
+
+
+
+
+void
+cls_lowell (sounding)
+struct snd	*sounding;
+/*
+ * Read a U. Lowell format sounding file, which is like the new CLASS
+ * format, but has a modified header.  The first line has been read
+ * up to the \n when this gets called.
+ */
+{				
+	char	string[STRSIZE];
+	int	i, year, month, day, hour, minute, second;
+/*
+ * Skip the first line's \n and the next three lines
+ */
+	for (i = 0; i < 4; i++)
+		fgets (string, STRSIZE, Sfile);
+/*
+ * Read the next line and strip trailing '\r' and '\n' characters
+ */
+	fgets (string, STRSIZE, Sfile);
+	for (i = strlen (string) - 1; string[i]=='\r' || string[i]=='\n'; i--)
+		string[i] = '\0';
+/*
+ * Build a site name from the third line info
+ */
+	sounding->site = (char *) 
+		malloc ((strlen (string) - 37) * sizeof (char));
+	strcpy (sounding->site, string + 38);
+/*
+ * Skip the lat, lon, alt line, since it's usually wrong anyway
+ */
+	fgets (string, STRSIZE, Sfile);
+	sounding->sitelon = -81.1942;
+	sounding->sitelat = 28.4250;
+/*
+ * Sounding release date and time
+ */
+	fscanf (Sfile, "%[^:]:%d/%d/%d %d:%d:%d", string, &month, &day, 
+		&year, &hour, &minute, &second);
+	year -= 1900;
+
+	sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
+	sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
+/*
+ * Read lines until we hit the last header line
+ */
+	while (strncmp (string, " # ___", 6))
+		fgets (string, STRSIZE, Sfile);
+/*
+ * Read the body
+ */
+	cls_ncbody (sounding);
+}
+
+
+
+
+void
+cls_ncbody (sounding)
+struct snd	*sounding;
+/*
+ * Read the body of a new CLASS format file
+ */
+{
+	char	string[STRSIZE], c;
+	int	i, status = 0, ndx, nfld;
+	struct snd_datum	*dptr[MAXFLDS], *prevpt;
+	float	val[MAXFLDS], badval[MAXFLDS];
+/*
  * Initialize the data pointers
  */
 	for (i = 0; i < MAXFLDS; i++)
@@ -593,6 +685,16 @@ struct snd	*sounding;
 	badval[18] = 32767.0;	badval[19] = 32767.0;
 	badval[20] = 32767.0;
 /*
+ * Only 20 fields in U. Lowell soundings
+ */
+	if (Lowell)
+	{
+		nfld = 20;
+		sounding->fields[20] = f_null;
+	}
+	else
+		nfld = 21;
+/*
  * Get the data
  */
 	for (ndx = 0; ; ndx++)
@@ -603,15 +705,15 @@ struct snd	*sounding;
 	 * with spaces.  Explicitly reading a character gets us past either 
 	 * way.)
 	 */
-		for (i = 0; i < 21 && status != EOF; i++)
+		for (i = 0; i < nfld && status != EOF; i++)
 			status = fscanf (Sfile, "%f%c", &val[i], &c);
 
 		if (status == EOF || status == 0)
 			break;
 	/*
-	 * Put the 21 data points into their respective data lists
+	 * Put the data points into their respective data lists
 	 */
-		for (i = 0; i < 21; i++)
+		for (i = 0; i < nfld; i++)
 		{
 		/*
 		 * Don't put bad values in the list
