@@ -10,32 +10,24 @@
  * or used in any form or by any means -- graphic, electronic, or mechanical,
  * including photocopying, recording, taping, or information storage and
  * retrieval systems -- without permission of the copyright owner.
- * 
+ *
  * This software and any accompanying written materials are provided "as is"
  * without warranty of any kind.  UCAR expressly disclaims all warranties of
  * any kind, either express or implied, including but not limited to the
  * implied warranties of merchantibility and fitness for a particular purpose.
  * UCAR does not indemnify any infringement of copyright, patent, or trademark
- * through use or modification of this software.  UCAR does not provide 
+ * through use or modification of this software.  UCAR does not provide
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.16 1993-09-21 20:21:32 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.17 2004-06-02 21:48:35 burghart Exp $";
 
 # include <math.h>
+# include <stdarg.h>
 # include <met_formulas.h>
 # include "fields.h"
 # include "flags.h"
 
-/*
- * cflow barfs on varargs stuff, and we want to avoid that
- * (note that "cflow -Dcflow ..." is required for this to work)
- */
-# ifndef cflow
-#	include <varargs.h>
-# else
-#	define va_dcl	int va_alist;
-# endif
 
 # define TRUE	1
 # define FALSE	0
@@ -150,10 +142,10 @@ fdd_dt_init ()
 	fdd_add_derivation (f_ascent, fdd_ascent, 2, f_time, f_alt);
 	fdd_add_derivation (f_rh, fdd_rh, 2, f_temp, f_dp);
 	fdd_add_derivation (f_theta_v, fdd_theta_v, 3, f_temp, f_pres, f_rh);
-	fdd_add_derivation (f_ri, fdd_ri, 4, f_u_wind, f_v_wind, f_theta, 
+	fdd_add_derivation (f_ri, fdd_ri, 4, f_u_wind, f_v_wind, f_theta,
 			    f_alt);
 	fdd_add_derivation (f_mflux, fdd_mflux, 2, f_mr, f_wspd);
-	fdd_add_derivation (f_mflux_uv, fdd_mflux_uv, 3, f_mr, f_u_wind, 
+	fdd_add_derivation (f_mflux_uv, fdd_mflux_uv, 3, f_mr, f_u_wind,
 			    f_v_wind);
 	fdd_add_derivation (f_t_wet, fdd_t_wet, 3, f_temp, f_pres, f_rh);
 /*
@@ -166,8 +158,7 @@ fdd_dt_init ()
 
 
 void
-fdd_add_derivation (va_alist)
-va_dcl		/* variable args declaration, no semicolon! */
+fdd_add_derivation (fldtype fld, ...)
 /*
  * Add a derivation function for fld to the table of legal derivations
  * The arguments to this routine are (in order):
@@ -181,18 +172,16 @@ va_dcl		/* variable args declaration, no semicolon! */
  *	fld[nflds-1]	the last field in the derivation
  */
 {
-	fldtype fld;
 	d_entry	*entry, *tail;
 	int	nflds;
 	void	(*func)();
 	int	i;
-	va_list	args;
+	va_list args;
 
-	va_start (args);
+	va_start (args, fld);
 /*
- * Get the first three arguments
+ * Get the function and nflds arguments
  */
-	fld = va_arg (args, fldtype);
 	func = (void (*)()) va_arg (args, void*);
 	nflds = va_arg (args, int);
 /*
@@ -365,7 +354,7 @@ int	npts;
 	float	*dp = dbufs[0], *temp = dbufs[1], *pres = dbufs[2];
 	float	e, vt, pres_prev = badval, alt_prev, vt_prev;
 	int	i;
-/* 
+/*
  * This derivation is adapted from equation 2.24 of Wallace and
  * Hobbs' "Atmospheric Science" (1977) using a simple estimation
  * of the integral.
@@ -388,8 +377,8 @@ int	npts;
 			if (pres_prev == badval)
 				buf[i] = 0.0;
 			else
-				buf[i] = alt_prev + R_D / G_0 * 0.5 * 
-					(vt / pres[i] + vt_prev / pres_prev) * 
+				buf[i] = alt_prev + R_D / G_0 * 0.5 *
+					(vt / pres[i] + vt_prev / pres_prev) *
 					(pres_prev - pres[i]);
 
 			pres_prev = pres[i];
@@ -446,7 +435,7 @@ int	npts;
 		if (u_wind[i] == badval || v_wind[i] == badval)
 			buf[i] = badval;
 		else
-			buf[i] = -90.0 - 
+			buf[i] = -90.0 -
 				RAD_TO_DEG (atan2 (v_wind[i], u_wind[i]));
 	}
 }
@@ -494,7 +483,7 @@ int	npts;
 		if (temp[i] == badval || pres[i] == badval || rh[i] == badval)
 			buf[i] = badval;
 		else
-			buf[i] = t_v (temp[i] + T_K, pres[i], 
+			buf[i] = t_v (temp[i] + T_K, pres[i],
 				0.01 * rh[i] * e_sw (temp[i] + T_K));
 	}
 }
@@ -551,7 +540,7 @@ int	npts;
 			continue;
 		}
 		else
-			buf[i] = 100.0 * e_from_dp (dp[i] + T_K) / 
+			buf[i] = 100.0 * e_from_dp (dp[i] + T_K) /
 				e_sw (temp[i] + T_K);
 	}
 }
@@ -577,7 +566,7 @@ int	npts;
 		else
 		{
 			theta = theta_dry (temp[i] + T_K, pres[i]);
-			buf[i] = t_v (theta, pres[i], 
+			buf[i] = t_v (theta, pres[i],
 				0.01 * rh[i] * e_sw (temp[i] + T_K));
 		}
 	}
@@ -600,9 +589,9 @@ int	npts;
 	g = 9.81;
 	for (i = 1; i < npts-1; i++)
 	{
-		if (u_wind[i+1] == badval || v_wind[i+1] == badval || 
+		if (u_wind[i+1] == badval || v_wind[i+1] == badval ||
 		    theta[i+1] == badval  || alt[i+1] == badval ||
-		    u_wind[i-1] == badval || v_wind[i-1] == badval || 
+		    u_wind[i-1] == badval || v_wind[i-1] == badval ||
 		    theta[i-1] == badval || alt[i-1] == badval )
 			buf[i] = badval;
 		else
