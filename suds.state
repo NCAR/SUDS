@@ -1,0 +1,1318 @@
+/*
+ * This is a raw UI state file for SUDS which needs to be preprocessed to
+ * make a regular state file.  Since the preprocessor does not
+ * recognize comments delimited by the exclamation point, apostrophes
+ * and quotes in comments must appear in pairs. (i.e., no contractions)
+ */
+/*
+ *		Copyright (C) 1988-91 by UCAR
+ *	University Corporation for Atmospheric Research
+ *		   All rights reserved
+ *
+ * No part of this work covered by the copyrights herein may be reproduced
+ * or used in any form or by any means -- graphic, electronic, or mechanical,
+ * including photocopying, recording, taping, or information storage and
+ * retrieval systems -- without permission of the copyright owner.
+ * 
+ * This software and any accompanying written materials are provided "as is"
+ * without warranty of any kind.  UCAR expressly disclaims all warranties of
+ * any kind, either express or implied, including but not limited to the
+ * implied warranties of merchantibility and fitness for a particular purpose.
+ * UCAR does not indemnify any infringement of copyright, patent, or trademark
+ * through use or modification of this software.  UCAR does not provide 
+ * maintenance or updates for its software.
+ *
+ * $Id: suds.state,v 1.1 1991-10-30 22:13:42 burghart Exp $
+ */
+
+# include "keywords.h"
+
+!
+! Make 'quit' do the same as 'exit'
+!
+define command quit 'exit'
+
+define state suds-initial
+!
+! Initialization stuff
+!
+	eoftext	'exit'
+	helpfile 'suds'
+	ctable ui$command_table
+# ifdef VMS
+	@ ui_include:ui_commands.
+# else
+	@ /rdss/ui/ui_commands.
+# endif
+!
+! The commands
+!
+	input 'file' KW_FILE
+		next file-opt-name
+	endinput
+	input 'output' KW_OUTPUT
+		next out-opt-device
+	endinput
+	input 'skewt' KW_SKEWT
+		next skt-what
+	endinput
+	input 'create' KW_CREATE
+		next cre-opt-sounding
+	endinput
+	input 'select' KW_SELECT
+		next slct-opt-field
+	endinput
+	input 'up' KW_UP
+		next up-count
+	endinput
+	input 'down' KW_DOWN
+		next down-count
+	endinput
+	input 'mark' KW_MARK
+		next mark-end
+	endinput
+	input 'cut' KW_CUT
+		next cut-end
+	endinput
+	input 'analyze' KW_ANALYZE
+		next analyze-what
+	endinput
+	input 'show' KW_SHOW
+		next show-what
+	endinput
+	input 'write' KW_WRITE
+		next wrt-opt-file
+	endinput
+	input 'erase' KW_ERASE
+		next erase-end
+	endinput
+	input 'newvalue' KW_NEWVALUE
+		next nv-value
+	endinput
+	input 'examine' KW_EXAMINE
+		next ex-end
+	endinput
+	input 'threshold' KW_THRESHOLD
+		next thr-opt-field
+	endinput
+	input 'forget' KW_FORGET
+		next forget-snd
+	endinput
+	input 'wscale' KW_WSCALE
+		next wscale-num
+	endinput
+	input 'foote' KW_FOOTE
+		next foote-snd
+	endinput
+	input 'hodograph' KW_HODOGRAPH
+		next hodo-what
+	endinput
+	input 'color' KW_COLOR
+		next color-index
+	endinput
+	input 'insert' KW_INSERT
+		next insert-where
+	endinput
+	input 'xsect' KW_XSECT
+		next xs-what
+	endinput
+	input 'origin' KW_ORIGIN
+		next origin-opt-lat
+	endinput
+	input 'limits' KW_LIMITS
+		next limits-fld
+	endinput
+	input 'conlimits' KW_CONLIMITS
+		next limits-fld
+	endinput
+	input 'extend' KW_EXTEND
+		next extend-end
+	endinput
+	input 'netcdf' KW_NETCDF
+		next wrt-opt-file
+	endinput
+	input 'forecast' KW_FORECAST
+		next ust$final_real
+	endinput
+	input 'mlvw' KW_MLVW
+		next mlvw-opt-bottom
+	endinput
+	input 'xyplot' KW_XYPLOT
+		next xy-xfld
+	endinput
+
+	input 'copyright' KW_COPYRIGHT
+		next ust$no_more
+	endinput
+
+	input 'test' KW_TEST
+		next test-temp
+	endinput
+enddef
+
+!
+! File command
+!
+define state file-opt-name
+	helpfile 'file'
+	input 'name' KW_SUGAR
+		ignore
+		next file-name
+	endinput
+	input string
+		next file-opt-type
+	endinput
+enddef
+
+define state file-name
+	helpfile 'file'
+	input string
+		next file-opt-type
+	endinput
+enddef
+
+define state file-opt-type
+	helpfile 'file'
+	input 'type' KW_SUGAR
+		ignore
+		next file-type
+	endinput
+	input 'class' SFMT_CLASS
+		next file-opt-id
+	endinput
+	input 'e-format' SFMT_EFMT
+		next file-opt-id
+	endinput
+	input 'jaws' SFMT_JAWS
+		next file-opt-id
+	endinput
+	input 'noaa' SFMT_NOAA
+		next file-opt-id
+	endinput
+	input 'nws' SFMT_NWS
+		next file-opt-id
+	endinput
+	input 'fgge' SFMT_FGGE
+		next file-opt-id
+	endinput
+	input 'rsanal' SFMT_RSANAL
+		next file-opt-id
+	endinput
+	input 'ncar' SFMT_NCAR
+		next file-opt-id
+	endinput
+	input 'mist' SFMT_MIST
+		next file-opt-id
+	endinput
+	input 'gale' SFMT_GALE
+		next file-opt-id
+	endinput
+	input 'nmc' SFMT_NMC
+		next file-opt-id
+	endinput
+	input 'netcdf' SFMT_NETCDF
+		next file-opt-id
+	endinput
+	input 'cape' SFMT_CAPE
+		next file-opt-id
+	endinput
+enddef
+
+define state file-type
+	helpfile 'file'
+	input 'class' SFMT_CLASS
+		next file-opt-id
+	endinput
+	input 'e-format' SFMT_EFMT
+		next file-opt-id
+	endinput
+	input 'jaws' SFMT_JAWS
+		next file-opt-id
+	endinput
+	input 'noaa' SFMT_NOAA
+		next file-opt-id
+	endinput
+	input 'nws' SFMT_NWS
+		next file-opt-id
+	endinput
+	input 'fgge' SFMT_FGGE
+		next file-opt-id
+	endinput
+	input 'rsanal' SFMT_RSANAL
+		next file-opt-id
+	endinput
+	input 'ncar' SFMT_NCAR
+		next file-opt-id
+	endinput
+	input 'mist' SFMT_MIST
+		next file-opt-id
+	endinput
+	input 'gale' SFMT_GALE
+		next file-opt-id
+	endinput
+enddef
+
+define state file-opt-id
+	helpfile 'file'
+	input 'id' KW_SUGAR
+		ignore
+		next file-idname
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+define state file-idname
+	helpfile 'file'
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Output command
+!
+define state out-opt-device
+	helpfile 'output'
+	input 'device' KW_SUGAR
+		ignore
+		next out-devname
+	endinput
+	input string
+		next out-opt-type
+	endinput
+enddef
+
+define state out-devname
+	helpfile 'output'
+	input string
+		next out-opt-type
+	endinput
+enddef
+
+define state out-opt-type
+	helpfile 'output'
+	input 'type' KW_SUGAR
+		ignore
+		next ust$final_string
+	endinput
+	input string
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Skewt command
+!
+define state skt-what
+	helpfile 'skewt'
+	input 'plot' KW_SUGAR
+		ignore
+		next skt-plot
+	endinput
+	input 'plimits' KW_PLIMITS
+		next skt-opt-pmax
+	endinput
+	input 'tlimits' KW_TLIMITS
+		next skt-opt-tmin
+	endinput
+	input string
+		lowercase
+		next skt-plot
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state skt-plot
+	helpfile 'skewt'
+	input string
+		lowercase
+		next skt-plot
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state skt-opt-pmax
+	helpfile 'skewt'
+	input 'max' KW_SUGAR
+		ignore
+		next skt-pmax
+	endinput
+	input real
+		next skt-opt-pmin
+	endinput
+enddef
+
+define state skt-pmax
+	helpfile 'skewt'
+	input real
+		next skt-opt-pmin
+	endinput
+enddef
+
+define state skt-opt-pmin
+	helpfile 'skewt'
+	input 'min' KW_SUGAR
+		ignore
+		next ust$final_real
+	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+define state skt-opt-tmin
+	helpfile 'skewt'
+	input 'min' KW_SUGAR
+		ignore
+		next skt-tmin
+	endinput
+	input real
+		next skt-opt-tmax
+	endinput
+enddef
+
+define state skt-tmin
+	helpfile 'skewt'
+	input real
+		next skt-opt-tmax
+	endinput
+enddef
+
+define state skt-opt-tmax
+	helpfile 'skewt'
+	input 'max' KW_SUGAR
+		ignore
+		next ust$final_real
+	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Create command
+!
+define state cre-opt-sounding
+	helpfile 'create'
+	input 'sounding' KW_SUGAR
+		ignore
+		next cre-id-name
+	endinput
+	input string
+		lowercase
+		next cre-opt-from
+	endinput
+enddef
+
+define state cre-id-name
+	helpfile 'create'
+	input string
+		lowercase
+		next cre-opt-from
+	endinput
+enddef
+
+define state cre-opt-from
+	helpfile 'create'
+	input 'from' KW_SUGAR
+		ignore
+		next cre-parent
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+define state cre-parent
+	helpfile 'create'
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+!
+! The select command
+!
+define state slct-opt-field
+	helpfile 'select'
+	input 'field' KW_SUGAR
+		ignore
+		next slct-field
+	endinput
+	input string
+		lowercase
+		next slct-opt-sounding
+	endinput
+enddef
+
+define state slct-field
+	helpfile 'select'
+	input string
+		lowercase
+		next slct-opt-sounding
+	endinput
+enddef
+
+define state slct-opt-sounding
+	helpfile 'select'
+	input 'sounding' KW_SUGAR
+		ignore
+		next slct-sounding
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state slct-sounding
+	helpfile 'select'
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Up and down
+!
+define state up-count
+	helpfile 'up'
+	input EOS
+		done
+	endinput
+	input int
+		next ust$no_more
+	endinput
+enddef
+
+define state down-count
+	helpfile 'down'
+	input EOS
+		done
+	endinput
+	input int
+		next ust$no_more
+	endinput
+enddef
+
+!
+! The show command
+!
+define state show-what
+	helpfile 'show'
+	input 'soundings' SHOW_SOUNDINGS
+		next opt-brief
+	endinput
+	input 'flags' SHOW_FLAGS
+		next ust$no_more
+	endinput
+	input 'colors' SHOW_COLORS
+		next ust$no_more
+	endinput
+	input 'origin' SHOW_ORIGIN
+		next ust$no_more
+	endinput
+	input 'limits' SHOW_LIMITS
+		next ust$no_more
+	endinput
+	input 'forecast' SHOW_FORECAST
+		next ust$no_more
+	endinput
+enddef
+
+define state opt-brief
+	input 'brief' KW_BRIEF
+		next ust$no_more
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Mark command
+!
+define state mark-end
+	helpfile 'mark'
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Cut command
+!
+define state cut-end
+	helpfile 'cut'
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Analyze command
+!
+define state analyze-what
+	helpfile 'analyze'
+	input EOS
+		done
+	endinput
+	input 'show' KW_SHOW
+		next analyze-show-fld
+	endinput
+	input 'to' KW_TO
+		next analyze-outfile
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+define state analyze-show-fld
+	helpfile 'analyze'
+	input EOS
+		done
+	endinput
+	input string
+		lowercase
+		next analyze-opt-at
+	endinput
+enddef
+
+define state analyze-opt-at
+	helpfile 'analyze'
+	input 'at' KW_SUGAR
+		ignore
+		next analyze-show-pres
+	endinput
+	input real
+		next analyze-show-fld
+	endinput
+enddef
+
+define state analyze-show-pres
+	helpfile 'analyze'
+	input real
+		next analyze-show-fld
+	endinput
+enddef
+
+define state analyze-outfile
+	helpfile 'analyze'
+	input string
+		lowercase
+		next analyze-sounding
+	endinput
+enddef
+
+define state analyze-sounding
+	helpfile 'analyze'
+	input EOS
+		done
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef 
+
+!
+! Write command
+!
+define state wrt-opt-file
+	helpfile 'write'
+	input 'file' KW_SUGAR
+		ignore
+		next wrt-fname
+	endinput
+	input string
+		next wrt-opt-from
+	endinput
+enddef
+
+define state wrt-fname
+	helpfile 'write'
+	input string
+		next wrt-opt-from
+	endinput
+enddef
+
+define state wrt-opt-from
+	helpfile 'write'
+	input 'from' KW_SUGAR
+		ignore
+		next wrt-sname
+	endinput
+	input string
+		lowercase
+		next wrt-opt-add
+	endinput
+	input 'add_alt' KW_ADD_ALT
+		next ust$no_more
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state wrt-sname
+	helpfile 'write'
+	input string
+		lowercase
+		next wrt-opt-add
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state wrt-opt-add
+	helpfile 'write'
+	input 'add_alt' KW_ADD_ALT
+		next ust$no_more
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Erase command
+!
+define state erase-end
+	helpfile 'erase'
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Newvalue command
+!
+define state nv-value
+	helpfile 'newvalue'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Examine command
+!
+define state ex-end
+	helpfile 'examine'
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Threshold command
+!
+define state thr-opt-field
+	helpfile 'threshold'
+	input 'field' KW_SUGAR
+		ignore
+		next thr-targetfld
+	endinput
+	input string
+		lowercase
+		next thr-opt-on
+	endinput
+enddef
+
+define state thr-targetfld
+	helpfile 'threshold'
+	input string
+		lowercase
+		next thr-opt-on
+	endinput
+enddef
+
+define state thr-opt-on
+	helpfile 'threshold'
+	input 'on' KW_SUGAR
+		ignore
+		next thr-threshfld
+	endinput
+	input string
+		lowercase
+		next thr-criterion
+	endinput
+enddef
+
+define state thr-threshfld
+	helpfile 'threshold'
+	input string
+		lowercase
+		next thr-criterion
+	endinput
+enddef
+
+define state thr-criterion
+	helpfile 'threshold'
+	input 'bad' THR_BAD
+		next thr-opt-sounding
+	endinput
+	input '=' THR_EQ
+		next thr-value
+	endinput
+	input '>' THR_GT
+		next thr-value
+	endinput
+	input '<' THR_LT
+		next thr-value
+	endinput
+	input '>=' THR_GE
+		next thr-value
+	endinput
+	input '<=' THR_LE
+		next thr-value
+	endinput
+enddef
+
+define state thr-value
+	helpfile 'threshold'
+	input real
+		next thr-opt-sounding
+	endinput
+enddef
+
+define state thr-opt-sounding
+	helpfile 'threshold'
+	input 'sounding' KW_SUGAR
+		ignore
+		next thr-snd-name
+	endinput
+	input EOS
+		done
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+define state thr-snd-name
+	helpfile 'threshold'
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Forget command
+!
+define state forget-snd
+	helpfile 'forget'
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Wscale command
+!
+define state wscale-num
+	helpfile 'wscale'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Foote command
+!
+define state foote-snd
+	helpfile 'foote'
+	input string
+		lowercase
+		next foote-snd
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Hodograph command
+!
+define state hodo-what
+	helpfile 'hodograph'
+	input 'top' KW_TOP
+		next hodo-real
+	endinput
+	input 'step' KW_STEP
+		next hodo-real
+	endinput
+	input 'mark' KW_MARK
+		next hodo-real
+	endinput
+	input string
+		lowercase
+		next hodo-snd
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state hodo-real
+	helpfile 'hodograph'
+	input real
+		next hodo-what
+	endinput
+enddef
+
+define state hodo-snd
+	helpfile 'hodograph'
+	input string
+		lowercase
+		next hodo-snd
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! Color command
+!
+define state color-index
+	helpfile 'color'
+	input string
+		lowercase
+		next color-cname
+	endinput
+enddef
+
+define state color-cname
+	helpfile 'color'
+	input 'rgb' KW_SUGAR
+		ignore
+		next color-red
+	endinput
+	input string
+		next ust$no_more
+	endinput
+enddef
+
+define state color-red
+	helpfile 'color'
+	input real
+		next color-green
+	endinput
+enddef
+
+define state color-green
+	helpfile 'color'
+	input real
+		next color-blue
+	endinput
+enddef
+
+define state color-blue
+	helpfile 'color'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Insert command
+!
+define state insert-where
+	helpfile 'insert'
+	input 'above' KW_ABOVE
+		next insert-field
+	endinput
+	input 'below' KW_BELOW
+		next insert-field
+	endinput
+enddef
+
+define state insert-field
+	helpfile 'insert'
+	input string
+		lowercase
+		next insert-value
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state insert-value
+	helpfile 'insert'
+	input real
+		next insert-field
+	endinput
+enddef
+
+!
+! Origin command
+!
+define state origin-opt-lat
+	helpfile 'origin'
+	input 'lat' KW_SUGAR
+		ignore
+		next origin-lat
+	endinput
+	input real
+		next origin-opt-lon
+	endinput
+enddef
+
+define state origin-lat
+	helpfile 'origin'
+	input real
+		next origin-opt-lon
+	endinput
+enddef
+
+define state origin-opt-lon
+	helpfile 'origin'
+	input 'lon' KW_SUGAR
+		ignore
+		next origin-lon
+	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+define state origin-lon
+	helpfile 'origin'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Limits (and conlimits) command
+!
+define state limits-fld
+	helpfile 'limits'
+	input string
+		lowercase
+		next limits-lim1
+	endinput
+enddef
+
+define state limits-lim1
+	helpfile 'limits'
+	input real
+		next limits-lim2
+	endinput
+enddef
+
+define state limits-lim2
+	helpfile 'limits'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Conlimits command
+!
+define state conlimits-fld
+	helpfile 'conlimits'
+	input string
+		lowercase
+		next conlimits-center
+	endinput
+enddef
+
+define state conlimits-center
+	helpfile 'conlimits'
+	input real
+		next conlimits-step
+	endinput
+enddef
+
+define state conlimits-step
+	helpfile 'conlimits'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Xsect command
+!
+define state xs-what
+	helpfile 'xsect'
+	input 'use' KW_USE
+		next xs-sndlist
+	endinput
+	input 'from' KW_FROM
+		next xs-from
+	endinput
+	input 'center' KW_CENTER
+		next xs-center-x
+	endinput
+	input 'vscale' KW_VSCALE
+		next xs-vscale
+	endinput
+	input 'time-height' KW_TIMHGT
+		next ust$final_string
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
+
+define state xs-sndlist
+	helpfile 'xsect'
+	input string
+		next xs-sndlist
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state xs-from
+	helpfile 'xsect'
+	input 'site' KW_SUGAR
+		ignore
+		next xs-from-site
+	endinput
+	input real
+		next xs-from-y
+	endinput
+enddef
+
+define state xs-from-site
+	helpfile 'xsect'
+	input string
+		next xs-to
+	endinput
+enddef
+
+define state xs-from-y
+	helpfile 'xsect'
+	input real
+		next xs-to
+	endinput
+enddef
+
+define state xs-to
+	helpfile 'xsect'
+	input 'to' KW_SUGAR
+		ignore
+		next xs-to-what
+	endinput
+	input 'site' KW_SUGAR
+		ignore
+		next xs-to-site
+	endinput
+	input real
+		next xs-to-y
+	endinput
+enddef
+
+define state xs-to-what
+	helpfile 'xsect'
+	input 'site' KW_SUGAR
+		ignore
+		next xs-to-site
+	endinput
+	input real
+		next xs-to-y
+	endinput
+enddef
+
+define state xs-to-site
+	helpfile 'xsect'
+	input string
+		next ust$no_more
+	endinput
+enddef
+
+define state xs-to-y
+	helpfile 'xsect'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+define state xs-center-x
+	helpfile 'xsect'
+	input real
+		next xs-center-y
+	endinput
+enddef
+
+define state xs-center-y
+	helpfile 'xsect'
+	input real
+		next xs-opt-angle
+	endinput
+enddef
+
+define state xs-opt-angle
+	helpfile 'xsect'
+	input 'angle' KW_SUGAR
+		ignore
+		next xs-angle
+	endinput
+	input real
+		next xs-opt-length
+	endinput
+enddef
+
+define state xs-angle
+	helpfile 'xsect'
+	input real
+		next xs-opt-length
+	endinput
+enddef
+
+define state xs-opt-length
+	helpfile 'xsect'
+	input 'length' KW_SUGAR
+		ignore
+		next xs-length
+	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+define state xs-length
+	helpfile 'xsect'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+define state xs-vscale
+	helpfile 'xsect'
+	input string
+		next xs-opt-limits
+	endinput
+enddef
+
+define state xs-opt-limits
+	helpfile 'xsect'
+	input 'limits' KW_SUGAR
+		ignore
+		next xs-botlim
+	endinput
+	input real
+		next xs-toplim
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
+define state xs-botlim
+	helpfile 'xsect'
+	input real
+		next xs-toplim
+	endinput
+enddef
+
+define state xs-toplim
+	helpfile 'xsect'
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! Extend command
+!
+define state extend-end
+	helpfile 'extend'
+	input EOS
+		done
+	endinput
+enddef
+
+!
+! MLVW command
+!
+define state mlvw-opt-bottom
+	helpfile 'mlvw'
+	input 'bottom' KW_SUGAR
+		ignore
+		next mlvw-bottom
+	endinput
+	input real
+		next mlvw-opt-top
+	endinput
+enddef
+
+define state mlvw-bottom
+	helpfile 'mlvw'
+	input real
+		next mlvw-opt-top
+	endinput
+enddef
+
+define state mlvw-opt-top
+	helpfile 'mlvw'
+	input 'top' KW_SUGAR
+		ignore
+		next ust$final_real
+	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+
+!
+! xyplot
+!
+define state xy-xfld
+	helpfile 'xyplot'
+	input string
+		lowercase
+		next xy-yfld
+	endinput
+enddef
+
+define state xy-yfld
+	helpfile 'xyplot'
+	input string
+		lowercase
+		next xy-snd-id
+	endinput
+enddef
+
+define state xy-snd-id
+	helpfile 'xyplot'
+	input string
+		lowercase
+		next xy-snd-id
+	endinput
+	input EOS
+		done
+	endinput
+enddef
+
