@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.7 $ $Date: 1989-11-21 15:33:45 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-04-13 15:33:31 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -747,7 +747,7 @@ edit_cut ()
  * Clear the editing region, leaving the pointer in its current location
  */
 	E_region.mark = 0;
-	if (Wkstn && G_ov_to_ws (E_region.ov) == Wkstn)
+	if (E_region.ov && G_ov_to_ws (E_region.ov) == Wkstn)
 		G_clear (E_region.ov);
 /*
  * Redraw the last plot if necessary
