@@ -1,11 +1,11 @@
 /*
  * Fields derivation module
- * $Revision: 1.5 $ $Date: 1990-11-13 09:28:29 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1991-01-16 21:54:53 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
 # include "fields.h"
-# include "derive.h"
+# include "met_formulas.h"
 
 # define TRUE	1
 # define FALSE	0
@@ -21,11 +21,12 @@
  * Table of field legal field derivations
  * and a boolean to tell if the table has been built yet
  */
-typedef struct
+typedef struct derive_entry
 {
 	int	nflds;
 	fldtype	*flist;
 	void	(*func)();
+	struct derive_entry	*next;
 } d_entry;
 
 static d_entry	*Derive_table[TOTAL_FLDS];
@@ -35,16 +36,17 @@ static int	Derive_init = FALSE;
 
 
 int
-fdd_derive (fld, dflds, ndflds, dfunc)
+fdd_derive (fld, ndx, dflds, ndflds, dfunc)
 fldtype	fld, **dflds;
-int	*ndflds;
+int	ndx, *ndflds;
 void	(**dfunc)();
 /*
- * Return the derivation entry for field fld.
+ * Return the ndx'th (ndx >= 0) derivation entry for field fld.
  * The function returns a boolean telling whether the entry exists.
  *
  * ON ENTRY:
  *	fld	field to be derived
+ *	ndx	the number of the derivation entry to return
  * ON EXIT:
  *   (success) return TRUE and
  *	dflds	points to the derivation field array
@@ -53,19 +55,28 @@ void	(**dfunc)();
  *   (failure) return FALSE, parameters unchanged
  */
 {
+	int	i;
+	d_entry	*entry;
 /*
  * Make sure the derivation table has been built
  */
 	if (! Derive_init)
 		fdd_dt_init ();
 /*
+ * Find the ndx'th entry
+ */
+	entry = Derive_table[fld];
+
+	for (i = 0; entry && i < ndx; i++)
+		entry = entry->next;
+/*
  * Return the derivation for this field, if any
  */
-	if (Derive_table[fld])
+	if (entry)
 	{
-		*dflds = Derive_table[fld]->flist;
-		*ndflds = Derive_table[fld]->nflds;
-		*dfunc = Derive_table[fld]->func;
+		*dflds = entry->flist;
+		*ndflds = entry->nflds;
+		*dfunc = entry->func;
 		return (TRUE);
 	}
 	else
@@ -130,6 +141,7 @@ va_dcl		/* variable args declaration, no semicolon! */
  */
 {
 	fldtype fld;
+	d_entry	*entry, *tail;
 	int	nflds;
 	void	(*func)();
 	int	i;
@@ -143,30 +155,29 @@ va_dcl		/* variable args declaration, no semicolon! */
 	func = (void (*)()) va_arg (args, void*);
 	nflds = va_arg (args, int);
 /*
- * Check for redundant derivation
+ * Allocate a new derivation table entry and fill it
  */
-	if (Derive_table[fld])
-	{
-		ui_warning ("Redundant derivation for field %s ignored",
-			fd_name (fld));
-		return;
-	}
-/*
- * Allocate the entry structure and put the function and number of 
- * fields into it
- */
-	Derive_table[fld] = (d_entry *) malloc (sizeof (d_entry));
-
-	Derive_table[fld]->nflds = nflds;
-	Derive_table[fld]->func = func;
-/*
- * Build an array for the derivation fields
- */
-	Derive_table[fld]->flist = (fldtype *) 
-		malloc (nflds * sizeof (fldtype));
+	entry = (d_entry *) malloc (sizeof (d_entry));
+	entry->nflds = nflds;
+	entry->func = func;
+	entry->next = (d_entry *) 0;
+	entry->flist = (fldtype *) malloc (nflds * sizeof (fldtype));
 
 	for (i = 0; i < nflds; i++)
-		Derive_table[fld]->flist[i] = va_arg (args, fldtype);
+		entry->flist[i] = va_arg (args, fldtype);
+/*
+ * Add this entry to the list of derivations for this field
+ */
+	if (! Derive_table[fld])
+		Derive_table[fld] = entry;
+	else
+	{
+		tail = Derive_table[fld];
+		while (tail->next)
+			tail = tail->next;
+
+		tail->next = entry;
+	}
 /*
  * Finish up
  */
