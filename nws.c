@@ -1,7 +1,7 @@
 /*
  * NWS format sounding access
  *
- * $Revision: 1.4 $ $Date: 1989-12-20 11:04:17 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1990-11-21 10:35:48 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -95,7 +95,8 @@ struct snd	*sounding;
 /*
  * Put the site into the sounding structure
  */
-	sounding->site = (char *) malloc (strlen (string) * sizeof (char));
+	sounding->site = (char *) 
+		malloc ((1 + strlen (string)) * sizeof (char));
 	strcpy (sounding->site, string);
 /*
  * Initialize the data pointers
