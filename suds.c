@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.24 1993-04-28 16:21:23 carson Exp $";
+static char *rcsid = "$Id: suds.c,v 1.25 1993-07-12 17:02:27 case Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -173,7 +173,7 @@ char	**argv;
 	/*
 	 * Welcome!
 	 */
-		ui_printf ("\nWelcome to SUDS, Version 1.%03d\n\n", VERSION);
+		ui_printf ("\nWelcome to SUDS, Version %2.1f\n\n", VERSION);
 	/*
 	 * (Bleep)ing copyright message
 	 */
