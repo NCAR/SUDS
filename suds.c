@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.13 $ $Date: 1991-01-30 17:14:33 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1991-03-21 15:49:25 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -167,7 +167,7 @@ main_cmd_init ()
 	void	edit_threshold (), snd_forget (), skt_wscale ();
 	void	ft_plot (), hd_plot (), color_change (), edit_insert ();
 	void	xs_xsect (), cvt_origin (), fd_set_limits (), edit_extend ();
-	void	nc_write_file ();
+	void	nc_write_file (), main_forecast (), an_mlvw_limits ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -197,6 +197,8 @@ main_cmd_init ()
 	Cmd_routine[KW_LIMITS]		= fd_set_limits;
 	Cmd_routine[KW_EXTEND]		= edit_extend;
 	Cmd_routine[KW_NETCDF]		= nc_write_file;
+	Cmd_routine[KW_FORECAST]	= main_forecast;
+	Cmd_routine[KW_MLVW]		= an_mlvw_limits;
 }
 
 
@@ -395,6 +397,10 @@ struct ui_command	*cmds;
 	case SHOW_LIMITS:
 		fd_show_limits ();
 		return;
+	case SHOW_FORECAST:
+		ui_printf ("\n Forecast values are calculated at %.0f mb\n\n",
+			Forecast_pres);
+		return;
 	default:
 		for (;; cmds++)
 		{
@@ -403,4 +409,17 @@ struct ui_command	*cmds;
 				return;
 		}
     }
+}
+
+
+
+
+void
+main_forecast (cmds)
+struct ui_command	*cmds;
+/*
+ * Set the pressure to use in forecast analyses
+ */
+{
+	Forecast_pres = UFLOAT (cmds[0]);
 }
