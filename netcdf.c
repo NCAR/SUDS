@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.7 1991-11-13 22:03:28 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.8 1992-06-05 19:29:54 burghart Exp $";
 
 # ifdef NETCDF
 
@@ -28,6 +28,7 @@ static char *rcsid = "$Id: netcdf.c,v 1.7 1991-11-13 22:03:28 burghart Exp $";
 # include <netcdf.h>
 # include <ui.h>
 # include "sounding.h"
+# include "globals.h"
 
 # define NC_BADVAL	-32768.0
 
@@ -274,7 +275,7 @@ struct ui_command	*cmds;
 	char	*fname, *id_name, *snd_default ();
 	struct snd	sounding, snd_find_sounding ();
 	struct tm	t;
-	float	val, bv = NC_BADVAL, zero = 0.0, altbuf[1024];
+	float	val, bv = NC_BADVAL, zero = 0.0, altbuf[BUFLEN];
 	char	string[80];
 	fldtype	fld, nc_fld;
 	struct snd_datum	*data[MAXFLDS];
@@ -405,7 +406,7 @@ struct ui_command	*cmds;
 
 		nflds++;
 
-		n_alts = snd_get_data (id_name, altbuf, 1024, f_alt, 
+		n_alts = snd_get_data (id_name, altbuf, BUFLEN, f_alt, 
 			NC_BADVAL);
 
 		for (i = 0; i < n_alts; i++)
