@@ -1,7 +1,7 @@
 /*
  * NWS format sounding access
  *
- * $Revision: 1.5 $ $Date: 1990-11-21 10:35:48 $ $Author: burghart $
+ * $Revision: 1.6 $ $Date: 1991-03-20 23:25:19 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -118,12 +118,6 @@ struct snd	*sounding;
 
 	sfc_pres = sfc[1];
 /*
- * Convert the surface altitude to ground relative (the altitude of the
- * surface point is slightly different from the site altitude, so we can't
- * just set it to zero)
- */
-	sfc[2] -= sounding->sitealt;
-/*
  * Get the data
  */
 	for (ndx = 0; ; ndx++)
@@ -141,10 +135,6 @@ struct snd	*sounding;
 	 */
 		pres = val[1];
 		rtype = (int) val[0];
-	/*
-	 * Convert the altitude to ground relative
-	 */
-		val[2] -= sounding->sitealt;
 	/*
 	 * Quit if we are starting another sounding
 	 */
