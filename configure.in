@@ -1,0 +1,81 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT(SUDS, 20020712, rdp-support@atd.ucar.edu)
+AM_INIT_AUTOMAKE
+AC_CONFIG_SRCDIR([suds.c])
+
+dnl Allow for RDSS home to be set via --with-rdss=<dir>, default to ${prefix}
+if test x$prefix = xNONE; then
+	RDSS_DIR=$ac_default_prefix
+else
+	RDSS_DIR=$prefix
+fi
+AC_ARG_WITH(rdss,
+	[  --with-rdss=<dir>       to tell where RDSS utilities are installed],
+	[if test "$withval" = "yes" -o "$withval" = "no"; then 
+		echo "Use --with-rdss=<dir>!"; exit 1
+	else
+		RDSS_DIR=$withval
+	fi])
+LDFLAGS="$LDFLAGS -L$RDSS_DIR/lib"
+CPPFLAGS="$CPPFLAGS -I$RDSS_DIR/include"
+export RDSS_DIR
+AC_SUBST(RDSS_DIR)
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+
+# Find X libraries/headers
+LIBS="$LIBS -lXaw -lXt -lXmu -lX11"
+AC_PATH_X
+
+if test "$no_x" = "yes"; then
+	echo "X11 is required for SUDS"; exit 1
+fi
+
+if test x$x_libraries != x; then 
+	LDFLAGS="$LDFLAGS -L$x_libraries"
+fi
+
+if test x$x_includes != x; then 
+	CPPFLAGS="$CPPFLAGS -I$x_includes"
+fi
+#
+# Checks for libraries.
+#
+AC_CHECK_LIB([m], [pow], , [echo "Cannot find math library"; exit 1])
+AC_CHECK_LIB([termcap], [tgetstr], ,
+	[echo "Cannot find termcap library"; exit 1])
+# Link to libnsl and libsocket if we can find them (i.e., on Solaris systems),
+# otherwise we probably get the necessary stuff from libc (i.e., under Linux)
+AC_CHECK_LIB([nsl], [gethostbyname])
+AC_CHECK_LIB([socket], [socket])
+AC_CHECK_LIB([netcdf], [ncopen], , 
+	[echo "NetCDF library not found.  NetCDF use is disabled."])
+AC_CHECK_LIB([rdssutil], [fixdir], , 
+	[echo "Cannot find rdssutil library"; exit 1])
+AC_CHECK_LIB([rdssui], [ui_reset], , 
+	[echo "Cannot find rdssui library"; exit 1])
+AC_CHECK_LIB([rdssgraph], [G_close], ,
+	[echo "Cannot find rdssgraph library"; exit 1])
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([errno.h stdlib.h string.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_STRUCT_TM
+AC_STRUCT_TIMEZONE
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_MKTIME
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([floor pow putenv sqrt strrchr])
+
+AC_CONFIG_SUBDIRS([help])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

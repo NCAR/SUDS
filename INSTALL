@@ -1,0 +1,15 @@
+To install under /usr/local, if RDSS utilities are also installed under
+/usr/local:
+
+	$ ./configure
+	$ make
+	$ make install
+
+The following flags for "configure" can be used for other installation
+options:
+
+	--prefix=<dir>	change the installation location for SUDS.  The 
+			default is "/usr/local".
+
+	--with-rdss=<dir>	tells where the RDSS utilities can be found.  
+			The default is the installation directory for SUDS.
