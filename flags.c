@@ -3,6 +3,9 @@
  * (stolen from ROBOT's flag.c)
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  90/05/04  13:41:51  burghart
+ * New flag theta_w
+ * 
  * Revision 1.2  90/05/04  13:36:47  burghart
  * function theta_w() changed name to theta_e()
  * 
@@ -36,6 +39,8 @@ struct flgst
 		"Show lifted parcel on skew-t"},
 	{ "theta_w",	&Flg_theta_w,	TRUE,
 		"Use equivalent wet-bulb temperature on skew-t"},
+	{ "vt",		&Flg_vt,	TRUE,
+		"Use virtual temperature on skew-t"},
 	{ ___,		___,		___,		___ }
 };
 
