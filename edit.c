@@ -1,7 +1,7 @@
 /*
  * Editing routines
  * 
- * $Revision: 1.6 $ $Date: 1989-10-03 10:41:26 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1989-11-21 15:33:45 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -398,6 +398,7 @@ struct ui_command	*cmds;
 	char	*id_name;
 	fldtype	fld;
 	struct snd_datum	*snd_data_ptr ();
+	int	snd_has_field ();
 	char	*snd_default ();
 /*
  * Get the field
@@ -410,6 +411,12 @@ struct ui_command	*cmds;
 		id_name = UPTR (cmds[1]);
 	else
 		id_name = snd_default ();
+/*
+ * Make sure the sounding/field pair exists
+ */
+	if (! snd_has_field (id_name, fld))
+		ui_error ("'%s' is not a raw field in sounding %s",
+			UPTR (cmds[0]), id_name);
 /*
  * Save the sounding-id and field
  */
