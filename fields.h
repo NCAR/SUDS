@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: fields.h,v 1.10 1992-07-30 20:24:31 burghart Exp $
+ * $Id: fields.h,v 1.11 1992-08-14 22:01:01 case Exp $
  */
 
 typedef enum
@@ -42,17 +42,17 @@ typedef enum
 	char	*fd_name (fldtype);
 	char	*fd_desc (fldtype);
 	char	*fd_units (fldtype);
-	float	fd_bot (fldtype);
-	float	fd_top (fldtype);
-	float	fd_center (fldtype);
-	float	fd_step (fldtype);
+	double	fd_bot (fldtype);
+	double	fd_top (fldtype);
+	double	fd_center (fldtype);
+	double	fd_step (fldtype);
 # else
 	fldtype fd_num ();
 	char	*fd_name ();
 	char	*fd_desc ();
 	char	*fd_units ();
-	float	fd_bot ();
-	float	fd_top ();
-	float	fd_center ();
-	float	fd_step ();
+	double	fd_bot ();
+	double	fd_top ();
+	double	fd_center ();
+	double	fd_step ();
 # endif
