@@ -1,7 +1,7 @@
 /*
  * Global parameters
  *
- * $Revision: 1.3 $ $Date: 1989-08-02 14:38:41 $ $Author: burghart $ 
+ * $Revision: 1.4 $ $Date: 1991-03-26 21:02:32 $ $Author: burghart $ 
  */
 # include <ui.h>
 # include <graphics.h>
@@ -44,6 +44,11 @@ var int	Interrupt;
  * Wind scale value
  */
 var float	W_scale;
+
+/*
+ * Pressure value to use for forecast analyses
+ */
+var float	Forecast_pres;
 
 /*
  * MIN macro
