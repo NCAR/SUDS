@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.21 1991-12-19 22:55:42 burghart Exp $";
+static char *rcsid = "$Id: suds.c,v 1.22 1992-12-11 21:30:24 case Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -91,6 +91,13 @@ char	**argv;
 	/*
 	 * Initialize
 	 */
+                if (argc && ! strcmp (argv[0], "-n"))
+                {
+                        read_init = FALSE;
+                        argc--;
+                        argv++;
+                }
+
 		loadfile = getenv ("SUDS_LF");
 		if (! loadfile)
 # ifdef VMS
@@ -134,12 +141,12 @@ char	**argv;
 		usy_s_symbol (usy_g_stbl ("ui$variable_table"),
 			"ui$helpdir", SYMT_STRING, &helpdir);
 
-		if (argc && ! strcmp (argv[0], "-n"))
+/*		if (argc && ! strcmp (argv[0], "-n"))
 		{
 			read_init = FALSE;
 			argc--;
 			argv++;
-		}
+		} */
 	/*
 	 * Set up the input files specified on the command line
 	 */
