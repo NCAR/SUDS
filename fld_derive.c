@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fld_derive.c,v 1.12 1992-03-16 17:28:50 burghart Exp $";
+static char *rcsid = "$Id: fld_derive.c,v 1.13 1992-07-30 20:41:10 burghart Exp $";
 
 # include <math.h>
 # include <varargs.h>
@@ -116,6 +116,7 @@ fdd_dt_init ()
 	void	fdd_mr (), fdd_u_wind (), fdd_v_wind (), fdd_theta ();
 	void	fdd_theta_e (), fdd_alt (), fdd_dp (), fdd_wspd ();
 	void	fdd_wdir (), fdd_vt (), fdd_ascent (), fdd_rh ();
+	void	fdd_theta_v ();
 	void	fdd_add_derivation ();
 /*
  * Start out with null lists for each field
@@ -137,6 +138,7 @@ fdd_dt_init ()
 	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_rh);
 	fdd_add_derivation (f_ascent, fdd_ascent, 2, f_time, f_alt);
 	fdd_add_derivation (f_rh, fdd_rh, 2, f_temp, f_dp);
+	fdd_add_derivation (f_theta_v, fdd_theta_v, 3, f_temp, f_pres, f_rh);
 /*
  * Mark the initialization as done
  */
@@ -539,3 +541,27 @@ int	npts;
 
 
 
+
+void
+fdd_theta_v (buf, dbufs, npts, badval)
+float	*buf, **dbufs, badval;
+int	npts;
+/*
+ * virtual potential temperature derivation routine
+ */
+{
+	float	*temp = dbufs[0], *pres = dbufs[1], *rh = dbufs[2], theta;
+	int	i;
+
+	for (i = 0; i < npts; i++)
+	{
+		if (temp[i] == badval || pres[i] == badval || rh[i] == badval)
+			buf[i] = badval;
+		else
+		{
+			theta = theta_dry (temp[i] + T_K, pres[i]);
+			buf[i] = t_v (theta, pres[i], 
+				0.01 * rh[i] * e_sw (temp[i] + T_K));
+		}
+	}
+}
