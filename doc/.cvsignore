@@ -1,0 +1,12 @@
+Makefile
+autom4te.cache
+config.log
+config.status
+suds.aux
+suds.dvi
+suds.log
+suds.ps
+suds.pdf
+suds.toc
+sudsndx.dat
+sudsndx.dats
