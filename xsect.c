@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.13 $ $Date: 1990-12-07 11:49:44 $ $Author: burghart $
+ * $Revision: 1.14 $ $Date: 1991-01-16 21:33:04 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -445,6 +445,8 @@ xs_put_data ()
 		 */
 			if (Time_height)
 				hlen = tpos[pt] / 3600.0;	/* to hours */
+			else if (xpos[pt] == X0 && ypos[pt] == Y0)
+				hlen = 0.0;
 			else
 				hlen = hypot (xpos[pt] - X0, ypos[pt] - Y0) *
 					cos (atan2 (ypos[pt]-Y0, xpos[pt]-X0) -
@@ -603,6 +605,8 @@ float	xdat, ydat, zdat;
  */
 	if (Time_height)
 		pos = xdat;
+	else if (xdat == X0 && ydat == Y0)
+		pos = 0.0;
 	else
 		pos = hypot (xdat - X0, ydat - Y0) * 
 			cos (atan2 (ydat-Y0, xdat-X0) - atan2 (Y1-Y0, X1-X0));
