@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.15 $ $Date: 1991-01-16 21:39:32 $ $Author: burghart $
+ * $Revision: 1.16 $ $Date: 1991-03-25 17:56:09 $ $Author: burghart $
  * 
  */
 # include <ui_param.h>
@@ -50,9 +50,9 @@ struct ui_command *cmds;
 	char	*id_name;
 	int	i, maxpts, pt = 0, nplots, plt, color;
 	float	x[400], yli[400], ydist[400];
-	float	pres[BUFLEN], vt[BUFLEN], dp[BUFLEN], alt[BUFLEN];
+	float	sitealt, pres[BUFLEN], vt[BUFLEN], dp[BUFLEN], alt[BUFLEN];
 	float	li_pres, li_temp, li, p_lcl, t_lcl, theta_e_lcl, lfc_pres;
-	float	an_li_ref (), an_lfc_calc ();
+	float	an_li_ref (), an_lfc_calc (), snd_s_alt ();
 	char	*snd_default ();
 	void	ft_reset_annot ();
 /*
@@ -119,11 +119,20 @@ struct ui_command *cmds;
 		snd_get_data (id_name, dp, BUFLEN, f_dp, BADVAL);
 		snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
 	/*
-	 * Convert dewpoints to K
+	 * Get the site altitude
+	 */
+		sitealt = snd_s_alt (id_name);
+	/*
+	 * Convert dewpoints to K and altitudes to AGL
 	 */
 		for (i = 0; i < maxpts; i++)
+		{
 			if (dp[i] != BADVAL)
 				dp[i] += T_K;
+
+			if (alt[i] != BADVAL)
+				alt[i] -= sitealt;
+		}
 	/*
 	 * Plot the annotation
 	 */
@@ -152,7 +161,7 @@ struct ui_command *cmds;
 		 * Don't use bad points
 		 */
 			if (pres[i] == BADVAL || vt[i] == BADVAL || 
-				dp[i] == BADVAL)
+				dp[i] == BADVAL || alt[i] == BADVAL)
 				continue;
 		/*
 		 * Break out when we get above the max height for the plot
