@@ -20,7 +20,9 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: netcdf.c,v 1.6 1991-10-21 21:50:59 burghart Exp $";
+static char *rcsid = "$Id: netcdf.c,v 1.7 1991-11-13 22:03:28 burghart Exp $";
+
+# ifdef NETCDF
 
 # include <time.h>
 # include <netcdf.h>
@@ -510,4 +512,27 @@ struct ui_command	*cmds;
 }
 
 
+# else	/* NetCDF not enabled */
 
+# include <ui.h>
+# include "sounding.h"
+
+
+void
+nc_read_file (fname, sounding)
+char	*fname;
+struct snd	*sounding;
+{
+	ui_error ("NetCDF functions not enabled on your system");
+}
+
+
+void
+nc_write_file (cmds)
+struct ui_command	*cmds;
+{
+	ui_error ("NetCDF functions not enabled on your system");
+}
+
+
+# endif /* NETCDF */
