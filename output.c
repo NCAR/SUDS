@@ -1,12 +1,10 @@
 /*
  * Output device handling
  *
- * $Log: not supported by cvs2svn $
+ * $Revision: 1.2 $ $Date: 1989-08-02 14:42:20 $ $Author: burghart $
+ * 
  */
 # include "globals.h"
-# include "color.h"
-
-# define MIN(x,y)	((x) < (y) ? (x) : (y))
 
 
 void
@@ -18,7 +16,7 @@ struct	ui_command	*cmds;
  */
 {
 	int	err;
-	void	out_color_init ();
+	void	color_loadmap ();
 
 	if (Wkstn)
 		G_close (Wkstn);
@@ -34,7 +32,7 @@ struct	ui_command	*cmds;
 	strcpy (Out_dev, UPTR(cmds[0]));
 	strcpy (Dev_type, UPTR(cmds[1]));
 
-	out_color_init ();
+	color_loadmap ();
 }
 
 
@@ -45,11 +43,13 @@ out_ws_check ()
  * Make sure we have opened a workstation
  */
 {
+	void	color_loadmap ();
+
 	if (! Wkstn)
 	{
 		char	dev[40], type[40], *deftype;
 		int	err;
-		void	out_color_init ();
+		void	out_colormap ();
 
 		ui_warning ("No output device has been specified");
 		ui_string_prompt ("Enter output device name", 0, dev, "TT");
@@ -67,26 +67,6 @@ out_ws_check ()
 			ui_error ("Cannot open device '%s' of type '%s'", 
 				dev, type);
 
-		out_color_init ();
+		color_loadmap ();
 	}
-}
-
-
-
-void
-out_color_init ()
-/*
- * Initialize the colors on our workstation
- */
-{
-	int	ncolor, base, i;
-	void	out_dv_color (), out_dv_mono ();
-
-	G_w_inquire (Wkstn, GIW_NCOLOR, &ncolor);
-/*
- * Allocate color space and set the color map
- */
-	G_get_color (Wkstn, MIN (ncolor, 12), &Colorbase);
-	G_set_color_map (Wkstn, Colorbase, MIN (ncolor, 12), Red, 
-		Green, Blue);
 }
