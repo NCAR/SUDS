@@ -30,11 +30,14 @@
 # define KW_HODOGRAPH	26
 # define KW_COLOR	27
 # define KW_LIST	28
+# define KW_INSERT	29
+# define KW_ABOVE	30
+# define KW_BELOW	31
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	28
+# define MAXKW	31
 
 /*
  * Threshold criteria keywords
