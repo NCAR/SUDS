@@ -1,7 +1,7 @@
 /*
  * RSANAL format sounding access
  *
- * $Revision: 1.4 $ $Date: 1989-12-20 14:08:02 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-03-15 20:30:57 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -9,8 +9,6 @@
 # include "globals.h"
 # include "sounding.h"
 
-# define TRUE	1
-# define FALSE	0
 # define BAD	-9999
 
 /*
