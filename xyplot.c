@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xyplot.c,v 1.6 1992-09-18 16:08:08 carson Exp $";
+static char *rcsid = "$Id: xyplot.c,v 1.7 1993-07-23 19:58:10 case Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -95,7 +95,6 @@ struct ui_command	*cmds;
 	xy_ov_check ();
 	G_clear (XYplot_ov);
 
-	Xtxt_top = Xmin - 0.5 * BORDER * width;
 /*
  * Let edit know about this plot
  */
