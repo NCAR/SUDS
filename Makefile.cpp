@@ -11,7 +11,7 @@ OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 all:	suds suds.lf
 
 xsaber:	$(OBJS)
-	# load $(CFLAGS) $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB) /locallib/gcc-gnulib
+	# load $(CFLAGS) $(OBJS) $(RDSSLIBRARIES)/librdss.a XToolkitLibs XLibrary -ltermcap MathLib $(NETCDFLIB) /locallib/gcc-gnulib
 	# link
 	
 
@@ -21,7 +21,7 @@ install: suds suds.lf
 	ranlib libsuds.a
 
 suds:	$(OBJS)
-	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a $(XLIBRARIES) XToolkitLibs XLibrary -ltermcap -lm $(NETCDFLIB) $(SUNVIEWFLAG)
+	$(CC) $(CFLAGS) -o suds $(OBJS) $(RDSSLIBRARIES)/librdss.a $(XLIBRARIES) XToolkitLibs XLibrary -ltermcap MathLib $(NETCDFLIB) $(SUNVIEWFLAG)
 
 suds.lf:suds.state suds.menu keywords.h
 	@ cc -E suds.state | grep -v '^# [0-9]' | cat -s > suds.i
