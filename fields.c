@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.12 1992-07-30 20:41:00 burghart Exp $";
+static char *rcsid = "$Id: fields.c,v 1.13 1992-08-14 22:03:25 case Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -206,7 +206,7 @@ fldtype	fld;
 
 
 
-float
+double
 fd_bot (fld)
 fldtype fld;
 /*
@@ -217,7 +217,7 @@ fldtype fld;
 
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
 		if (Fnamelist[i].fld == fld)
-			return (Fnamelist[i].bot);
+			return ((double) Fnamelist[i].bot);
 
 	ui_error ("Unknown field type %d", fld);
 }
@@ -225,7 +225,7 @@ fldtype fld;
 
 
 
-float
+double
 fd_top (fld)
 fldtype fld;
 /*
@@ -236,7 +236,7 @@ fldtype fld;
 
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
 		if (Fnamelist[i].fld == fld)
-			return (Fnamelist[i].top);
+			return ( (double) Fnamelist[i].top);
 
 	ui_error ("Unknown field type %d", fld);
 }
@@ -244,7 +244,7 @@ fldtype fld;
 
 
 
-float
+double
 fd_center (fld)
 fldtype fld;
 /*
@@ -255,7 +255,7 @@ fldtype fld;
 
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
 		if (Fnamelist[i].fld == fld)
-			return (Fnamelist[i].center);
+			return ( (double) Fnamelist[i].center);
 
 	ui_error ("Unknown field type %d", fld);
 }
@@ -263,7 +263,7 @@ fldtype fld;
 
 
 
-float
+double
 fd_step (fld)
 fldtype fld;
 /*
@@ -274,7 +274,7 @@ fldtype fld;
 
 	for (i = 0; Fnamelist[i].fld != f_null; i++)
 		if (Fnamelist[i].fld == fld)
-			return (Fnamelist[i].step);
+			return ( (double) Fnamelist[i].step);
 
 	ui_error ("Unknown field type %d", fld);
 }
