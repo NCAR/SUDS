@@ -1,7 +1,7 @@
 /*
  * NCAR format sounding access
  *
- * $Revision: 1.4 $ $Date: 1991-03-20 23:06:53 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1991-03-21 17:14:10 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -29,7 +29,7 @@ static FILE	*Tfile, *Wfile;
 /*
  * Winds info
  */
-static float	Sfc_wdir, Sfc_wspd, Steptime;
+static float	Sfc_alt, Sfc_wdir, Sfc_wspd, Steptime;
 static int	Nloc;
 static struct wdata
 {
@@ -225,14 +225,14 @@ float	*lat, *lon;
  */
 {
 	float	az, el, alt;
-	float	steptime, xpos, ypos, sitealt;
+	float	steptime, xpos, ypos;
 	int	index, status;
 	char	id1[20], id2[20];
 /*
  * Read the header lines from the winds file
  */
 	fscanf (Wfile, "%s %s", id1, id2);
-	fscanf (Wfile, "%f %f", &sitealt, &Steptime);
+	fscanf (Wfile, "%f %f", &Sfc_alt, &Steptime);
 	fscanf (Wfile, "%f %f", &Sfc_wdir, &Sfc_wspd);
 /*
  * Get the x and y distances from the project origin in statute miles
@@ -263,17 +263,15 @@ float	*lat, *lon;
 	while (status != EOF)
 	{
 	/*
-	 * Convert the altitude to ground relative and the angles
-	 * to radians
+	 * Convert the angles to radians
 	 */
-		alt -= sitealt;
 		az = DEG_TO_RAD (az);
 		el = DEG_TO_RAD (el);
 	/*
 	 * Save x, y, and z location for this point
 	 */
-		S_loc[Nloc].x = sin (az) * alt / tan (el);
-		S_loc[Nloc].y = cos (az) * alt / tan (el);
+		S_loc[Nloc].x = sin (az) * (alt - Sfc_alt) / tan (el);
+		S_loc[Nloc].y = cos (az) * (alt - Sfc_alt) / tan (el);
 		S_loc[Nloc].z = alt;
 
 		Nloc++;
@@ -297,9 +295,9 @@ float	alt, *wspd, *wdir;
 	float	del_x, del_y, mid;
 	int	i;
 /*
- * Just return the surface wind below 20 m
+ * Just return the surface wind below 20 m AGL
  */
-	if (alt < 20.0)
+	if ((alt - Sfc_alt) < 20.0)
 	{
 		*wspd = Sfc_wspd;
 		*wdir = Sfc_wdir;
@@ -319,16 +317,6 @@ float	alt, *wspd, *wdir;
  */
 	for (i = 0; i < Nloc && S_loc[i].z < alt; i++)
 		/* nothing */;
-# ifdef notdef
-/*
- * Complain if the chosen altitude isn't close to midway between two
- * sonde locations
- */
-	mid = (S_loc[i].z + S_loc[i-1].z) / 2.0;
-	if (fabs (alt - mid) > 10.0)
-		ui_warning ("Altitude discrepancy! at: %.1f  mid:%.1f",
-			alt, mid);
-# endif
 /*
  * Compute speed and direction from the points straddling the given altitude
  */
