@@ -1,6 +1,6 @@
 /*
  * Fields derivation module
- * $Revision: 1.1 $ $Date: 1990-01-23 09:32:11 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-05-04 13:36:58 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
@@ -290,7 +290,7 @@ int	npts;
 		if (dp[i] == badval || pres[i] == badval)
 			buf[i] = badval;
 		else
-			buf[i] = theta_w (dp[i] + T_K, pres[i]);
+			buf[i] = theta_e (dp[i] + T_K, pres[i]);
 	}
 }
 
