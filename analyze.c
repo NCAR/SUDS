@@ -1,5 +1,9 @@
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  89/05/09  15:06:04  burghart
+ * Added code to separate positive and negative area below the LFC.
+ * (Previously, only the total area was reported)
+ * 
  * Revision 1.2  89/03/24  14:52:56  burghart
  * Added "TO filename" capability to the ANALYZE command
  * 
@@ -9,6 +13,7 @@
  */
 # include <math.h>
 # include <stdio.h>
+# include <ui_error.h>
 # include <ui_date.h>
 # include "globals.h"
 # include "fields.h"
@@ -18,10 +23,12 @@
 # define MIN(x,y)	((x) < (y)) ? (x) : (y)
 # define R_D	287.
 
+# define DEG_TO_RAD	0.017453293
+
 /*
  * Forward declarations
  */
-float	an_lfc_calc (), an_area (), an_li (), an_fmli ();
+float	an_lfc_calc (), an_area (), an_li (), an_fmli (), an_shear ();
 void	an_surface (), an_printf ();
 
 /*
@@ -38,8 +45,8 @@ struct ui_command	*cmds;
  * Perform an analysis of a sounding
  */
 {
-	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN];
-	float	t_sfc, p_sfc, dp_sfc, li, fmli, area;
+	float	t[BUFLEN], p[BUFLEN], dp[BUFLEN], u[BUFLEN], v[BUFLEN];
+	float	t_sfc, p_sfc, dp_sfc, li, fmli, area, shear;
 	float	p_lcl, t_lcl, theta_lcl, theta_e_lcl, p_lower, t_lower;
 	float	p_upper, t_upper, p_lfc, ln_p, dt_lower, dt_upper;
 	float	area_pos = 0.0, area_neg = 0.0;
@@ -96,7 +103,8 @@ struct ui_command	*cmds;
 	an_printf ("\nAnalysis for sounding '%s'\n", id_name);
 	an_printf ("Time: %s, Site: %s\n", string, snd_site (id_name));
 	an_printf ("-----------------------------------------------\n");
-	an_printf ("Surface potential temperature: %.1f K\n", 
+	an_printf ("Surface potential temperature%s: %.1f K\n", 
+		Flg_mli ? " (50 mb average)" : "",
 		theta_dry (t_sfc + T_K, p_sfc));
 	an_printf ("Surface mixing ratio%s: %.1f g/kg \n", 
 		Flg_mli ? " (50 mb average)" : "",
@@ -191,16 +199,16 @@ struct ui_command	*cmds;
 
 	if (Flg_mli)
 	{
-		an_printf ("The modified lifted index is %.2f\n", li);
+		an_printf ("Modified lifted index: %.2f\n", li);
 	/*
 	 * Get the forecasted modified lifted index, too
 	 */
 		fmli = an_fmli (p, t, npts, p_sfc, dp_sfc);
-		an_printf ("The forecasted modified lifted index is %.2f\n", 
+		an_printf ("Forecasted modified lifted index: %.2f\n", 
 			fmli);
 	}
 	else
-		an_printf ("The lifted index is %.2f\n", li);
+		an_printf ("Lifted index: %.2f\n", li);
 /*
  * Integrate the area (energy) from the LCL to the LFC
  */
@@ -281,9 +289,9 @@ struct ui_command	*cmds;
 /*
  * Print the total areas from the surface to the LFC
  */
-	an_printf ("The positive area below the LFC is %.0f J/kg\n", 
+	an_printf ("Positive area below the LFC: %.0f J/kg\n", 
 		area_pos * R_D);
-	an_printf ("The negative area below the LFC is %.0f J/kg\n", 
+	an_printf ("Negative area below the LFC: %.0f J/kg\n", 
 		area_neg * R_D);
 /*
  * Now integrate up to the tropopause
@@ -365,10 +373,19 @@ struct ui_command	*cmds;
 		t_lower = t_upper;
 		dt_lower = dt_upper;
 	}
-	an_printf ("The positive area above the LFC is %.0f J/kg\n", 
-		area_pos * R_D);
-	an_printf ("The negative area above the LFC is %.0f J/kg\n", 
+	an_printf ("CAPE: %.0f J/kg\n", area_pos * R_D);
+	an_printf ("Negative area above the LFC: %.0f J/kg\n", 
 		area_neg * R_D);
+/*
+ * Bulk Richardson number
+ */
+	shear = an_shear (id_name);
+	if (shear != 0.0)
+		an_printf ("Bulk Richardson number: %.1f\n", 
+			2.0 * R_D * area_pos / (shear * shear));
+	else
+		an_printf ("Bulk Richardson number: NO SHEAR\n");
+
 	an_printf ("\n");
 }
 
@@ -444,7 +461,7 @@ int	npts;
 	{
 		an_printf (
 			"Super-adiabatic case at %d mb, no LFC calculated\n",
-			(int) p_sfc);
+			(int) p_prev);
 		return (BADVAL);
 	}
 /*
@@ -550,11 +567,13 @@ int	npts;
  * Find the surface values.  If the MLI flag is set (i.e., we're using
  * the modified lifted index), the surface dewpoint returned is actually
  * the dewpoint corresponding to the surface pressure and the mean mixing
- * ratio for the lowest 50 mb of the sounding.
+ * ratio for the lowest 50 mb of the sounding; the surface temperature
+ * returned is the temperature corresponding to the surface pressure and
+ * the mean potential temperature for the lowest 50 mb of the sounding.
  */
 {
-	int	i = 0;
-	float	sum = 0.0, mr, mr_prev, p_prev, p_top;
+	int	i = 0, mr_count = 0, theta_count = 0;
+	float	mr_sum = 0.0, mr, theta_sum = 0.0, theta, p_top;
 /*
  * Find the lowest point with good values in all three fields; this
  * will be our surface point.
@@ -572,13 +591,11 @@ int	npts;
 	if (! Flg_mli)
 		return;
 /*
- * Using MLI.  Average the mixing ratio over the lowest 50 mb
+ * Using MLI.  Average the mixing ratio and theta over the lowest 50 mb
  */
-	mr_prev = w_sat (*dp_sfc + T_K, *p_sfc);
-	p_prev = *p_sfc;
 	p_top = *p_sfc - 50.0;
 
-	for (i++; TRUE; i++)
+	for (; p[i] > p_top || p[i] == BADVAL; i++)
 	{
 	/*
 	 * Don't try to use non-existent or bad values
@@ -586,38 +603,32 @@ int	npts;
 		if (i == npts)
 			ui_error ("The sounding does not span 50 mb");
 
-		if (p[i] == BADVAL || dp[i] == BADVAL)
+		if (p[i] == BADVAL || dp[i] == BADVAL || t[i] == BADVAL)
 			continue;
 	/*
-	 * Break out if we passed the 50 mb mark
+	 * Find the mixing ratio and theta and increment our sums
 	 */
-		if (p[i] < p_top)
-			break;
-	/*
-	 * Find the mixing ratio and increment our sum
-	 */
-		mr = w_sat (dp[i] + T_K, p[i]);
-		sum += (p_prev - p[i]) * (mr + mr_prev) / 2.0;
-	/*
-	 * Update the prev values
-	 */
-		mr_prev = mr;
-		p_prev = p[i];
+		if (dp[i] != BADVAL)
+		{
+			mr_sum += w_sat (dp[i] + T_K, p[i]);
+			mr_count++;
+		}
+		if (t[i] != BADVAL)
+		{
+			theta_sum += theta_dry (t[i] + T_K, p[i]);
+			theta_count++;
+		}
 	}
 /*
- * We have the point after the 50 mb mark.  Interpolate to 50 mb and
- * add the last little bit to our sum
+ * Find the mean mixing ratio, then get the corresponding dewpoint.
  */
-	mr = w_sat (dp[i] + T_K, p[i]);
-	mr = mr_prev + (p_top - p_prev) / (p[i] - p_prev) * (mr - mr_prev);
-
-	sum += (p_prev - p_top) * (mr + mr_prev) / 2.0;
-/*
- * Divide the sum by 50.0 to get the mean mixing ratio, then get
- * the corresponding dewpoint.
- */
-	mr = sum / 50.0;
+	mr = mr_sum / mr_count;
 	*dp_sfc = t_mr (*p_sfc, mr) - T_K;
+/*
+ * Find the mean theta and the corresponding surface temperature
+ */
+	theta = theta_sum / theta_count;
+	*t_sfc = theta_to_t (theta, *p_sfc) - T_K;
 /*
  * Done
  */
@@ -769,5 +780,93 @@ int	ARGS;	/* ARGS is defined in ui_param.h */
  */
 	if (Write_to_file)
 		fprintf (Outfile, buf);
+}
+
+
+
+
+float
+an_shear (id_name)
+char	*id_name;
+/*
+ * Find a shear value for use in the Bulk Richardson number calculation
+ */
+{
+	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN], p[BUFLEN];
+	float	p_sum = 0.0, u_sum = 0.0, v_sum = 0.0;
+	float	sfc_u, sfc_v, delta_u, delta_v;
+	int	sfc_vals = FALSE;
+	int	npts, i;
+/*
+ * Get the wind and altitude data
+ */
+	ERRORCATCH
+		npts = snd_get_data (id_name, p, BUFLEN, f_pres, BADVAL);
+		snd_get_data (id_name, wspd, BUFLEN, f_wspd, BADVAL);
+		snd_get_data (id_name, wdir, BUFLEN, f_wdir, BADVAL);
+		snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
+	ON_ERROR
+		return (0.0);
+	ENDCATCH
+/*
+ * Find the mean wind speeds up to 500m and up to 6km
+ */
+	for (i = 0; i < npts; i++)
+	{
+	/*
+	 * Make sure we have good points
+	 */
+		if (p[i] == BADVAL || wspd[i] == BADVAL || 
+			wdir[i] == BADVAL || alt[i] == BADVAL)
+			continue;
+	/*
+	 * Get the mean surface wind if we passed 500m
+	 */
+		if (alt[i] > 500.0 && !sfc_vals)
+		{
+			if (p_sum == 0.0)
+			{
+				ui_warning ("Unable to calculate shear");
+				return (0.0);
+			}
+			sfc_u = u_sum / p_sum;
+			sfc_v = v_sum / p_sum;
+			sfc_vals = TRUE;
+		}
+	/*
+	 * Return the shear if we passed 6km
+	 */
+		if (alt[i] > 6000.0)
+		{
+			if (p_sum == 0.0)
+			{
+				ui_warning ("Unable to calculate shear");
+				return (0.0);
+			}
+			delta_u = u_sum / p_sum - sfc_u;
+			delta_v = v_sum / p_sum - sfc_v;
+			return (hypot (delta_u, delta_v));
+		}
+	/*
+	 * Increment the sums for the pressure and pressure weighted
+	 * wind speed
+	 */
+		u_sum += p[i] * wspd[i] * sin (wdir[i] * DEG_TO_RAD);
+		v_sum += p[i] * wspd[i] * cos (wdir[i] * DEG_TO_RAD);
+		p_sum += p[i];
+	}
+/*
+ * If we get here, it means the sounding doesn't extend to 6km
+ */
+	if (p_sum == 0.0)
+	{
+		ui_warning ("Unable to calculate shear");
+		return (0.0);
+	}
+
+	ui_warning ("Sounding shallower than 6km; using available data for shear.");
+	delta_u = u_sum / p_sum - sfc_u;
+	delta_v = v_sum / p_sum - sfc_v;
+	return (hypot (delta_u, delta_v));
 }
 
