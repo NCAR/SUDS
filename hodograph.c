@@ -1,7 +1,7 @@
 /*
  * Hodograph plotting module
  *
- * $Revision: 1.6 $ $Date: 1989-10-09 15:53:37 $ $Author: burghart $
+ * $Revision: 1.7 $ $Date: 1990-01-23 09:20:29 $ $Author: burghart $
  * 
  */
 # include <math.h>
@@ -129,11 +129,11 @@ int	plot_ndx;
  */
 {
 	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN];
-	float	x[BUFLEN], y[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
+	float	u[BUFLEN], v[BUFLEN], mark_alt, site_alt, prev_alt = 0.0;
 	float	frac, xmark, ymark;
 	float	snd_s_alt ();
 	int	i, npts, goodpts;
-	int	color = C_TRACE1 + plot_ndx;
+	int	color = C_DATA1 + plot_ndx;
 	char	string[10];
 /*
  * Grab the data
@@ -142,7 +142,7 @@ int	plot_ndx;
 	snd_get_data (id_name, wdir, BUFLEN, f_wdir, BADVAL);
 	snd_get_data (id_name, alt, BUFLEN, f_alt, BADVAL);
 /*
- * Build the x and y arrays from the wind speed and direction
+ * Build the u and v arrays from the wind speed and direction
  * and put a mark at every 1km MSL
  */
 	site_alt = snd_s_alt (id_name);
@@ -155,10 +155,10 @@ int	plot_ndx;
 		if (wspd[i] == BADVAL || wdir[i] == BADVAL)
 			continue;
 	/*
-	 * Break the wind into x and y components and increment the count
+	 * Break the wind into u and v components and increment the count
 	 */
-		x[goodpts] = wspd[i] * cos (DEG_TO_RAD (90.0 - wdir[i]));
-		y[goodpts] = wspd[i] * sin (DEG_TO_RAD (90.0 - wdir[i]));
+		u[goodpts] = wspd[i] * cos (DEG_TO_RAD (270.0 - wdir[i]));
+		v[goodpts] = wspd[i] * sin (DEG_TO_RAD (270.0 - wdir[i]));
 		goodpts++;
 	/*
 	 * Skip altitude stuff if the alt is bad
@@ -175,10 +175,10 @@ int	plot_ndx;
 		 * Interpolate to the mark altitude
 		 */
 			frac = (mark_alt - prev_alt) / (alt[i] - prev_alt);
-			xmark = x[goodpts-2] + 
-				frac * (x[goodpts-1] - x[goodpts-2]);
-			ymark = y[goodpts-2] + 
-				frac * (y[goodpts-1] - y[goodpts-2]);
+			xmark = u[goodpts-2] + 
+				frac * (u[goodpts-1] - u[goodpts-2]);
+			ymark = v[goodpts-2] + 
+				frac * (v[goodpts-1] - v[goodpts-2]);
 		/*
 		 * Draw the mark
 		 */
@@ -200,9 +200,9 @@ int	plot_ndx;
 		prev_alt = alt[i];
 	}
 /*
- * Draw the hodograph from the x and y arrays we just built
+ * Draw the hodograph from the u and v arrays we just built
  */
-	G_polyline (Hodo_ov, GPLT_SOLID, color, goodpts, x, y);
+	G_polyline (Hodo_ov, GPLT_SOLID, color, goodpts, u, v);
 /*
  * Annotate
  */
@@ -289,7 +289,7 @@ hd_background ()
 	}
 
 	G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale,
-		GT_CENTER, GT_TOP, 0.0, -1.1 * W_scale, 0.0, "X (M/S)");
+		GT_CENTER, GT_TOP, 0.0, -1.1 * W_scale, 0.0, "U (M/S)");
 /*
  * Label the vertical axes
  */
@@ -324,7 +324,7 @@ hd_background ()
 	}
 
 	G_write (Hodo_bg_ov, C_WHITE, GTF_MINSTROKE, 0.05 * W_scale, GT_CENTER,
-		GT_BOTTOM, -1.1 * W_scale, 0.0, 90.0, "Y (M/S)");
+		GT_BOTTOM, -1.1 * W_scale, 0.0, 90.0, "V (M/S)");
 /*
  * Restore the clipping
  */
@@ -463,8 +463,8 @@ float	wspd, wdir, *x, *y;
  * and f_wdir, respectively, so they are ignored.
  */
 {
-	*x = (wspd * cos (DEG_TO_RAD(90.0-wdir)) + S_width / 2.0) / S_width;
-	*y = (wspd * sin (DEG_TO_RAD(90.0-wdir)) + S_height / 2.0) / S_height;
+	*x = (wspd * cos (DEG_TO_RAD(270.0-wdir)) + S_width / 2.0) / S_width;
+	*y = (wspd * sin (DEG_TO_RAD(270.0-wdir)) + S_height / 2.0) / S_height;
 	return;
 }
 
@@ -484,6 +484,7 @@ int	color;
 /*
  * Top annotation
  */
+	hd_top_text ("HODOGRAPH", C_WHITE, TRUE);
 	hd_top_text ("SITE: ", C_WHITE, TRUE);
 	site = snd_site (id_name);
 	hd_top_text (site, C_WHITE, FALSE);
