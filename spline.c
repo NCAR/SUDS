@@ -1,7 +1,7 @@
 /*
  * Cubic spline package
  *
- * $Revision: 1.1 $ $Date: 1990-01-23 13:45:26 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-05-03 15:23:58 $ $Author: burghart $
  *
  * Equations here are taken from "Numerical Analysis",
  * L. W. Johnson and R. D. Riess, Addison-Wesley 1982.
@@ -44,9 +44,13 @@ int	npts;
  */
 	if (N == 1)
 	{
+		if (X)
+			free (X);
 		X = (float *) malloc (2 * sizeof (float));
 		memcpy (X, x, 2 * sizeof (float));
 
+		if (F)
+			free (F);
 		F = (float *) malloc (2 * sizeof (float));
 		memcpy (F, f, 2 * sizeof (float));
 
