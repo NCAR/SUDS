@@ -1,7 +1,7 @@
 /*
  * netCDF sounding access
  *
- * $Revision: 1.1 $ $Date: 1990-12-11 11:28:30 $ $Author: burghart $
+ * $Revision: 1.2 $ $Date: 1990-12-12 13:56:01 $ $Author: burghart $
  * 
  */
 # include <time.h>
@@ -364,16 +364,16 @@ struct ui_command	*cmds;
  * Put in the base time
  */
 	t.tm_year = sounding.rls_time.ds_yymmdd / 10000;
-	t.tm_mon = (sounding.rls_time.ds_yymmdd / 100) % 100;
+	t.tm_mon = ((sounding.rls_time.ds_yymmdd / 100) % 100) - 1;
 	t.tm_mday = sounding.rls_time.ds_yymmdd % 100;
 	t.tm_hour = sounding.rls_time.ds_hhmmss / 10000;
 	t.tm_min = (sounding.rls_time.ds_hhmmss / 100) % 100;
 	t.tm_sec = sounding.rls_time.ds_hhmmss % 100;
-	t.tm_gmtoff = offset * 3600;	/* convert to seconds */
+	t.tm_gmtoff = 0;
 	t.tm_zone = (char *) 0;
 	t.tm_wday = t.tm_isdst = t.tm_yday = 0;
 
-	base_time = timegm (&t);
+	base_time = timegm (&t) + offset * 3600;
 	ncvarput1 (Sfile, v_base, 0, &base_time);
 /*
  * If we don't have an offset time field, put in zeros now
