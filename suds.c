@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.18 1991-10-21 21:25:31 burghart Exp $";
+static char *rcsid = "$Id: suds.c,v 1.19 1991-10-22 20:41:47 case Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -30,6 +30,7 @@ static char *rcsid = "$Id: suds.c,v 1.18 1991-10-21 21:25:31 burghart Exp $";
 # include <ui_error.h>
 # include "globals.h"
 # include "keywords.h"
+# include <string.h>
 
 /*
  * Pointers to routines to handle each command (stored by keyword number)
@@ -56,7 +57,7 @@ main (argc, argv)
 int	argc;
 char	**argv;
 {
-	char	*loadfile;
+	char	*loadfile, *n, *tmpstr;
 	void	main_finish (), main_interrupt (), main_cmd_init();
 	void	main_copyright ();
 	int	main_dispatch ();
@@ -115,11 +116,23 @@ char	**argv;
 # else
 			helpdir.us_v_ptr = "/rdss/suds/help/";
 # endif
+
+# ifndef VMS
+	/*
+	 * Add '/' to end of helpdir if not already there.
+	 */
+	        if ( n = strrchr (helpdir.us_v_ptr, '/'))
+		        if ( *(++n) )
+			{
+				tmpstr = helpdir.us_v_ptr;
+				helpdir.us_v_ptr = (char *) malloc
+					(strlen (tmpstr) + 2);
+				sprintf (helpdir.us_v_ptr, "%s/", tmpstr);
+			}
+# endif
 		usy_s_symbol (usy_g_stbl ("ui$variable_table"),
 			"ui$helpdir", SYMT_STRING, &helpdir);
-	/*
-	 * Do we want the init file?
-	 */
+
 		if (argc && ! strcmp (argv[0], "-n"))
 		{
 			read_init = FALSE;
