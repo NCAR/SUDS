@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: xyplot.c,v 1.5 1992-08-14 22:08:10 case Exp $";
+static char *rcsid = "$Id: xyplot.c,v 1.6 1992-09-18 16:08:08 carson Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -34,6 +34,7 @@ static char *rcsid = "$Id: xyplot.c,v 1.5 1992-08-14 22:08:10 case Exp $";
 # define DEG_TO_RAD(x)	((x) * 0.017453292)
 # define RAD_TO_DEG(x)	((x) * 57.29577951)
 # define BETWEEN(x,lim0,lim1)	((((x)-(lim0))*((x)-(lim1))) <= 0)
+# define YPOS(p)        (log((p)/Ymin) / log(Ymax/Ymin)) 
 
 /*
  * Overlay for the plot
@@ -44,7 +45,7 @@ static overlay	XYplot_ov = (overlay) 0;
  * X and Y fields and their limits
  */
 static fldtype	Xfld, Yfld;
-static float	Xmin, Xmax, Ymin, Ymax;
+static float	Xmin, Xmax, Ymin, Ymax, Ystep;
 
 /*
  * Current text position for the bottom and top annotations
@@ -109,6 +110,7 @@ struct ui_command	*cmds;
 	Yfld = fd_num (UPTR (*cmds++));
 	Ymin = (float) fd_bot (Yfld);
 	Ymax = (float) fd_top (Yfld);
+	Ystep= (float) fd_step(Yfld);
 /*
  * Set the plot limits and plot the background
  */
@@ -137,9 +139,21 @@ struct ui_command	*cmds;
 /*
  * Plot title
  */
-	sprintf (string, "X-Y plot of %s vs. %s     Plot generated: ", 
-		fd_name (Xfld), fd_name (Yfld));
-	xy_top_text (string, C_WHITE, FALSE);
+	/* 
+	 * Use Log(Pressure) if requested and the Y field is pressure
+	 */
+	if ( Yfld == f_pres && Flg_logp ) 
+	{
+	sprintf (string, "X-Y plot of %s vs. log(%s)      Plot generated: ", 
+			fd_name (Xfld), fd_name (Yfld));
+		xy_top_text (string, C_WHITE, FALSE);
+	}
+	else
+	{
+		sprintf (string, "X-Y plot of %s vs. %s      Plot generated: ", 
+			fd_name (Xfld), fd_name (Yfld));
+		xy_top_text (string, C_WHITE, FALSE);
+	}
 
 	time (&curtime);
 	strftime (string, sizeof (string), "%e-%b-%Y,%T", gmtime (&curtime));
@@ -189,9 +203,10 @@ xy_background ()
 {
 	float	charsize, start, step, factor, tick;
 	float	height = Ymax - Ymin, width = Xmax - Xmin;
-	float	x[5], y[5];
+	float	x[5], y[5], p ;
 	bool	dolabel;
 	char	string[64];
+	int temp = 0;
 /*
  * Character size
  */
@@ -271,6 +286,49 @@ xy_background ()
 	sprintf (string, "%s (%s)", fd_desc (Xfld), fd_units (Xfld));
 	G_write (XYplot_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER, GT_TOP, 
 		Xmin + 0.5 * width, Ymin - 0.06 * height, 0.0, string);
+/* 
+ * Use Log(Pressure) if requested and the Y field is pressure
+ */
+	if ( Yfld == f_pres && Flg_logp ) 
+	{
+	/*
+	 * Put vertical ticks and labels
+	 */
+		for (p=Ymin; p>=Ymax;
+		     p -= ((int)p%(int)Ystep) ? ((int)p%(int)Ystep) : Ystep)
+		{
+		/*
+		 * Check for an interrupt
+		 */
+			if (Interrupt) 
+				xy_abort();
+		/* 
+		 * Draw the tick mark 
+		 */
+			x[0] = Xmin;
+			x[1] = Xmin + 0.025*width;
+			y[0] = y[1] = YPOS(p)*(Ymax-Ymin)+Ymin;
+			G_polyline( XYplot_ov, GPLT_SOLID, C_WHITE, 2,x,y);
+
+			x[0] = Xmin + 0.975*width;
+			x[1] = Xmax;
+			G_polyline( XYplot_ov, GPLT_SOLID, C_WHITE, 2,x,y);
+		/*
+		 * Annotate along the left axis
+		 */
+			sprintf(string, "%d", (int) p);
+			G_write(XYplot_ov, C_WHITE, GTF_DEV, charsize,
+			   GT_RIGHT, GT_CENTER, Xmin-0.01*width, 
+			   y[0], 0.0, string);
+		}
+
+	sprintf (string, "log(%s) (%s)", fd_desc (Yfld), fd_units (Yfld));
+	G_write (XYplot_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER, GT_BOTTOM, 
+		Xmin - 0.15 * width, Ymin + 0.5 * height, 90.0, string);
+	}
+
+	else	
+	{
 /*
  * Find the step for vertical ticks
  */
@@ -330,6 +388,7 @@ xy_background ()
 	sprintf (string, "%s (%s)", fd_desc (Yfld), fd_units (Yfld));
 	G_write (XYplot_ov, C_WHITE, GTF_DEV, charsize, GT_CENTER, GT_BOTTOM, 
 		Xmin - 0.15 * width, Ymin + 0.5 * height, 90.0, string);
+	}
 }
 
 
@@ -407,8 +466,13 @@ int	plot_ndx;
 			continue;
 
 		xpts[goodpts] = xpts[i];
-		ypts[goodpts] = ypts[i];
-
+	/*
+	 * If logp flag is set and Pressure is Yfld , plot the log(y) 
+	 */
+		if ( Yfld == f_pres && Flg_logp ) 
+			ypts[goodpts] = YPOS(ypts[i])*(Ymax-Ymin)+Ymin;
+		else	
+			ypts[goodpts] = ypts[i];
 		goodpts++;
 	}
 /*

@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: skewt.c,v 1.24 1992-08-14 22:04:58 case Exp $";
+static char *rcsid = "$Id: skewt.c,v 1.25 1992-09-18 16:06:44 carson Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -43,6 +43,16 @@ static float	Pmin, Pmax;
 static int	Pstep;
 static float	Tmin, Tmax;
 static int	Tstep;
+
+/* 
+ * Wind barb resolution (one barb = Wb_res)
+ */
+static float Wb_res;
+
+/*
+ * Wind Plot interval (each Mark_inc sample plotted)
+ */
+static int Mark_inc;
 
 /*
  * Slope of the isotherms
@@ -102,6 +112,7 @@ struct ui_command	*cmds;
  */
 	if (cmds->uc_ctype == UTT_KW)
 	{
+
 	    switch (UKEY (cmds[0]))
 	    {
 		case KW_PLIMITS:
@@ -127,6 +138,18 @@ struct ui_command	*cmds;
 		 * We'll need to redraw the background
 		 */
 			Redraw = TRUE;
+			return;
+		case KW_BARBRES:
+			Wb_res = UFLOAT (cmds[1]);
+
+			if (Wb_res <= 0.0 )
+			ui_error ("The wind barb resolution must be >0");
+			return;
+		case KW_STEP:
+		/*
+		 * Plot command with a step selection keyword
+		 */
+			skt_plot(cmds);
 			return;
 		default:
 			for (;; cmds++)
@@ -162,6 +185,23 @@ struct ui_command	*cmds;
 	float	pmin, pmax;
 	overlay ovlist[3];
 	char	*snd_default ();
+/*
+ * Handle the qualifiers
+ */
+	for (; cmds[0].uc_ctype == UTT_KW; cmds++)
+	{
+		switch (UKEY (cmds[0]))
+		{
+		    case KW_STEP:
+			cmds++;
+			Mark_inc = (int)(UFLOAT (cmds[0]));
+ 			if ( Mark_inc <= 0 ) Mark_inc = 1;
+			break;
+		    default:
+			ui_error ("BUG! Can't handle keyword %d in skt_plot!",
+				UKEY (cmds[0]));
+		}
+	}
 /*
  * Make sure the graphics stuff is ready
  */
@@ -250,6 +290,10 @@ struct ui_command	*cmds;
  * Make the last sounding our default
  */
 	snd_set_default (id_name);
+/* 
+ * Reset the wind interval mark for the next plot
+ */
+	Mark_inc = 1;
 }
 
 
@@ -838,7 +882,7 @@ skt_ov_check ()
 	 * plot a window to the right of the skew-t plot
 	 */
 		Winds_ov = G_new_overlay (Wkstn, 0);
-		G_set_coords (Winds_ov, -0.5 * (1.0/BORDER + 1), -BORDER, 
+  		G_set_coords (Winds_ov, -0.5 * (1.0/BORDER + 2), -BORDER, 
 			1.0, 1.0 + BORDER);
 	/*
 	 * True aspect ratio of the 0.0-1.0 window in the winds overlay
@@ -1114,6 +1158,16 @@ int	plot_ndx, nplots;
 	float	p[BUFLEN], wspd[BUFLEN], wdir[BUFLEN], u[BUFLEN], v[BUFLEN];
 	float	xstart, xscale, yscale, xov[2], yov[2];
 	int	i, npts;
+	float brbang ;
+	float size, blen, tlen, sp, hblen, unorm ,vnorm, x0, y0;
+	float spd1, bbarb, rbang, cosrba, sinrba, px[3], py[3];
+	float cosror, sinror;
+	float round_val, half_val, flag_val;
+
+	int j, nspd, nflag, nbarb, kbarb, numbas, nbase, nhbarb, ihs;
+	char string[25];
+
+
 /*
  * Grab the winds data and convert it to u and v
  */
@@ -1141,10 +1195,29 @@ int	plot_ndx, nplots;
 	xscale = 1.0 / (W_scale * 2 * nplots);
 	yscale = W_aspect * xscale;
 /*
+ * Set size parameters for wind barbs
+ */
+        size = 0.8 * xscale * W_scale;
+        blen = size * 0.4;
+        tlen = size * 1.0;
+        sp   = size * 0.15;
+        hblen = 0.5 * blen;
+        brbang = 70.0;
+        ihs = -1;
+	round_val = Wb_res * 0.25;
+	half_val  = Wb_res * 0.5;
+	flag_val  = Wb_res * 5.0;
+/*
  * Plot the winds
  */
 	for (i = 0; i < npts; i++)
 	{
+        /* 
+         * Plot winds at interval specified by Mark_inc
+         */
+            if ( i % Mark_inc == 0 ) 
+            {
+
 		if (p[i] == BADVAL || p[i] < Pmin || p[i] > Pmax)
 			continue;
 	/*
@@ -1152,24 +1225,184 @@ int	plot_ndx, nplots;
 	 */
 		xov[0] = xstart;
 		yov[0] = YPOS (p[i]);
-	/*
-	 * Convert to the overlay coordinates
-	 */
-		if (u[i] != BADVAL)
-			xov[1] = xov[0] + u[i] * xscale;
-		else
+        /* 
+         * If wind vectors are to be drawn 
+         */
+                if ( Flg_barb == 0 )
+                {
+	        /*
+        	 * Convert to the overlay coordinates
+        	 */
+        		if (u[i] != BADVAL)
+        			xov[1] = xov[0] + u[i] * xscale;
+        		else
+        			continue;
+
+        		if (v[i] != BADVAL)
+        			yov[1] = yov[0] + v[i] * yscale;
+        		else
+        			continue;
+        	/*
+        	 * Draw the wind line
+	         */
+        		G_polyline (Winds_ov, GPLT_SOLID, 
+				C_DATA1+2*plot_ndx, 2, xov, yov);
+                }
+
+		/* 
+		 * Else draw wind barbs
+		 */
+                else
+                {
+		    if ( wdir[i] == BADVAL )
+			continue;
+		    if ( wspd[i] == BADVAL )
 			continue;
 
-		if (v[i] != BADVAL)
-			yov[1] = yov[0] + v[i] * yscale;
-		else
-			continue;
-	/*
-	 * Draw the wind line
-	 */
-		G_polyline (Winds_ov, GPLT_SOLID, C_DATA1 + 2 * plot_ndx, 2, 
-			xov, yov);
-	}
+                /* 
+                 * Compute direction of wind line
+                 */
+		    cosror = cos ( DEG_TO_RAD( wdir[i] ));
+		    sinror = sin ( DEG_TO_RAD( wdir[i] ));
+
+		    xov[1] = xov[0] + sinror * size;
+ 		    yov[1] = yov[0] + cosror * size*W_aspect;
+
+		    x0 = xov[0];
+		    y0 = yov[0];
+		/* 
+		 * Compute the number of flags, whole barbs and half 
+  		 * barbs needed to represent the wind speed.
+  		 */
+
+		    nspd  = wspd[i] + 0.5;
+		    nspd  = nspd % (int) Wb_res;
+		    spd1  = wspd[i] + round_val;
+		    nflag = spd1 / flag_val;
+		    bbarb = (spd1 - nflag*flag_val) / Wb_res;
+		    nbarb = bbarb;
+		    kbarb = bbarb + 0.5;
+		    nhbarb = 0;
+		    if  ( nbarb != kbarb ) nhbarb = 1;
+		    numbas = nflag*2 + nbarb + nhbarb;
+
+/*
+		if ( numbas > 0 ) 
+		{
+ */
+        	/*
+        	 * Draw the wind line
+	         */
+		    G_polyline(Winds_ov, GPLT_SOLID, C_DATA1 + 2*plot_ndx, 
+				2, xov, yov );
+
+		/* Compute angle for positioning of flags and barbs. */
+		    rbang = wdir[i] - ihs * brbang ;
+
+		/* Compute positions of flags. */
+		    nbase  = 0;
+		    cosrba = cos ( DEG_TO_RAD( rbang ));
+		    sinrba = sin ( DEG_TO_RAD( rbang ));
+
+		/* 
+		 * Draw flags. 
+	  	 */
+
+		    for ( j=1; j<= nflag; j++ )
+		       {
+
+			/* Compute 1st base of flag.  */
+
+			px[2] = (tlen - nbase * sp)*sinror + x0;
+			py[2] = (tlen - nbase * sp)*cosror*W_aspect + y0;
+
+			/* Compute 2nd base of flag.  */
+
+			px[0] = (tlen - (nbase+1) * sp)*sinror + x0;
+			py[0] = (tlen - (nbase+1)*sp)*cosror*W_aspect + y0;
+
+			/* Compute tip of flag and draw.  */
+
+			px[1] = blen * sinrba + px[0];
+			py[1] = blen * cosrba * W_aspect + py[0];
+
+			/* Draw flag.  */
+		        G_polyline(Winds_ov, GPLT_SOLID, 
+ 				C_DATA1 + 2*plot_ndx, 3, px, py );
+
+			/* Increment base number counter.  */
+
+			nbase = nbase + 2;
+		       }
+
+		/*
+		 * Draw whole barbs.
+		 */
+
+		   for ( j=1; j<=nbarb; j++)
+		      {
+
+			/* Compute base of whole barb and move pen.  */
+
+		       px[0] = (tlen - nbase * sp)*sinror + x0;
+		       py[0] = (tlen - nbase * sp)*cosror*W_aspect + y0;
+
+			/* Compute tip of barb and draw.   */
+
+			px[1] = blen * sinrba + px[0];
+			py[1] = blen * cosrba * W_aspect + py[0];  
+
+      		 	G_polyline(Winds_ov, GPLT_SOLID,
+				C_DATA1 + 2*plot_ndx, 2, px, py );
+
+			/* Increment base count.   */
+
+			++nbase;
+		      }
+
+		/*
+		 * Draw half barbs.
+		 */
+
+		   for ( j=1; j<= nhbarb; j++)
+		      {
+
+			/* If no bases have been used, start half barb 
+			 * at 2nd base. 
+			 */
+
+			if ( nbase == 0 ) nbase = 1;
+
+			/* Compute base of half barb.   */
+
+			px[0] = (tlen - nbase * sp)*sinror + x0;
+			py[0] = (tlen - nbase * sp)*cosror*W_aspect + y0;
+
+			/* Compute tip of half barb.   */
+
+			px[1] = hblen * sinrba + px[0];  
+			py[1] = hblen * cosrba * W_aspect + py[0];  
+		        G_polyline(Winds_ov, GPLT_SOLID, 
+				C_DATA1 + 2*plot_ndx, 2, px, py );
+
+			/* Increment base count.   */
+
+			++nbase;
+		      }
+/* Take out open circle for calm winds, draw empty vector instead
+		}
+		else  
+		{
+		   G_write(Winds_ov, C_DATA1 + 2*plot_ndx, GTF_DEV, .02,
+			   GT_CENTER, GT_CENTER, x0, y0, 0.0, "o");
+		}
+ */
+		   
+
+		}	/* End if plot wind vectors/barbs */
+	   }		/* End if wind plot interval */
+
+	}		/* End for each wind sample */
 /*
  * Declare the winds fields to edit
  */
@@ -1189,14 +1422,26 @@ int	plot_ndx, nplots;
 	{
 		G_write (Winds_ov, C_WHITE, GTF_DEV, 0.025, GT_CENTER, 
 			GT_TOP, 0.5, -0.01, 0.0, "WINDS PROFILE");
-		G_write (Winds_ov, C_WHITE, GTF_DEV, 0.02, GT_LEFT, 
-			GT_CENTER, 0.5, -0.06, 0.0, " = 10 M/S");
+             /* 
+              * Label wind vector length 
+              */
+                if ( Flg_barb == 0 ) 
+		{
+			G_write (Winds_ov, C_WHITE, GTF_DEV, 0.02, GT_LEFT, 
+				GT_CENTER, 0.5, -0.06, 0.0, " = 10 M/S");
 
-		xov[0] = 0.5 - (10.0 * xscale);
-		xov[1] = 0.5;
-		yov[0] = -0.06;
-		yov[1] = -0.06;
-		G_polyline (Winds_ov, GPLT_SOLID, C_WHITE, 2, xov, yov);
+			xov[0] = 0.5 - (10.0 * xscale);
+			xov[1] = 0.5;
+			yov[0] = -0.06;
+			yov[1] = -0.06;
+			G_polyline (Winds_ov, GPLT_SOLID, C_WHITE, 2, xov, yov);
+		}
+		else
+		{
+			sprintf (string, "One barb = %-.1f m/s", Wb_res);
+			G_write (Winds_ov, C_WHITE, GTF_DEV, 0.02, GT_CENTER, 
+				GT_CENTER, 0.5, -0.06, 0.0, string );
+		}
 	}
 /*
  * Done
@@ -1236,6 +1481,8 @@ skt_init ()
 	Tmin = -40.;
 	Tmax = 35.;
 	Tstep = 10;
+	Mark_inc = 1;
+	Wb_res = 10.0;
 /*
  * Create UI indirect variables
  */
@@ -1243,5 +1490,7 @@ skt_init ()
 	usy_c_indirect (symtbl, "skewt_pmax", &Pmax, SYMT_FLOAT, 0);
 	usy_c_indirect (symtbl, "skewt_tmin", &Tmin, SYMT_FLOAT, 0);
 	usy_c_indirect (symtbl, "skewt_tmax", &Tmax, SYMT_FLOAT, 0);
+	usy_c_indirect (symtbl, "skewt_wres", &Wb_res, SYMT_FLOAT, 0);
+	usy_c_indirect (symtbl, "skewt_mark", &Mark_inc, SYMT_INT, 0);
 }
 

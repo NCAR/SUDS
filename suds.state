@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.4 1992-09-02 16:57:11 burghart Exp $
+ * $Id: suds.state,v 1.5 1992-09-18 16:07:40 carson Exp $
  */
 
 # include "keywords.h"
@@ -330,6 +330,12 @@ define state skt-what
 	input 'tlimits' KW_TLIMITS
 		next skt-opt-tmin
 	endinput
+	input 'barbres' KW_BARBRES
+		next skt-wres
+	endinput
+	input 'step' KW_STEP
+		next skt-real
+	endinput
 	input string
 		lowercase
 		next skt-plot
@@ -403,6 +409,18 @@ define state skt-opt-tmax
 		ignore
 		next ust$final_real
 	endinput
+	input real
+		next ust$no_more
+	endinput
+enddef
+define state skt-real
+	helpfile 'skewt'
+	input real
+		next skt-what
+	endinput
+enddef
+define state skt-wres
+	helpfile 'skewt'
 	input real
 		next ust$no_more
 	endinput
