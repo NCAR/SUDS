@@ -1,6 +1,6 @@
 /*
  * Fields derivation module
- * $Revision: 1.4 $ $Date: 1990-11-05 11:15:23 $ $Author: burghart $
+ * $Revision: 1.5 $ $Date: 1990-11-13 09:28:29 $ $Author: burghart $
  */
 # include <math.h>
 # include <varargs.h>
@@ -100,6 +100,7 @@ fdd_dt_init ()
 	fdd_add_derivation (f_theta, fdd_theta, 2, f_temp, f_pres);
 	fdd_add_derivation (f_theta_e, fdd_theta_e, 3, f_temp, f_dp, f_pres);
 	fdd_add_derivation (f_alt, fdd_alt, 3, f_dp, f_temp, f_pres);
+	fdd_add_derivation (f_dp, fdd_dp, 2, f_temp, f_rh);
 	fdd_add_derivation (f_wspd, fdd_wspd, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_wdir, fdd_wdir, 2, f_u_wind, f_v_wind);
 	fdd_add_derivation (f_vt, fdd_vt, 3, f_temp, f_pres, f_dp);
