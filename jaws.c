@@ -1,9 +1,7 @@
 /*
  * JAWS format sounding access
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.1  89/03/16  15:14:47  burghart
- * Initial revision
+ * $Revision: 1.3 $ $Date: 1989-12-18 14:44:42 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -52,6 +50,8 @@ struct snd	*sounding;
 	sounding->site = (char *) malloc (7 * sizeof (char));
 	strcpy (sounding->site, "Denver");
 	sounding->sitealt = 1611.;	/* Alt of Denver NWS site */
+	sounding->sitelat = 39.75;	/* Lat */
+	sounding->sitelon = -104.87;	/* Lon */
 /*
  * Initialize the data pointers
  */
