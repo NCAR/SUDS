@@ -1,7 +1,7 @@
 /*
  * netCDF sounding access
  *
- * $Revision: 1.3 $ $Date: 1991-03-21 15:45:06 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1991-03-22 18:24:28 $ $Author: burghart $
  * 
  */
 # include <time.h>
@@ -37,7 +37,7 @@ struct fldmatch
 	{f_qu,		"qu"		},
 	{f_qv,		"qv"		},
 	{f_rtype,	"rtype"		},
-	{f_dz,		"ascent_rate"	},
+	{f_ascent,	"ascent_rate"	},
 	{f_mr,		"mr"		},
 	{f_azimuth,	"azim"		},
 	{f_range,	"range"		},

@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.14 $ $Date: 1991-03-20 22:53:32 $ $Author: burghart $
+ * $Revision: 1.15 $ $Date: 1991-03-22 18:22:54 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -39,7 +39,7 @@ struct fldmatch	F_match_tbl[] =
 	{f_qu, "Qu", ""}, 
 	{f_qv, "Qv", ""}, 
 	{f_rtype, "Rtype", ""}, 
-	{f_dz, "dZ", ":m/s"}, 
+	{f_ascent, "dZ", ":m/s"}, 
 	{f_mr, "MR", ":g/kg"},
 	{f_azimuth, "Ang", ":deg"}, 
 	{f_range, "Rng", ":km"}, 
@@ -570,7 +570,7 @@ struct snd	*sounding;
 	sounding->fields[2] = f_temp;	sounding->fields[3] = f_dp;
 	sounding->fields[4] = f_rh;	sounding->fields[5] = f_u_wind;
 	sounding->fields[6] = f_v_wind;	sounding->fields[7] = f_wspd;
-	sounding->fields[8] = f_wdir;	sounding->fields[9] = f_dz;
+	sounding->fields[8] = f_wdir;	sounding->fields[9] = f_ascent;
 	sounding->fields[10] = f_lon;	sounding->fields[11] = f_lat;
 	sounding->fields[12] = f_range;	sounding->fields[13] = f_azimuth;
 	sounding->fields[14] = f_alt;	sounding->fields[15] = f_qpres;
