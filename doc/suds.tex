@@ -338,7 +338,7 @@ user to scale skew-t plots as desired.
 \ndxentry{skewt plimits}{\tt skewt plimits}
 The pressure limits of skew-t plots are set with the command:
 \begin{example}
-	skewt plimits [max] |p_hi| [min] |p_lo|
+	skewt plimits [max] |p\_hi| [min] |p\_lo|
 \end{example}
 where {\pf p\_hi} and {\pf p\_lo} are the upper and lower pressure limits
 in mb, respectively.  The default pressure limits in effect at program
@@ -347,7 +347,7 @@ initiation are 1050-100 mb.
 \ndxentry{skewt tlimits}{\tt skewt tlimits}
 Similarly, temperature limits may be changed using the command:
 \begin{example}
-	skewt tlimits [min] |t_lo| [max] |t_hi|
+	skewt tlimits [min] |t\_lo| [max] |t\_hi|
 \end{example}
 where {\pf t\_lo} and {\pf t\_hi} are the temperature limits in $^\circ$C.
 The limits specified are the temperature limits for the bottom level (highest
@@ -356,6 +356,17 @@ the temperature in the lower left corner is the same as the temperature in
 the upper right corner.  Hence, the temperatures at the top of the plot extend
 from 2{\pf t\_lo}\minus{\pf t\_hi} to {\pf t\_lo} $^\circ$C.  The default
 values of {\pf t\_lo} and {\pf t\_hi} are -40 and 35, respectively.
+
+\subindex{winds}{vector/barb interval}
+By default, a barb or vector is drawn for every wind point in a sounding.
+With the ||windstep|| command, the interval between drawn points may be set.
+The syntax is:
+\begin{example}
+	windstep |n|
+\end{example}
+where {\pf n} is the step in sounding points between drawn barbs or vectors.
+Setting {\pf n} to two will cause every other point to be used, setting it
+to three will cause every third point to be used, etc.
 
 \section{Hodographs}
 \index{hodographs}
