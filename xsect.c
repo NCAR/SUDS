@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.12 $ $Date: 1990-11-27 15:12:12 $ $Author: burghart $
+ * $Revision: 1.13 $ $Date: 1990-12-07 11:49:44 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_param.h>
@@ -387,8 +387,8 @@ xs_put_data ()
 			/*
 			 * Use the point to help build the floor array
 			 */
-				xs_build_limits (TRUE, xpos[pt], ypos[pt], 
-					zpos[pt]);
+				xs_build_limits (Floor, F_wgt, xpos[pt], 
+					ypos[pt], zpos[pt]);
 			/*
 			 * Go on to the next point
 			 */
@@ -469,7 +469,7 @@ xs_put_data ()
 	 * Use the highest point of this sounding to help build the 
 	 * ceiling array
 	 */
-		xs_build_limits (FALSE, xhighest, yhighest, zhighest);
+		xs_build_limits (Ceiling, C_wgt, xhighest, yhighest, zhighest);
 	/*
 	 * Draw the trace for this sounding
 	 */
@@ -582,48 +582,42 @@ float	vdat, xdat, ydat;
 
 
 void
-xs_build_limits (dofloor, xdat, ydat, zdat)
-bool	dofloor;
+xs_build_limits (array, weight, xdat, ydat, zdat)
+float	*array, *weight;
 float	xdat, ydat, zdat;
 /*
- * Use the given point to help build either the ceiling or floor array
- * (Chosen by the boolean "dofloor").  For time-height plots, xdat should
- * be the time position and ydat should be zero.
+ * Use the given point to help build either the given ceiling or floor
+ * array.  For time-height plots, xdat should be the time position and 
+ * ydat should be zero.
  */
 {
 	int	ih;
-	float	x, y, d, xstep, ystep, tstep, wgt;
-	float	*array, *weight;
-
-	array = dofloor ? Floor : Ceiling;
-	weight = dofloor ? F_wgt : C_wgt;
+	float	pos, d, hstep, wgt;
 /*
- * Step through the array and use a distance weighting scheme to apply 
- * the given point
+ * Horizontal step length in the plane
+ */
+	hstep = P_len / (HDIM - 1);
+/*
+ * Find the distance from the left endpoint of the plane to the projection
+ * of the given point onto the plane.
  */
 	if (Time_height)
-		tstep = P_len / (HDIM - 1);
+		pos = xdat;
 	else
-	{
-		xstep = (X1 - X0) / (HDIM - 1);
-		ystep = (Y1 - Y0) / (HDIM - 1);
-	}
-
-
+		pos = hypot (xdat - X0, ydat - Y0) * 
+			cos (atan2 (ydat-Y0, xdat-X0) - atan2 (Y1-Y0, X1-X0));
+/*
+ * Step through the array and use a distance weighting scheme to apply 
+ * the given point.  The point is projected onto the plane before distances
+ * are calculated. 
+ */
 	for (ih = 0; ih < HDIM; ih++)
 	{
-		if (Time_height)
-		{
-			x = ih * tstep;
-			y = 0.0;
-		}
-		else
-		{
-			x = X0 + ih * xstep;
-			y = Y0 + ih * ystep;
-		}
-
-		d = sqrt ((xdat - x) * (xdat - x) + (ydat - y) * (ydat - y));
+	/*
+	 * Find the distance from this array point to the projection of
+	 * the input point
+	 */
+		d = fabs (ih * hstep - pos);
 	/*
 	 * Use a 1/d^2 weighting scheme, truncated at a weight of 100
 	 */
