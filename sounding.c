@@ -1,9 +1,27 @@
 /*
  * Sounding module.  Load, copy, and keep track of soundings.
- *
- * $Revision: 1.16 $ $Date: 1991-06-26 16:10:34 $ $Author: burghart $
- * 
  */
+/*
+ *		Copyright (C) 1988-91 by UCAR
+ *	University Corporation for Atmospheric Research
+ *		   All rights reserved
+ *
+ * No part of this work covered by the copyrights herein may be reproduced
+ * or used in any form or by any means -- graphic, electronic, or mechanical,
+ * including photocopying, recording, taping, or information storage and
+ * retrieval systems -- without permission of the copyright owner.
+ * 
+ * This software and any accompanying written materials are provided "as is"
+ * without warranty of any kind.  UCAR expressly disclaims all warranties of
+ * any kind, either express or implied, including but not limited to the
+ * implied warranties of merchantibility and fitness for a particular purpose.
+ * UCAR does not indemnify any infringement of copyright, patent, or trademark
+ * through use or modification of this software.  UCAR does not provide 
+ * maintenance or updates for its software.
+ */
+
+static char *rcsid = "$Id: sounding.c,v 1.17 1991-10-21 21:56:43 burghart Exp $";
+
 # include <ui_param.h>
 # include <ui_date.h>		/* for date formatting stuff */
 # include "globals.h"
@@ -49,7 +67,7 @@ snd_init ()
 	void	noa_read_file (), nws_read_file (), fgge_read_file ();
 	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
 	void	mist_read_file (), gale_read_file (), nmc_read_file ();
-	void	nc_read_file ();
+	void	nc_read_file (), cape_read_file ();
 
 	Read_file[SFMT_CLASS]	= cls_read_file;
 	Fmt_name[SFMT_CLASS]	= "CLASS";
@@ -86,6 +104,9 @@ snd_init ()
 
 	Read_file[SFMT_NETCDF]	= nc_read_file;
 	Fmt_name[SFMT_NETCDF]	= "netCDF";
+
+	Read_file[SFMT_CAPE]	= cape_read_file;
+	Fmt_name[SFMT_CAPE]	= "CaPE";
 
 	Init = TRUE;
 }
