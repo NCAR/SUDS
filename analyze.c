@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.25 1992-05-05 21:04:10 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.26 1992-07-20 15:21:01 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -959,19 +959,21 @@ an_shear ()
  * Find a shear value for use in the Bulk Richardson number calculation
  */
 {
-	float	wspd[BUFLEN], wdir[BUFLEN], alt[BUFLEN], p[BUFLEN];
-	float	p_sum = 0.0, u_sum = 0.0, v_sum = 0.0;
+	float	u_wind[BUFLEN], v_wind[BUFLEN], alt[BUFLEN];
+	float	pres[BUFLEN], temp[BUFLEN];
+	float	u, v, a, p, t, frac, wgt;
+	float	wgt_sum = 0.0, u_sum = 0.0, v_sum = 0.0;
 	float	sfc_u, sfc_v, delta_u, delta_v, sitealt;
-	int	sfc_vals = FALSE;
-	int	npts, i;
+	int	npts, ndx, i;
 	float	snd_s_alt ();
 /*
  * Get the wind and altitude data
  */
 	ERRORCATCH
-		npts = snd_get_data (Id_name, p, BUFLEN, f_pres, BADVAL);
-		snd_get_data (Id_name, wspd, BUFLEN, f_wspd, BADVAL);
-		snd_get_data (Id_name, wdir, BUFLEN, f_wdir, BADVAL);
+		npts = snd_get_data (Id_name, pres, BUFLEN, f_pres, BADVAL);
+		snd_get_data (Id_name, temp, BUFLEN, f_temp, BADVAL);
+		snd_get_data (Id_name, u_wind, BUFLEN, f_u_wind, BADVAL);
+		snd_get_data (Id_name, v_wind, BUFLEN, f_v_wind, BADVAL);
 		snd_get_data (Id_name, alt, BUFLEN, f_alt, BADVAL);
 	ON_ERROR
 		return (0.0);
@@ -981,68 +983,107 @@ an_shear ()
  */
 	sitealt = snd_s_alt (Id_name);
 /*
- * Find the mean wind speeds up to 500m and up to 6km
+ * Compress out levels with any bad data, convert altitudes to AGL, and
+ * convert temperatures to K
  */
+	ndx = 0;
 	for (i = 0; i < npts; i++)
 	{
+		if (pres[i] == BADVAL || temp[i] == BADVAL ||
+			u_wind[i] == BADVAL || v_wind[i] == BADVAL || 
+			alt[i] == BADVAL)
+			continue;
+
+		pres[ndx] = pres[i];
+		temp[ndx] = temp[i] + T_K;
+		u_wind[ndx] = u_wind[i];
+		v_wind[ndx] = v_wind[i];
+		alt[ndx] = alt[i] - sitealt;
+		ndx++;
+	}
+
+	npts = ndx;
+/*
+ * Find the density weighted vector mean wind speeds up to 500m and up to 6km
+ */
+	i = 0;	/* index into data arrays */
+
+	for (a = 0.0; a <= 6000.0; a += 100.0)
+	{
 	/*
-	 * Make sure we have good points
+	 * Go on to the next a if this one is lower than the lowest datum
 	 */
-		if (p[i] == BADVAL || wspd[i] == BADVAL || 
-			wdir[i] == BADVAL || alt[i] == BADVAL)
+		if (a < alt[0])
 			continue;
 	/*
-	 * Convert altitude to AGL
+	 * Find the next datum above altitude a
 	 */
-		alt[i] -= sitealt;
-	/*
-	 * Get the mean surface wind if we passed 500m
-	 */
-		if (alt[i] > 500.0 && !sfc_vals)
+		while (alt[i] <= a)
+			if (++i == npts)
+				break;
+
+		if (i == npts)
 		{
-			if (p_sum == 0.0)
+			if (a <= 500.0)
+			{
+				ui_warning ("Sounding shallower than 500m.");
+				ui_warning ("Unable to calculate shear.");
+				return (0.0);
+			}
+			else
+			{
+				ui_warning ("Sounding shallower than 6km.");
+				ui_warning ("Using available data for shear.");
+				break;
+			}
+		}
+	/*
+	 * Interpolate the data to altitude a
+	 */
+		frac = (a - alt[i-1]) / (alt[i] - alt[i-1]);
+
+		p = exp (frac * log (pres[i]) + (1 - frac) * log (pres[i-1]));
+		t = frac * temp[i] + (1 - frac) * temp[i-1];
+		u = frac * u_wind[i] + (1 - frac) * u_wind[i-1];
+		v = frac * v_wind[i] + (1 - frac) * v_wind[i-1];
+	/*
+	 * Find the density (less some constants)
+	 */
+		wgt = p / t;
+	/*
+	 * Increment the sums
+	 */
+		wgt_sum += wgt;
+		u_sum += wgt * u;
+		v_sum += wgt * v;
+	/*
+	 * Calculate the mean when we hit 500m
+	 */
+		if (a == 500.0)
+		{
+			if (wgt_sum == 0.0)
 			{
 				ui_warning ("Unable to calculate shear");
 				return (0.0);
 			}
-			sfc_u = u_sum / p_sum;
-			sfc_v = v_sum / p_sum;
-			sfc_vals = TRUE;
+			sfc_u = u_sum / wgt_sum;
+			sfc_v = v_sum / wgt_sum;
 		}
-	/*
-	 * Return the shear if we passed 6km
-	 */
-		if (alt[i] > 6000.0)
-		{
-			if (p_sum == 0.0)
-			{
-				ui_warning ("Unable to calculate shear");
-				return (0.0);
-			}
-			delta_u = u_sum / p_sum - sfc_u;
-			delta_v = v_sum / p_sum - sfc_v;
-			return (hypot (delta_u, delta_v));
-		}
-	/*
-	 * Increment the sums for the pressure and pressure weighted
-	 * wind speed
-	 */
-		u_sum -= p[i] * wspd[i] * sin (DEG_TO_RAD (wdir[i]));
-		v_sum -= p[i] * wspd[i] * cos (DEG_TO_RAD (wdir[i]));
-		p_sum -= p[i];
 	}
 /*
- * If we get here, it means the sounding doesn't extend to 6km
+ * Do it
  */
-	if (p_sum == 0.0)
+	if (wgt_sum == 0.0)
 	{
 		ui_warning ("Unable to calculate shear");
 		return (0.0);
 	}
 
-	ui_warning ("Sounding shallower than 6km; using available data for shear.");
-	delta_u = u_sum / p_sum - sfc_u;
-	delta_v = v_sum / p_sum - sfc_v;
+	an_printf ("\t 500 m: (%.2f,%.2f)\n", sfc_u, sfc_v);
+	an_printf ("\t  6 km: (%.2f,%.2f)\n", u_sum/wgt_sum, v_sum/wgt_sum);
+
+	delta_u = u_sum / wgt_sum - sfc_u;
+	delta_v = v_sum / wgt_sum - sfc_v;
 	return (hypot (delta_u, delta_v));
 }
 
