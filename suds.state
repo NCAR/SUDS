@@ -22,7 +22,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: suds.state,v 1.1 1991-10-30 22:13:42 burghart Exp $
+ * $Id: suds.state,v 1.2 1991-12-11 16:02:32 burghart Exp $
  */
 
 # include "keywords.h"
@@ -39,11 +39,7 @@ define state suds-initial
 	eoftext	'exit'
 	helpfile 'suds'
 	ctable ui$command_table
-# ifdef VMS
-	@ ui_include:ui_commands.
-# else
-	@ /rdss/ui/ui_commands.
-# endif
+	@ #ui$defs_file
 !
 ! The commands
 !
