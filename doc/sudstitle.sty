@@ -1,0 +1,23 @@
+% titlepage.sty  27 Jan 85
+% Modified 3/3/88 cb Start at page one so twoside stuff works
+\def\maketitle{\begin{titlepage}
+\let\footnotesize\small \let\footnoterule\relax \setcounter{page}{1}
+\null
+\vfil
+\vskip 60pt \begin{center}
+{\LARGE \@title \par} \vskip 3em {\large \lineskip .75em
+\begin{tabular}[t]{c}\@author
+\end{tabular}\par}
+\vskip 1.5em {\large \@date \par} \end{center} \par
+\@thanks
+\vfil
+\null
+\end{titlepage}
+\setcounter{footnote}{0} \let\thanks\relax
+\gdef\@thanks{}\gdef\@author{}\gdef\@title{}\let\maketitle\relax}
+\def\abstract{\titlepage
+\null\vfil
+\begin{center}
+{\bf Abstract}
+\end{center}}
+\def\endabstract{\par\vfil\null\endtitlepage}

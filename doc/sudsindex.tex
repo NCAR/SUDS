@@ -1,0 +1,218 @@
+% Index generation facilities
+%
+% An index file <TeXfile>ndx.dat is created which contains entries 
+% of the form:
+%	\entry {sortstring}{page}{topic}
+%    or
+%	\entry {sortstring}{page}{topic}{subtopic}
+%
+% The texindex program is run on this file and creates a file <TeXfile>ndx.dats
+% (the sorted index file) which has lines like:
+%	\initial {c}			before the topics whose initial is c
+%
+%	\entry {topic}{pagelist}	for a topic that is used without 
+%					subtopics
+%
+%	\primary {topic}		for the beginning of a topic that is 
+%					used with subtopics
+%
+%	\secondary {subtopic}{pagelist}	for each subtopic
+%
+
+%
+% Open file <current_file>.ndx where <current_file> is the name of
+% the file we are now TeXing.
+%
+\newif\ifindexopen
+\indexopenfalse
+
+\newwrite \ndxfileout
+
+%
+% The "user-level" commands
+%
+% \doindex		- Start the index
+% \index{something}	- Create an index entry for "something"
+% \mainindex{something}	- Make the main index entry for "something", i.e.
+%			  the page number will be in italics
+% \subindex{main}{sub}	- Create a subentry for "sub" under the main
+%			  entry "main"
+% \mainsubindex{main}{sub}
+%			- Main entry for a subindexed item
+%
+
+\def\doindex{\openout \ndxfileout = \jobname ndx.dat
+	\indexopentrue}
+
+\def\index#1{\ndxentry{#1}{#1}\ignorespaces}
+\def\mainindex#1{\ndxmainentry{#1}{#1}\ignorespaces}
+
+\def\subindex#1#2{\subndxentry{#1}{#2}{#2}\ignorespaces}
+\def\mainsubindex#1#2{\subndxmainentry{#1}{#2}{#2}\ignorespaces}
+
+
+%
+% Define \realbackslash to give us a printable backslash
+%
+{\catcode`\@=0 \catcode`\\=\other
+	@gdef@realbackslash{\}}
+
+%
+% \ndxentry creates a new index entry 
+%	argument 1:	the sort string (e.g. "routine ()")
+%	argument 2:	the output string (e.g. "\tt routine ()")
+%
+\def\ndxentry#1#2{\ifindexopen%
+\write \ndxfileout {\realbackslash entry {#1}{\thepage}{#2}}%
+\if@nobreak\ifvmode\nobreak\fi\fi\fi}
+\def\ndxmainentry#1#2{\ifindexopen%
+\write \ndxfileout {\realbackslash entry {#1}{{\it\thepage}}{#2}}%
+\if@nobreak\ifvmode\nobreak\fi\fi\fi}
+
+%
+% \subndxentry works like \ndxentry except it creates a subentry for a main
+% index entry
+%	argument 1:	primary entry (e.g. "Graphics")
+%	argument 2:	subentry sort string (e.g. "G_redraw ()")
+%	argument 3:	subentry output string (e.g. "\tt G_redraw ()")
+%
+% NOTE: it is important to leave " !" between #1 and #2 in the
+%	definitions below for the secondary entries to be sorted properly
+%
+\def\subndxentry#1#2#3{\ifindexopen%
+  \write \ndxfileout {\realbackslash entry {#1 !#2}{\thepage}{#1}{#3}}%
+\if@nobreak\ifvmode\nobreak\fi\fi\fi}
+\def\subndxmainentry#1#2#3{\ifindexopen%
+  \write \ndxfileout {\realbackslash entry {#1 !#2}{{\it\thepage}}{#1}{#3}}%
+\if@nobreak\ifvmode\nobreak\fi\fi\fi}
+
+%
+% Definition for the index line in the TOC
+%
+\def\tocindexline{\ifindexopen\contentsline{chapter}{Index}{}\fi}
+
+\def\l@index#1#2{\pagebreak[3]
+ \vskip 1.0em plus 1pt \@tempdima 1.5em \begingroup
+ \parindent \z@ \rightskip \@pnumwidth
+ \parfillskip -\@pnumwidth
+ \bf \leavevmode #1\hfil 
+ \hbox to\@pnumwidth{\hfil}
+ \par
+ \endgroup}
+
+
+%
+% Define the macros used in formatting output of the sorted index material.
+%
+% These macros are used by the sorted index file itself.
+% Change them to control the appearance of the index.
+%
+\font\initialfont = cmssbx10 scaled \magstep2
+
+\def\ptexline{\hbox to \hsize}
+
+\def\Dotsbox{\hbox to 1em{\hss.\hss}}
+
+\outer\def\initial #1{
+	\bigbreak
+	\ptexline{\initialfont #1 \hfill}
+	\kern 2pt
+	\penalty3000}
+
+\outer\def\entry #1#2{{
+	\parfillskip = 0in plus 1 fil
+	\parskip = 0in
+	\parindent = 0in
+	\hangindent = 1cm
+	\hangafter = 1
+	\noindent{#1}, #2\par}}
+
+\def\primary #1{\ptexline{#1\hfil}\nobreak}
+
+\newskip\secondaryindent \secondaryindent=0.5cm
+
+\def\secondary #1#2{{
+	\parfillskip = 0in plus 1 fil
+	\parskip = 0in
+	\hangindent = 1.5cm
+	\hangafter = 1
+	\noindent
+	\hskip\secondaryindent{#1}, #2\par}}
+
+%
+% Hacked up "onepageout" macro.
+%
+
+\def\xonepageout#1{
+	\setbox\@outputbox = \xpagebody{#1}
+	\@outputpage}
+%\def\xonepageout#1{
+%	\shipout\vbox{\xpagebody{#1}}
+%	\addtocounter{page}{1}
+%
+%	\ifnum \outputpenalty > -20000 
+%		% do nothing
+%	\else
+%		\dosupereject
+%	\fi}
+
+\def\xpagebody#1{\vbox to \textheight{\boxmaxdepth = \maxdepth #1}}
+
+%
+% Define two-column mode, which is used in indexes.
+% Adapted from the TeXBook, page 416
+%
+
+\newbox\partialpage
+
+\newdimen\doublecolumnhsize
+\doublecolumnhsize = 0.5\textwidth
+\advance\doublecolumnhsize by -0.1 true in
+
+\newdimen\doublecolumnvsize
+\doublecolumnvsize = 2\textheight
+\advance\doublecolumnvsize by 0.5 true in
+
+\def\doublecolumns{
+	\output = {\global\setbox\partialpage = 
+		\vbox{\unvbox255\kern -\topskip \kern \baselineskip}}
+	\eject
+	\output = {\doublecolumnout}
+	\hsize = \doublecolumnhsize
+	\vsize = \doublecolumnvsize}
+
+\def\enddoublecolumns{\output = {\balancecolumns}
+	\eject 
+	\global\pagegoal = \vsize}
+
+\def\doublecolumnout{
+	\splittopskip = \topskip 
+	\splitmaxdepth = \maxdepth
+	\dimen@ = \textheight
+	\advance \dimen@ by -\ht \partialpage
+	\setbox0 = \vsplit255 to \dimen@
+	\setbox2 = \vsplit255 to \dimen@
+	\xonepageout \pagesofar 
+	\unvbox255 
+	\penalty \outputpenalty}
+  
+\def\pagesofar{\unvbox\partialpage
+	\wd0 = \hsize
+	\wd2 = \hsize
+	\hbox to \textwidth {\box0\hfil\box2}}
+
+\def\balancecolumns{
+	\setbox0 = \vbox{\unvbox255}
+	\dimen@ = \ht0
+	\advance \dimen@ by \topskip
+	\advance \dimen@ by -\baselineskip
+	\divide \dimen@ by 2
+	\splittopskip = \topskip
+	{\vbadness = 10000
+	\loop 
+		\global\setbox3 = \copy0
+		\global\setbox1 = \vsplit3 to \dimen@
+	\ifdim \ht3 > \dimen@ \global\advance \dimen@ by 1pt \repeat}
+	\setbox0 = \vbox to \dimen@ {\unvbox1}
+	\setbox2 = \vbox to \dimen@ {\unvbox3}
+	\pagesofar}

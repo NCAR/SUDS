@@ -1,0 +1,1664 @@
+%
+% To make the PostScript document:
+%
+%	$ latex suds.tex
+%	$ texindex sudsndx.dat
+%	$ latex suds.tex
+%	$ dvips -o suds.ps suds.dvi
+%
+
+\documentstyle [twoside]{suds}
+
+\setcounter{tocdepth}{1}	% Only parts and sections in toc
+
+\tableofcontents
+\doindex
+
+%
+% Heavier underscores
+%
+\def\_{\leavevmode \kern.06em \vbox{\hrule height 0.8pt width 0.3em}}
+
+%
+% Macros of use here.
+%
+\newcommand{\Suds}{{\caps Suds}}
+\newcommand{\suds}{{\caps suds}}
+\newcommand{\headsuds}{SUDS}
+\newcommand{\minus}{${}-{}$}
+\newcommand{\sub}[1]{$_{#1}$}
+\newfont{\bfss}{cmssbx10 scaled \magstep3}
+
+\title{	SUDS: \\
+	The System for User-editing and \\
+	Display of Soundings}
+\author{Chris Burghart \\
+	Research Data Program \\
+	Atmospheric Technology Division \\
+	National Center for Atmospheric Research}
+
+\begin{document}
+\maketitle
+
+\part {Introduction}
+The System for User-editing and Display of Soundings, or \suds, is the RDSS
+software package for sounding manipulation.  This document describes the
+program and its usage.
+
+\section {Running and Stopping the Program}
+\index{running \suds}
+\Suds\ can be run by typing the command:
+\begin{example}
+	suds
+\end{example}
+at the system level prompt.  The program will respond with its own 
+prompt, |->|, at which point the user can begin entering the commands
+described in this document.
+
+The command to leave \suds\ is:
+\ndxentry{exit}{\tt exit}
+\index{stopping \suds}
+\begin{example}
+	exit
+\end{example}
+Simply type this command at the \suds\ prompt, and the program will terminate.
+
+\section {Concept}
+\index{purpose of \suds}
+\Suds\ is being developed to provide RDSS users with the capability to examine
+and modify soundings from various systems.  The current functionality of
+\suds\ includes these abilities in very simple form, but work on the
+program continues, and many enhancements will be added as they are developed.
+The order and extent of improvements will be very dependent on feedback from
+users; the more requests there are for a given change, the more likely the 
+change is to occur.  Let me know what you want to see.
+
+\section {The User Interface}
+\index{user interface}
+\Suds\ is driven by the RDSS User Interaction Package, the same interface used
+by the {\caps robot} program.  At the bottom level, it is a command based 
+system, with the capability to be adapted to menus.  Only the command interface
+to \suds\ is described here; the menu interface, when it is developed, will be
+documented separately.
+
+\section {Structure of the Manual}
+\index{structure of the manual}
+This manual is divided into five parts.  The first part is the introduction
+which you are now reading.  Part~2 explains the procedures for accessing
+soundings for use in the program.  Part~3 covers the various commands which
+are used in generating plots.  Part~4 explains how to edit a sounding and 
+how to save a sounding once it has been modified.  Finally, Part~5 contains a
+glossary of all of the commands available in \suds.
+
+\index{command syntax}
+Command syntax is displayed in this manual as shown below, where the |skewt|
+command is used as an example:
+\begin{example}
+	skewt [plot] [|id-name|\sub{1} |id-name|\sub{2}\ldots |id-name|\sub{n}]
+\end{example}
+Words which are shown in |typewriter type|, like |skewt| and |plot| above,
+are keywords and should be typed
+as shown.  The parts of the command shown in {\pf italic typewriter type},
+like {\pf id-name}\sub{1} and {\pf id-name}\sub{2} are
+parameters for the command.  Appropriate values or names should be 
+substituted in these positions.   The parts of the syntax which are enclosed
+in square brackets, as the keyword |plot| is above, are optional parts of
+the command.  In the case of optional keywords, they are simply provided as 
+filler words which can make the command more descriptive.  In the case of 
+optional parameters, like {\pf id-name}\sub{1}\ldots {\pf id-name}\sub{n}, 
+they refer to parameters which may be supplied if the user wishes, but 
+are not required.
+
+\section{Flags}
+\mainindex{flags}
+A number of things which \suds\ does may be changed with the use of logical
+flags.  Throughout the document, these named flags and their functions will
+be described.  The user can change the values of the flags using the ||set||
+command:
+\begin{example}
+	set |fname| true
+	  {\rm --or--}
+	set |fname| false
+\end{example}
+where {\pf fname} is the name of the flag to be changed.
+The default values for the flags are included in the descriptions of each,
+and the ||show flags|| command:
+\begin{example}
+	show flags
+\end{example}
+will display the current state of all program flags.
+
+
+\part {Accessing Soundings}
+\index{accessing soundings}
+Before anything can be done with a sounding in \suds, the sounding must
+be made available to the program.  
+This part explains the commands available for bringing soundings into the
+system and for making copies of them if necessary.
+
+\section {Reading a Sounding File}
+\index{reading a sounding file}
+\subindex{soundings}{reading from a file}
+Soundings are generally stored on disk, with each sounding in its own file.
+The file for a given sounding must be declared to \suds\ before it can be used
+in the program.  The command ||file|| is used for this purpose; its
+syntax is:
+\begin{example}
+	file [name] |filename| [type] |filetype| [id] |sounding-id|
+\end{example}
+The {\pf filename} is just the system name of the file from which the sounding
+is to be taken.  \subindex{soundings}{format of}\index{format, sounding}The 
+format of the sounding file is indicated by the {\pf filetype} parameter.  
+Legal formats are shown in Table~\ref{tbl-formats}.  New formats will be added
+as necessary.  The final parameter to the |file| command 
+is the \subindex{soundings}{identifiers (id's) of}\index{identifier, sounding} 
+{\pf sounding-id}, which is the 
+name which will be assigned to the chosen sounding for the remainder of the 
+\suds\ session.  All future references to the sounding will use this 
+identifier.
+
+\begin{table}[tp]
+	\begin{center}
+	\begin{tabular}{|c|l|}
+		\hline
+		Format		& Description \\
+		\hline \hline
+		\tt cape	& CaPE format \\
+		\tt class	& CLASS format (both old and new) \\
+                \tt drexel      & Drexel University Gale Data Center format \\
+		\tt fgge	& FGGE format \\
+		\tt gale	& GALE format \\
+		\tt jaws	& JAWS format \\
+		\tt mist	& MIST format \\
+		\tt ncar	& NCAR-mobile format \\
+		\tt netcdf	& netCDF (Network Common Data Format) \\
+		\tt nmc		& National Meteorological Center format \\
+		\tt noaa	& NOAA-mobile format \\
+		\tt nssl	& National Severe Storms Laboratory format \\
+		\tt nws		& National Weather Service format\\
+		\tt rsanal	& RSANAL format \\ \hline
+	\end{tabular}
+	\end{center}
+	\caption{Legal formats for the {\tt file} command.}
+	\label{tbl-formats}
+\end{table}
+
+\mainindex{current default sounding}
+\mainsubindex{soundings}{current default}
+The sounding thus loaded will also be assigned as the current
+default sounding.  Many commands in \suds\ allow the user to omit the 
+specification of a sounding to be used.  In these cases, the current default
+sounding will be used.
+
+The |ncar|, |noaa|, and |rsanal| formats require that the user specify an
+origin before a file of that format can be loaded.  The origin is used to
+convert the site location in $(x,y)$ space into a location in
+(latitude,longitude) space.  If no origin has been specified (see the
+||origin|| command) when a file in one of these formats is loaded, the user 
+will be prompted for an origin latitude and longitude.
+
+\section {Creating a Copy of a Sounding}
+\index{copying soundings}
+\subindex{soundings}{copying}
+A user may wish to make a copy of a sounding before applying some
+edit command to it.  This allows experimentation without having to worry
+about destroying previous work.
+A copy of a sounding may be made using the ||create|| command:
+\begin{example}
+	create [sounding] |new-id| [from] |sounding-id|
+\end{example}
+where {\pf new-id} is the identifier to be assigned to the created sounding
+and {\pf sounding-id} is the identifier of the sounding from which it is being
+created.
+\index{current default sounding}\subindex{soundings}{current default}
+The created sounding will be 
+established as the current default sounding.
+
+
+\section{Removing Soundings}
+\index{removing soundings}
+\subindex{soundings}{removing}
+A sounding may be removed from the list of currently available soundings
+using the ||forget|| command.  The syntax of the command is:
+\begin{example}
+	forget |sounding-id|
+\end{example}
+where {\pf sounding-id} is the name of the sounding to be removed from the 
+list.  The {\pf sounding-id} {\it must} be specified; no default name will
+be assumed.
+
+\section{Displaying Available Soundings}
+
+It is often useful to see which soundings have been declared within \suds.
+For this purpose, the ||show soundings|| command:
+\begin{example}
+	show soundings
+\end{example}
+has been provided.  This command will display a list of the soundings 
+currently available, with their identifiers, release times, site names, and
+fields.
+
+
+\part{Making plots}
+\label{part-plot}
+One of the primary functions of \suds\ is to generate plots from sounding
+data.  This part of the document contains the commands necessary for
+making these displays.
+
+\section{Output Device}
+Before any plots can be generated, the device on which the plots are to be
+drawn must be specified.  The ||output|| command is used for this purpose,
+with syntax:
+\begin{example}
+	output [device] |dev-name| [type] |dev-type|
+\end{example}
+The parameter {\pf dev-name} is the system name of the device to be used, and
+{\pf dev-type} is the type of the device.  Some device names of interest
+are shown in Table~\ref{tbl-dev} and the legal types are shown in 
+Table~\ref{tbl-type}.  Editing is supported only on X window devices.
+
+\begin{table}[tp]
+	\begin{center}
+	\begin{tabular}{|c|l|}
+		\hline
+		Device		& Description \\ \hline \hline
+		\tt lp		& The default printer \\
+		\tt screen	& X workstation screen \\ \hline
+	\end{tabular}
+	\end{center}
+	\caption{Common graphic output devices for the {\tt output} command}
+	\label{tbl-dev}
+\end{table}
+
+\begin{table}[tp]
+	\begin{center}
+	\begin{tabular}{|c|l|}
+		\hline
+		Type		& Description \\ \hline\hline
+		\tt ps		& PostScript black \& white printer \\
+		\tt psc		& PostScript color printer \\
+		\tt X500	& X Window $500 \times 500$ window \\
+		\tt X700 	& X Window $700 \times 700$ window \\
+		\hline
+	\end{tabular}
+	\end{center}
+	\caption{Legal device types for the {\tt output} command}
+	\label{tbl-type}
+\end{table}
+
+\section{Skew-t, Log p Plots}
+\index{skew-t, log p plots}
+\subindex{plots}{skew-t, log p}
+A standard skew-t, log p (hereafter simply skew-t) plot may be generated 
+in \suds\ using the ||skewt|| command.  The syntax of the command is:
+\begin{example}
+	skewt [plot] [|id-name|\sub{1}\ldots|id-name|\sub{n}]
+\end{example}
+where {\pf id-name\sub{1}\ldots id-name\sub{n}} are the identifiers of the 
+soundings to be plotted.  If no soundings are specified, the current default
+sounding will be used.  
+\index{current default sounding}\subindex{soundings}{current default}
+The last sounding plotted by this command will be established as the new 
+current default sounding.  Traces of temperature and dewpoint will be plotted 
+for each of the soundings, with appropriate labeling.  The number of soundings 
+which may be specified for one plot is limited to three. 
+
+\subsection{Skew-t flags}
+In addition to the thermodynamic data plotted in the skew-t plots, a winds
+profile and traces to follow a lifted surface parcel can be displayed.  These
+two options are controlled by the flags ||winds|| and ||lift||, respectively.
+By default, both of the flags are set to true.  The display of the lifted 
+surface parcel will be affected by the value of the ||mli|| flag, which 
+controls whether analyses are performed using the standard lifted index or the
+modified lifted index.  The |mli| flag is described in the {\bf Analysis of
+Soundings} section. 
+
+\index{moist adiabats, labeling}
+Another flag affecting skew-t plots is the ||theta_w|| flag.  On standard
+Air Force skew-t, log-p charts, moist adiabats are labeled by their
+wet-bulb potential temperature, $\theta_w$.  With the |theta_w| flag
+set to true (the default), \suds\ draws moist adiabats in this fashion.
+When |theta_w| is false, however, equivalent potential temperature
+will be used to label moist adiabats.
+
+Finally, the temperature data shown on the skew-t plot can be set to
+either ambient temperature or virtual temperature using the ||vt|| flag.
+Be default, ambient temperature is used, but virtual temperature will be
+plotted if |vt| is true.  Note that the |vt| flag also affects analysis
+results.  See the |analysis| command below.
+
+\subsection{Skew-t plot limits}
+The default plot limits on a \suds\ skew-t plot should be sufficient to show
+all points on most soundings.  It is often desirable, however, to change these
+limits in order to fill more of the plot or to emphasize a portion of a 
+sounding.  The commands ||skewt plimits|| and ||skewt tlimits|| allow the 
+user to scale skew-t plots as desired.
+
+\ndxentry{skewt plimits}{\tt skewt plimits}
+The pressure limits of skew-t plots are set with the command:
+\begin{example}
+	skewt plimits [max] |p_hi| [min] |p_lo|
+\end{example}
+where {\pf p\_hi} and {\pf p\_lo} are the upper and lower pressure limits
+in mb, respectively.  The default pressure limits in effect at program
+initiation are 1050-100 mb.
+
+\ndxentry{skewt tlimits}{\tt skewt tlimits}
+Similarly, temperature limits may be changed using the command:
+\begin{example}
+	skewt tlimits [min] |t_lo| [max] |t_hi|
+\end{example}
+where {\pf t\_lo} and {\pf t\_hi} are the temperature limits in $^\circ$C.
+The limits specified are the temperature limits for the bottom level (highest
+pressure) of the plot.  The temperature is skewed in the plots such that 
+the temperature in the lower left corner is the same as the temperature in 
+the upper right corner.  Hence, the temperatures at the top of the plot extend
+from 2{\pf t\_lo}\minus{\pf t\_hi} to {\pf t\_lo} $^\circ$C.  The default
+values of {\pf t\_lo} and {\pf t\_hi} are -40 and 35, respectively.
+
+\section{Hodographs}
+\index{hodographs}
+\subindex{plots}{hodographs}
+A standard hodograph winds plot may be generated for a sounding using the 
+||hodograph|| command:
+\begin{example}
+	hodograph [mark |m|] [step |s|] [top |t|] [|id-name|\sub{1}\ldots|id-name|\sub{n}]
+\end{example}
+where {\pf id-name\sub{1}\ldots id-name\sub{n}} are the identifiers of the 
+soundings to be plotted.  If no soundings are specified, the current default
+sounding will be used.  Up to three soundings may be shown in the same 
+hodograph.  The winds for each sounding specified will be shown as a trace 
+on an $x$-$y$ plane.
+
+The optional keywords |mark|, |step|, and |top|, affect how the hodograph 
+plots are drawn.  By default, every wind point in the sounding is used, and
+a label is placed on the hodograph every 1~km MSL.  The |mark| keyword
+may be used to change the label spacing to every {\pf m}~km MSL.
+The |step| keyword causes the hodograph to be drawn with a point every 
+{\pf s}~km, rather than drawing every point in the sounding.  When
+|step| is specified, every point drawn will be labeled.  The |top| keyword can
+be used to stop the hodograph at {\pf t}~km MSL.  By default, plots
+are drawn up to 20~km MSL.
+
+If AGL altitudes are desired instead of MSL on hodographs, the ||hodo_msl||
+flag can be set false.  Be default it is true, meaning that MSL altitudes
+will be used.
+
+\section{Cross-section Plots}
+\index{cross-sections}
+\subindex{plots}{cross-sections}
+Vertical cross-section plots (spatial or time-height) are generated in \suds\
+using the ||xsect|| family of commands.  Two of the commands affect both
+spatial and time-height plots.  The first of these is ||xsect use||, which
+is used to specify the soundings to use for subsequent cross-section plots.
+The syntax for the command is:
+\begin{example}
+	xsect use |snd\sub{1} snd\sub{2} \ldots|
+\end{example}
+where the parameters {\pf snd\sub{n}} are the identifiers of soundings to use.
+There is no maximum number of soundings to use, but at least two soundings
+must be specified with the |xsect use| command.  The |xsect use| command must
+appear before cross-section plots can be generated.
+
+By default, altitude is used as the vertical scale of cross-section plots.
+This can be changed with the ||xsect vscale|| command:
+\begin{example}
+	xsect vscale |fld|
+\end{example}
+where {\pf fld} is the name of the field to use for the vertical scale.
+Only |pres| or |alt| may be used as the vertical scale field.
+
+\subsection{Spatial cross-sections}
+\index{spatial cross-sections}
+\subindex{plots}{spatial cross-sections}
+For spatial cross-section plots, the surface endpoints of the vertical 
+plane must be given before the cross-section can be generated.  These 
+endpoints are specified using the ||xsect from - to -|| command 
+which has syntax:
+\begin{example}
+	xsect from |left-endpoint| to |right-endpoint|
+\end{example}
+The endpoints can be specified in either of two ways.  The (x,y) location
+of the endpoint can be used:
+\begin{example}
+	|xpos ypos|
+\end{example}
+where {\pf xpos} and {\pf ypos} are given in km and are interpreted relative
+to the origin current at the time the plot is generated (see the |origin| and
+|show origin| commands).  Alternatively, the launch point of a sounding
+can be specified as an endpoint:
+\begin{example}
+	site |sounding-id|
+\end{example}
+The |site| keyword is required and {\pf sounding-id} is the identifier of
+the sounding to use.
+
+Finally, the actual plot of a spatial cross-section is generated using the
+command:
+\begin{example}
+	xsect |fldname|
+\end{example}
+where {\pf fldname} is the name of the field to use for the plot.
+
+Two special fields are available for plotting in spatial cross-sections,
+||u_prime|| and ||v_prime||.  The $u'$ field is the wind component parallel
+to the plane of the cross-section, with the positive vector pointing to
+the right.  The $v'$ field is the wind component perpendicular to the
+plane of the cross-section, with the positive vector pointing into the plot.
+
+\subsection{Time-height cross-sections}
+\index{time-height cross-sections}
+\subindex{plots}{time-height cross-sections}
+Time-height cross-section plots are generated with the ||xsect time-height||
+command, which has syntax:
+\begin{example}
+	xsect time-height |fldname|
+\end{example}
+The parameter {\pf fldname} is the name of the field to plot.  The time
+limits of the plot will be generated automatically based on the earliest
+and latest times from all of the soundings being used for the plot.
+
+\section{Foote Charts}
+\index{Foote charts}
+\subindex{plots}{Foote charts}
+The Foote chart was first described by Foote (1984) and provides a means for 
+predicting whether an obstacle (e.g., a gust front) of a given height will
+initiate convection in an air mass.  Wilson and Mueller (1987) added the parcel
+lifted index (PLI) to the chart as an indicator for intensity of initiated
+convection.  A Foote chart with PLI values may be generated in \suds\ with the
+||foote|| command:
+\begin{example}
+	foote [|id-name|\sub{1}\ldots|id-name|\sub{n}]
+\end{example}
+where {\pf id-name\sub{1}\ldots id-name\sub{n}} are the identifiers of the 
+soundings to be plotted.  If no soundings are specified, the current default
+sounding will be used.  Up to three soundings may be displayed in the same
+Foote chart.
+
+\section{X-Y Plots}
+Plots of one sounding field against another can be made using the ||xyplot|| 
+command, which has syntax:
+\begin{example}
+	xyplot |xfld| |yfld| [|id-name|\sub{1}\ldots|id-name|\sub{n}]
+\end{example}
+The fields to be displayed along the x- and y-axes are {\pf xfld} and 
+{\pf yfld}, respectively.  The {\pf id-name} parameters are the sounding(s)
+to be used in making the plot.  Up to three soundings can be displayed in
+on x-y plot.  If no sounding identifier is specified, the current default
+sounding will be used.  Reasonable default plot limits exist for each
+field, but they can be changed using the |limits| command.
+
+
+\section{Color Handling}
+\index{color handling}
+Any of the colors used by \suds\ in its plots can be changed by the user
+with the ||color|| command:
+\begin{example}
+	color |index-name| |color-name|
+\end{example}
+where {\pf index-name} is the name describing the ``function'' of the color
+being changed.  Table~\ref{tbl-clrndx} shows the index names and their default 
+color values.  Each name describes its own use; data traces are drawn using
+colors |data1|--|data9|, backgrounds are drawn using |bg1|--|bg4|.  Even
+the program's notions of |black| and |white| can be changed.  ``White''
+annotations on a plot can be made to actually come out red and ``black'' areas
+can be made lime green.  For most output devices, the |black| index also 
+controls the screen background color.
+
+\begin{table}[tp]
+	\begin{center}
+	\begin{tabular}{|c|l|c|}
+		\hline
+		Index name	& Usage			& Default color \\ 
+		\hline\hline
+		\tt data1	& First data color 	& red \\
+		\tt data2	& Second data color	& cyan \\
+		\tt data3	& Third data color	& magenta \\
+		\tt data4	& Fourth data color	& medium slate blue \\
+		\tt data5	& Fifth data color	& yellow \\
+		\tt data6	& Sixth data color	& green \\
+		\tt data7	& Seventh data color	& gold \\
+		\tt data8	& Eighth data color	& dark orchid \\
+		\tt data9	& Ninth data color	& pale green \\
+		\tt bg1		& Background drawing	& gray60 \\
+		\tt bg2		& Background drawing	& gray45 \\
+		\tt bg3		& Background drawing	& steel blue \\
+		\tt bg4		& Background drawing	& sienna \\
+		\tt black	& Screen color		& black \\
+		\tt white	& Bright annotation color & white \\
+		\hline
+	\end{tabular}
+	\end{center}
+	\caption{Legal color index names for the {\tt color} command.}
+	\label{tbl-clrndx}
+\end{table}
+
+The {\pf color-name} parameter is a color name from the list in 
+Appendix~\ref{color-names}.  All of the primary and secondary colors are in the
+list, as well as a number of other colors ranging from aquamarine to wheat.
+Case is important for these color names, and names with spaces in them must
+be placed in quotes.
+
+If the named colors are insufficient, the user may specify a custom color
+using:
+\begin{example}
+	color |index-name| rgb |redval| |greenval| |blueval|
+\end{example}
+where {\pf redval}, {\pf greenval}, and {\pf blueval} are the relative red,
+green, and blue intensities of the color in the range 0.0--1.0.  The 
+{\pf index-name} parameter can take the same values as in the standard
+|color| command above.
+
+A listing of the current color settings can be generated with the
+||show colors|| command:
+\begin{example}
+	show colors
+\end{example}
+which takes no parameters.  A tabular listing of the color indices with their
+current values will be printed on the user's terminal, with the color name
+and the RGB values displayed.  If a graphic output device has been specified,
+a plot will also be generated on that display, with some text written in each
+of the colors.
+
+\section{Plot origin}
+\subindex{plots}{origin for}
+The origin used to convert between (latitude,longitude) and 
+($x,y$) coordinates is set using the ||origin|| command:
+\begin{example}
+	origin |lat| |lon|
+\end{example}
+where {\pf lat} and {\pf lon} are the latitude and longitude of the chosen
+origin.  The values should be given in decimal degrees (e.g., 
+$39^\circ 30'00''$ is specified as 39.500).  Standard sign conventions are 
+used, so north latitudes and east longitudes are positive.  This means that
+{\em west longitudes must be entered as negative values}.
+
+The current value of the origin may be examined with the ||show origin||
+command:
+\begin{example}
+	show origin
+\end{example}
+which takes no parameters.
+
+\section{Winds scaling}
+\subindex{winds}{scaling}
+The scaling of winds values on ||skewt|| and ||hodograph|| plots may be 
+changed with the ||wscale|| command:
+\begin{example}
+	wscale |val|
+\end{example}
+where {\pf val} is an estimate of the maximum wind speed (in ms$^{-1}$) to
+be plotted.  Winds less than {\pf val} are assured to fit within the bounds
+of the plot.  The default wind scaling value is 25.0 ms$^{-1}$.
+
+\section{Field Limits}
+\index{limits}
+Four plot limits are associated with each field understood by \suds:
+bottom, top, center, and step.  The bottom and top are the plotting bounds
+used for x-y plots and for the vertical scales of skew-t and cross-section
+plots.  Bottom sets the limit for the bottom (or left) side of the plot,
+and top sets the limit for the top (or right) side of the plot.  The center
+and step values are used for contours in cross-section plots.  Center is
+the first contour value and step is the spacing to use between contours on
+either side of the center.  The center value also determines how color will
+be used if the display device supports it.  Color index |data5| is used for
+the center contour, and the colors are used down to |data1| and up to
+|data9| for contours below and above the center value respectively.
+Contours outside this range of nine colors will be plotted using color
+index |bg1| (medium gray by default).
+
+\subindex{limits}{examining}
+The current limits for all fields may be shown using the ||show limits|| 
+command:
+\begin{example}
+	show limits
+\end{example}
+which takes no parameters.  Each known field is listed along with its 
+bottom, top, center, and step values.
+
+\subsection{Changing bottom and top limits}
+\subindex{limits}{bottom and top}
+The bottom and top limits for a field may be changed 
+with the ||limits|| command:
+\begin{example}
+	limits |fld| |bottom| |top|
+\end{example}
+where {\pf fld} is the name of the field to be affected, {\pf bottom} is
+the bottom value to use, and {\pf top} is the top value to use.
+
+\subsection{Changing contour limits}
+\index{contour limits}
+\subindex{limits}{contour}
+The center value and spacing used in contour plots may be changed on a
+field-by-field basis with the ||conlimits|| command:
+\begin{example}
+	conlimits |fld| |center| |step|
+\end{example}
+where {\pf fld} is the name of the field to be affected, {\pf center} is
+the center contour value, and {\pf step} is the spacing to use between 
+contours.  The possible contour values used for the chosen field are determined
+by the formula ${\pf center}\pm n\times{\pf step}$ where $n$ can be any 
+integer.  
+
+
+\part{Editing Soundings}
+\index{editing}
+\subindex{soundings}{editing}
+The process of editing in \suds\ consists of three basic functions.  
+The first step is to specify the particular sounding and field
+to be edited, using the ||select|| command.  Once a field has been selected,
+it remains so defined until another |select|
+command is given.  If the chosen field is in the current plot, a cursor
+will appear on the plot, over the first point of the chosen field.
+The second step of editing involves movement through the data to mark a point 
+or region to be edited. 
+Third, an editing function is chosen which is then
+applied to the point or points which have been selected.  These procedures 
+may then be repeated as necessary to perform the desired modifications.
+Generally, the second and third steps are repeated until the user is finished
+editing a field, then the |select| command is used to change fields and
+the process is repeated.  Edited soundings may optionally be written to
+disk files to save them for later editing or analysis.
+
+The \suds\ commands used in editing are described in detail in the following
+sections.
+
+\section{Selecting the Field to be Edited}
+\subindex{editing}{selecting a field for}
+Once one or more soundings have been made known to \suds, a field may be 
+chosen for editing by using the ||select|| command.  The syntax of this 
+command is:
+\begin{example}
+	select [field] |fld-name| [[sounding] |sounding-id|]
+\end{example}
+where {\pf fld-name} is the name of the field to edit and 
+{\pf sounding-id} is the name of the sounding being edited.  If no sounding 
+is specified, the current default sounding will be assumed.  Legal field 
+names are shown in Appendix~\ref{app-fields}.
+
+If a field which is in the current plot is selected, a cursor will appear 
+over the first point of that field.
+
+\section{Pointer Movement}
+\index{pointer movement}
+\subindex{editing}{pointer movement}
+The current position within the data of the currently selected field is 
+referred to as the pointer position.  The |select| command will position the 
+pointer on the first point of the chosen field; it may then be moved using 
+the commands ||up|| and ||down||, which have syntax:
+\begin{example}
+	up [|count|]
+	  {\rm --and--}
+	down [|count|]
+\end{example}
+The optional parameter {\pf count} tells how many points to move up or
+down the trace; it defaults to one if not specified.  Note that pointer
+movement in \suds\ is handled only through program commands.  Use of the
+Ramtek trackball, as is done in the RDSS radar editor, will move the cursor on
+the screen, but will not be recognized by \suds.
+
+\section{Examining Data Values}
+\index{values, examining}
+\index{data values, examining}
+\subindex{editing}{examining data values}
+When the pointer is on a given point, it is often useful to know the exact
+value of the point.  The command:
+\ndxentry{examine}{\tt examine}
+\begin{example}
+	examine
+\end{example}
+will show the current pointer position, as well as the positions of points  
+in the region of the pointer, up to three points to either side.
+The |examine| command takes no parameters.
+
+\section{Region Selection}
+\index{region selection}
+\subindex{editing}{region selection}
+Some editing functions can affect a contiguous set of points, or a region.
+The current editing region is defined by its two endpoints, one of which is 
+established by issuing the command:
+\ndxentry{mark}{\tt mark}
+\begin{example}
+	mark
+\end{example}
+when the pointer is over the desired point.  The pointer may then be moved,
+and the second endpoint of the editing region is defined as the current 
+pointer location.  For fields in the current plot, \suds\ will display the 
+current region by overwriting the edited trace in white.  A |mark| will be 
+deleted when another |mark| command is issued or when an editing function uses 
+the current region.
+
+\section{Editing Functions}
+The editing functions described here directly modify the selected sounding and
+field.  Some functions affect only the one point marked by the pointer, while
+others will affect all of the points in the current editing region.  The
+descriptions below will explain the results of each command.  After each of 
+the commands below is used, the current plot will be redrawn if necessary to 
+reflect the changes effected by the editing.
+
+\subsection{Deleting individual points}
+\subindex{editing}{deleting individual points}
+A single point may be removed from a sounding using the command:
+\ndxentry{erase}{\tt erase}
+\begin{example}
+	erase
+\end{example}
+which takes no parameters.  The command deletes the point which is currently 
+under the pointer.  The pointer will be moved to the next point up (next point
+down if the point deleted is at the top).  The |mark| position, if any, will
+remain unchanged unless it was on the deleted point, in which case the 
+position will be nullified.
+
+\subsection{Deleting regions of points}
+\subindex{editing}{deleting regions of points}
+All of the points in the current editing region, exclusive of the endpoints,
+may be removed from the sounding with the command:
+\ndxentry{cut}{\tt cut}
+\begin{example}
+	cut
+\end{example}
+which takes no parameters.  A |cut| command leaves the pointer in its current
+position and nullifies the ||mark|| position.  If |cut| is used and there
+is no current editing region (i.e., no |mark| has been placed or the pointer
+is on top of the mark), an error will result and the sounding will be
+unchanged.
+
+\subsection{Replacing individual data values}
+\subindex{editing}{replacing individual data values}
+\index{replacing individual data values}
+Occasionally, it is useful to change a given point in a sounding.  The 
+value associated with the point under the current pointer location may be
+changed with the ||newvalue|| command:
+\begin{example}
+	newvalue |val|
+\end{example}
+where {\pf val} is the new value to be substituted for the current one.  
+Other parts of the sounding will be unaffected and the pointer will remain 
+on the same point.
+
+\subsection{Inserting new data points}
+\subindex{editing}{inserting data points}
+\index{inserting data points}
+\Suds\ also allows the user to insert new data points into a sounding 
+which is being edited.  With the ||insert|| command, a list of fields and
+associated values can be specified to create a new point, which is then 
+inserted either above or below the current pointer location.
+\begin{example}
+	insert |where| |fld-name\sub{1}| |val\sub{1}| [|fld-name\sub{2}| |val\sub{2}| \ldots]
+\end{example}
+The first parameter, {\pf where}, is one of the keywords |above| or |below|, 
+depending on where the point is to be inserted.  The following parameters 
+should be ({\pf fld-name}, {\pf val}) pairs to use in creating the new 
+point.  As an example, if a user wished to insert a point above the current 
+position with pressure 500 mb, temperature -5$^\circ$C, and dewpoint 
+-10$^\circ$C, the command would be:
+\begin{example}
+	insert above pres 500 temp -5 dp -10
+\end{example}
+The specified point would be inserted immediately above the current point 
+in the list of data points.  
+
+NOTE: Only the position of the pointer is used for this edit procedure; the
+currently selected field is only affected if it is explicitly included in 
+the list of fields in the |insert| command.
+
+\subsection{Data Thresholding}
+\subindex{editing}{thresholding}
+\index{data thresholding}
+\index{thresholding}
+A commonly needed function is the ability to remove points from a field based
+on the values from another field (or perhaps the same field).  This capability
+is provided in \suds\ by the ||threshold|| command, which has syntax:
+\begin{example}
+	threshold [field] |f| [on] |t| |c| [[and] |t|\sub{2} |c|\sub{2} \ldots] [sounding |id-name|]
+\end{example}
+The command removes points from target field {\pf f} for which the
+corresponding points in field {\pf t} fit the given criterion {\pf c}.
+If no sounding is specified by {\pf id-name}, the current default sounding
+will be used.  Multiple threshold fields and criteria may be specified, if
+desired.  In the case of multiple criteria, a target point will be removed
+only if {\it all} criteria are met.
+
+Criteria are specified by comparative expressions or by the keyword |bad|.
+Legal criteria are shown in Table~\ref{tbl-crit}.  As an example, consider
+a case in which sounding |test| has a some glitched wind speed data.  The
+user decides to remove all points with wind speed greater than 75 $ms^{-1}$
+in order to get rid of the glitches.  The command to accomplish this would
+be:
+\begin{example}
+	threshold wspd on wspd > 75.0 sounding test
+\end{example}
+Notice that there is a space on either side of the ``|>|''; this is
+necessary in order for the command to be parsed properly.  As a second
+example, consider a CLASS system sounding, where a pressure quality field,
+|qpres|, is provided.  In this case the user chooses to remove pressures
+that have a quality number greater than 1.5, but does not want to remove
+points for which the quality number is 77 (which is a special value for
+CLASS soundings).  The |threshold| command to do this for the current
+default sounding is:
+\begin{example}
+	threshold pres on qpres > 1.5 and qpres <> 77
+\end{example}
+Multiple criteria can be combined like this in many different ways, and can
+involve separate fields for each criterion.  Up to ten different criteria can
+be included in a single |threshold| command.
+
+\begin{table}[tp]
+	\begin{center}
+	\begin{tabular}{|c|c|}
+		\hline
+		\tt = \pf val	& \tt <> \pf val \\
+		\tt > \pf val	& \tt < \pf val \\
+		\tt >= \pf val	& \tt <= \pf val\\
+		\tt bad 	& \\ \hline
+	\end{tabular}
+	\end{center}
+	\caption{Legal criteria for the {\tt threshold} command}
+	\label{tbl-crit}
+\end{table}
+
+Another user has edited the temperature field in the current default sounding,
+removing some bad points.  Since dewpoint is derived in part from temperature,
+the corresponding data in the dewpoint field should also be removed.  Rather
+than editing the dewpoint in a similar fashion as the temperature, the user
+can simply remove data from the dewpoint field corresponding to the now deleted
+points in the temperature field using the command:
+\begin{example}
+	threshold dp on temp bad
+\end{example}
+After this command is executed, all dewpoint data which do not have 
+corresponding good points in the temperature field will have been deleted.
+
+Note that this command differs from other editing commands in that the fields
+and sounding to be used are specified as part of the command.  The last 
+|select| command and the current editing region do not affect and are not
+affected by the |threshold| command.
+
+\subsection{Extending Values to the Surface}
+\subindex{editing}{extending data}
+\index{extending data to the surface}
+Occasionally, it is useful to make data follow a dry adiabat or a constant
+mixing ratio from the surface to a chosen level.  This can be accomplished
+using the ||extend|| command:
+\begin{example}
+	extend
+\end{example}
+which takes no parameters.  If the selected field is temperature, the
+|extend| command will cause the temperature points from the current
+position down to the surface to be modified to follow the dry adiabat which
+intersects the current point.  The effect is to ``extend'' a dry adiabat
+from the pointer to the surface.  If dewpoint is the currently selected
+field, then a similar procedure is used, except that the data will be
+forced to follow a line of constant mixing ratio.  If any field other that
+temperature or dewpoint is selected, an error message will be issued.
+
+\section{Saving Edited Soundings}
+\index{saving an edited sounding}
+\subindex{editing}{saving an edited sounding}
+After a sounding has been edited, it is often desirable to save it for future
+reference or continued editing.  The ||write|| command allows the user
+to put a sounding into a file which can be read again later.  The syntax of 
+the command is:
+\begin{example}
+	write [file] |filename| [[from] |sounding-id|]
+\end{example}
+where {\pf sounding-id} is the identifier of the sounding to be
+written and {\pf filename} is the system name of the file to be created.
+If no sounding is specified, the current default sounding will be written.
+The type of the created file is ||CLASS||; this is the type which needs
+to be specified if the file is read in again using the |file| command.
+
+Soundings can also be saved as netCDF files using the ||netcdf|| command,
+which is structured like the |write| command:
+\begin{example}
+	netcdf [file] |filename| [[from] |sounding-id|]
+\end{example}
+Files written in this way can be used in other programs which understand
+netCDF.
+
+\section{Analysis of Soundings}
+\index{analyzing a sounding}
+\subindex{soundings}{analysis of}
+Of course, determination of characteristics of a sounding is important.
+Currently, \suds\ provides only the ||analyze|| command to perform calculations
+on a sounding.  The syntax of the command is:
+\begin{example}
+	analyze [to |filename|] [|sounding-id|]
+\end{example}
+where {\pf sounding-id} is the identifier for the sounding of interest.  If no
+sounding is specified, the current default sounding will be used.  
+Normally, the analysis is written only to the user's terminal screen.  If
+the optional |to| qualifier is used, however, the analysis will also be put 
+into a disk file with name {\pf filename}.
+
+
+\index{lifting condensation level}
+\index{LCL}
+\index{lifted index}
+\index{modified lifted index}
+\index{level of free convection}
+\index{LFC}
+\index{CAPE}
+\index{bulk Richardson number}
+\index{mean layer vector wind}
+\index{MLVW}
+The |analyze| command will display:
+\begin{itemize}
+	\parskip=0pt
+	\item Surface potential temperature and virtual potential temperature
+	\item Surface mixing ratio
+	\item Lifted index level temperature, potential temperature, virtual 
+		temperature, and virtual potential temperature (the lifted
+		index level is either 500 or 400 mb.  See the description of 
+		the ||mli|| flag below)
+	\item Pressure of the lifting condensation level (LCL)
+	\item Lifted index or modified lifted index
+	\item Pressure of the level of free convection (LFC)
+	\item Positive area, in J kg$^{-1}$, below the LFC
+	\item Negative area, in J kg$^{-1}$, below the LFC
+	\item CAPE (Positive area, in J kg$^{-1}$, above the LFC)
+	\item Negative area, in J kg$^{-1}$, above the LFC
+	\item Shear over the lowest 6 km of the sounding
+	\item Bulk Richardson number
+	\item MLVW (Mean Layer Vector Wind)
+\end{itemize}
+and an equivalent ``forecast'' analysis based on values at a user-selected
+pressure, rather than the surface values.
+
+By default, surface values used for the analysis are actually averages over
+the lowest 50 mb of the sounding.  To change the depth of the mixed layer,
+the command ||mixdepth|| can be used:
+\begin{example}
+	mixdepth |depth|
+\end{example}
+where {\pf depth} is the desired depth of the mixed layer in mb.  A value
+of zero will defeat averaging and the absolute surface values will be used.
+
+The pressure used for the forecast analysis is 700 mb by default, but may
+be changed with the ||forecast|| command:
+\begin{example}
+	forecast |forecast-level|
+\end{example}
+The {\pf forecast-level} is the pressure in mb to be used as the basis
+for the forecast analysis.
+
+Normally, analyses will be performed using ambient temperature to calculate
+LCL, lifted index, areas, and Bulk Richardson number.  If the ||vt|| flag
+is true, however, virtual temperature will be used for these calculations.
+
+\subsection{Lifted Index Calculation}
+\index{lifted index}
+\index{modified lifted index}
+Lifted index calculations will be affected by the ||mli|| or ``modified
+lifted index'' flag.  This flag, which is true by default, causes the
+analysis to use the modified lifted index rather than the standard lifted
+index.  In calculating the MLI, the parcel is lifted to 400 mb rather than
+500 mb.
+
+\subsection{Mean Layer Vector Wind}
+\index{mean layer vector wind}
+\index{MLVW}
+The MLVW (mean layer vector wind) is the mean wind between 1000 mb and 700 mb.
+The mean u and v components of winds within the pressure limits are calculated
+independently, and then combined to yield the MLVW.  The user can change the
+pressure limits used to calculate MLVW with the ||mlvw|| command:
+\begin{example}
+	mlvw [bottom] |bot-pres| [top] |top-pres|
+\end{example}
+where {\pf bot-pres} and {\pf top-pres} are the pressures in mb of the bottom
+and top of the layer to use.  (Presumably {\pf bot-pres} will be greater 
+than {\pf top-pres}).
+
+\subsection{Adding Items to the Analysis}
+An analysis can have certain custom values added to it by the user with
+the ||analyze show|| command.  This command allows the specification of
+a list of fields and the pressures at which they are to be evaluated. The
+syntax of the command is:
+\begin{example}
+	analyze show |fld| [at] |pres| [|fld| [at] |pres|]\ldots
+\end{example}
+where each {\pf fld} is the name of a field to be displayed and the 
+corresponding {\pf pres} is the pressure at which to evaluate the field.
+The chosen values will be shown at the end of each analysis under the heading
+``USER-REQUESTED VARIABLES.''
+
+
+\part{Glossary of Commands}
+The following is an alphabetical listing of all of the commands available
+in \suds.
+
+\begin{glossarylist}
+\keyword{analyze [to {\pf filename}] [{\pf sounding-id}]}
+	The ||analyze|| command performs an analysis on the sounding with 
+	identifier {\pf sounding-id}.  The current default sounding will be
+	used if none is specified.  The LCL, LFC, and some important
+	areas are displayed.  If the optional qualifier |to| is used, the
+	analysis will be written in to file {\pf filename}.
+
+\keyword{analyze show {\pf fld} [at] {\pf pres} [{\pf fld} [at] {\pf pres}]\ldots}
+	Field-pressure pairs can be displayed as part of an analysis using
+	the ||analyze show|| command.  Each {\pf fld} parameter is a field
+	name and the associated {\pf pres} is the pressure at which to
+	evaluate the field.  The values are printed at the end of each
+	analysis generated by the |analyze| command.
+
+\keyword{color {\pf index-name} {\pf color-name}}
+	The ||color|| command changes the color associated with the given
+	{\pf index-name} to the named color specified by {\pf color-name}.
+
+\keyword{color {\pf index-name} rgb {\pf redval greenval blueval}}
+	Like the standard |color| command above, except a custom color is
+	specified by its red, green, and blue values.  The parameters
+	{\pf redval}, {\pf greenval}, and {\pf blueval} should be numbers in
+	the range 0.0--1.0 specifying the relative red, green, and blue 
+	intensities.
+
+\keyword{conlimits {\pf fld} {\pf center} {\pf step}}
+	The ||conlimits|| command allows the user to set the contour limits
+	for field {\pf fld}.  The values {\pf center} and {\pf step} are
+	the basis contour value and the spacing between contours for the
+	chosen field.
+
+\keyword{copyright}
+	Displays the standard UCAR copyright message.
+
+\keyword{create [sounding] {\pf new-id} [from] {\pf sounding-id}}
+	The ||create|| command generates a new sounding with 
+	identifier {\pf new-id} from the sounding with identifier 
+	{\pf sounding-id}.  The created sounding will be established as
+	the current default sounding.
+
+\keyword{cut}
+	After an editing region has been chosen, the ||cut|| command removes
+	all of the points in the editing region, exclusive of the endpoints.
+
+\keyword{down [{\pf count}]}
+	The ||down|| command moves the pointer down {\pf count} points in the
+	current trace.  If {\pf count} is not specified, it defaults to one.
+
+\keyword{erase}
+	The point currently under the pointer is removed by the ||erase||
+	command.
+
+\keyword{examine}
+	The data values at and around the pointer are shown by the 
+	||examine|| command.  Up to three points on either side of the
+	pointer are shown in addition to the current location.
+
+\keyword{exit}
+	The ||exit|| command terminates \suds, returning the user to the
+	system level.
+
+\keyword{extend}
+	Data below the pointer position will be forced to fit along a given
+	path depending on the field selected.  Temperature, if selected,
+	will be made to follow a dry adiabat, dewpoint will be set to
+	a constant mixing ratio, and any other selected field will not be
+	affected.
+
+\keyword{file [name] {\pf filename} [type] {\pf filetype} [id] {\pf sounding-id}}
+	Soundings may be loaded from disk files using the ||file|| command, 
+	where {\pf filename} is the system name of the file, and {\pf filetype}
+	is the type of file being read (e.g., |CLASS| or |NOAA|).  The
+	{\pf sounding-id} is the identifier to be used in referring to the 
+	sounding within the program.  The sounding accessed will become the
+	current default sounding.
+
+\keyword{forecast {\pf forecast-level}}
+	The pressure used for the forecast analysis (700 mb by default), may
+	be changed with the ||forecast|| command.  The {\pf forecast-level} 
+	is the pressure in mb to be used as the basis for the analysis.
+
+\keyword{foote [{\pf id-name}\sub{1}\ldots{\pf id-name}\sub{n}]}
+	A Foote chart may be generated with the ||foote|| command.
+	Charts for the soundings specified by {\pf id-name}\sub{1}\ldots 
+	{\pf id-name}\sub{n} will be plotted.  If no sounding is specified,
+	the current default sounding will be used.
+
+\keyword{forget {\pf sounding-id}}
+	A sounding may be removed from the list of available soundings using
+	the ||forget|| command.  Note that the sounding to be removed must
+	be given; no default will be used.
+
+\keyword{hodograph [mark {\pf mval}] [step {\pf sval}] [top {\pf topval}] [{\pf id-name}\sub{1}\ldots{\pf id-name}\sub{n}]}
+	A standard hodograph is generated by the ||hodograph|| command.
+	Up to three soundings, specified by {\pf id-name}\sub{1}\ldots
+	{\pf id-name}\sub{n} will be plotted on the hodograph.  If no sounding
+	is specified, the current default sounding will be used.  The |mark|
+	keyword changes the labeling distance from 1~km to {\pf mval}~km.
+	The |step| keyword allows the user to specify that points be drawn 
+	every {\pf sval}~km; by default, every wind point in the sounding is 
+	drawn.  When |top| is used, the hodograph will be drawn up to
+	{\pf topval}~km MSL instead of the default 20~km MSL.
+
+\keyword{insert {\pf where} {\pf fld-name\sub{1}} {\pf val\sub{1}} %
+   [{\pf fld-name\sub{2}} {\pf val\sub{2}} \ldots]}
+	A data point may be inserted into the currently selected sounding
+	with the ||insert|| command.  The parameter {\pf where} specifies
+	whether the point is to go |above| or |below| the current pointer
+	position and is followed by a list of ({\pf fld-name}, {\pf val})
+	pairs to be used in making the point.
+
+\keyword{limits {\pf fld} {\pf bottom} {\pf top}}
+	The ||limits|| command allows the user to set the bottom and top
+	limits for field {\pf fld}.  The values {\pf bottom} and {\pf top}
+	are the values to use at the bottom (or left) and top (or right)
+	sides of the plot when the selected field is plotted.
+
+\keyword{mark}
+	The beginning of an editing region is specified with the ||mark||
+	command.  The command is issued when the pointer is on the desired
+	starting location.
+
+\keyword{mixdepth {\pf depth}}
+	The ||mixdepth|| command is used to change the mixed layer depth used 
+	in calculating surface values for sounding analyses.  The chosen
+	{\pf depth} is specified in mb.  50 mb is the default mixed layer
+	depth.
+
+\keyword{mlvw [bottom] {\pf bot-pres} [top] {\pf top-pres}}
+	The ||mlvw|| command changes the layer over which Mean Layer Vector
+	Wind is calculated.  The pressure in mb of the bottom of the layer is
+	{\pf bot-pres} and at the top of the layer is {\pf top-pres}.  By
+	default, the limits are 1000 mb and 700 mb, respectively.
+
+\keyword{netcdf [file] {\pf filename} [[from] {\pf sounding-id}]}
+	The ||netcdf|| command saves the sounding specified by 
+	{\pf sounding-id} into a disk file with the name {\pf filename}.
+	If no sounding is specified, the current default sounding will be 
+	written.  The file created has type |netcdf| (see the |file| 
+	command for the usage of file type).
+
+\keyword{newvalue {\pf val}}
+	The ||newvalue|| command substitutes {\pf val} for the value currently
+	associated with the point under the pointer.  The rest of the sounding
+	remains unchanged.
+
+\keyword{origin {\pf lat} {\pf lon}}
+	The ||origin|| command sets the origin for conversion between
+	(latitude,longitude) and ($x,y$) coordinates.  The parameters
+	{\pf lat} and {\pf lon} are specified in decimal degrees.
+
+\keyword{output [device] {\pf dev-name} [type] {\pf dev-type}}
+	The graphics output device is specified with the ||output|| command.
+	The parameters {\pf dev-name} and {\pf dev-type} refer to the device's
+	system name and type, respectively.  See Tables \ref{tbl-dev} and 
+	\ref{tbl-type} for some common devices and types.
+
+\keyword{select [field] {\pf fld-name} [[sounding] {\pf sounding-id}]}
+	A field to be edited is specified with the ||select|| command.  The
+	{\pf sounding-id} is the identifier for the sounding to be used
+	and {\pf fld-name} is the name of the field to be edited.  The
+	selected field must have been displayed in the previous plot.
+	If no sounding is specified, the current default sounding will be
+	assumed.
+
+\keyword{set {\pf flagname} {\pf value}}
+	The ||set|| command is used to change the value of program flag
+	{\pf flagname} to {\pf value}.  The {\pf value} can be either
+	|true| or |false|.
+
+\keyword{show colors}
+	The ||show colors|| command generates listings of the current color
+	settings to both the user's terminal and to the current graphics
+	device.
+
+\keyword{show flags}
+	The current state of all program flags may be shown using the
+	||show flags|| command.
+
+\keyword{show limits}
+	The current plot limits for all fields are displayed by the 
+	||show limits|| command.
+
+\keyword{show origin}
+	The ||show origin|| command shows the current value of the origin
+	used for converting between (latitude,longitude) and
+	($x,y$) coordinates.
+
+\keyword{show soundings}
+	The ||show soundings|| command displays a list of the currently
+	available soundings, with the identifier, time, and site for each.
+
+\keyword{skewt [plot] [{\pf id-name}\sub{1}\ldots{\pf id-name}\sub{n}]}
+	A skew-t, log p plot may be generated with the ||skewt|| command.
+	The soundings specified by {\pf id-name}\sub{1}\ldots
+	{\pf id-name}\sub{n} will be plotted.  If no sounding is specified,
+	the current default sounding will be used.  The last sounding plotted
+	by this command will become the new current default sounding.
+
+\keyword{skewt plimits [max] {\pf p\_hi} [min] {\pf p\_lo}}
+	The ||skewt plimits|| command is used to change the pressure limits
+	used in |skewt| plots.  The maximum and minimum pressures to display
+	are {\pf p\_hi} and {\pf p\_lo}, respectively.
+
+\keyword{skewt tlimits [min] {\pf t\_lo} [max] {\pf t\_hi}}
+	The temperature limits of |skewt| plots are set with the 
+	||skewt tlimits|| command.  The minimum and maximum temperatures,
+	{\pf t\_lo} and {\pf t\_hi}, apply to the temperature limits at
+	the highest pressure (bottom) of the plot.  The temperature
+	limits at the top of the plot are different due to the skew in the
+	temperature scale.
+
+\keyword{threshold [field] {\pf target} [on] {\pf thresh} {\pf criterion} [[sounding] {\pf id-name}]}
+	The ||threshold|| command removes points from field {\pf target} 
+	for which corresponding points in field {\pf thresh} meet the given 
+	{\pf criterion}.  The sounding to be used is given by {\pf id-name}
+	or the current default sounding will be used if none is specified.
+
+\keyword{up [{\pf count}]}
+	The pointer may be moved up the trace with the ||up|| command.  The
+	number of points moved is determined by {\pf count}.  If {\pf count}
+	is not specified, it defaults to one.
+
+\keyword{xsect {\pf fldname}}
+	The ||xsect|| command generates a spatial cross section plot of
+	the field {\pf fldname}.  Before a cross-section can be made,
+	the plot must be defined using the  |xsect use|, 
+	|xsect from - to -|, and |origin| commands.
+
+\keyword{xsect from {\pf xleft yleft} to {\pf xright to yright}}
+	The surface endpoints of the plane for a spatial cross-section
+	plot are given with the ||xsect from - to -|| command.
+	The parameters {\pf xleft}, {\pf yleft}, {xright}, and {\pf yright}
+	specify the $(x,y)$ locations of the left and right endpoints,
+	respectively.  The values should be given in km, and are interpreted
+	with respect to the origin current at the time of the plot.
+
+\keyword{xsect time-height {\pf fldname}}
+	The ||xsect time-height|| command is used to make a time-height
+	cross-section plot.  Before the plot can be made, the soundings
+	to use must be given with the |xsect use| command.
+
+\keyword{xsect use {\pf snd\sub{1} snd\sub{2} \ldots}}
+	The soundings to use in cross-section plots (spatial or time-height)
+	are specified with the ||xsect use|| command.  The parameters
+	{\pf snd\sub{n}} are the identifiers for the chosen soundings.  There
+	is no maximum number of soundings to use, but at least two must
+	be given.
+
+\keyword{xsect vscale {\pf fldname}}
+	The vertical scale for cross-section plots may be changed with
+	the ||xsect vscale|| command.  The {\pf fldname} parameter 
+	specifies the field to be used for the vertical scale, either 
+	|pres| or |alt|.
+
+\keyword{xyplot {\pf xfld} {\pf yfld} [{\pf id-name}\sub{1}\ldots{\pf id-name}\sub{n}]}
+	One field can be plotted against another using the ||xyplot|| command.
+	The parameters {\pf xfld} and {\pf yfld} tell the fields to plot
+	against the x- and y- axes, respectively.  The soundings specified
+	by {\pf id-name}\sub{1}--{\pf id-name}\sub{n} will be used for the
+	plot, or the current default sounding will be used if no soundings
+	are given.
+
+\keyword{write [file] {\pf filename} [[from] {\pf sounding-id}]}
+	The ||write|| command saves the sounding specified by 
+	{\pf sounding-id} into a disk file with the name {\pf filename}.
+	If no sounding is specified, the current default sounding will be 
+	written.  The file created has type |CLASS| (see the |file| 
+	command for the usage of file type).
+
+\end{glossarylist}
+
+
+
+\appendix
+
+\part{Field Derivation}
+
+Formulas for most of the derivations used by \suds\ are extracted from {\sl
+Formulation of Output Parameters for PAM II CMF Data} (Herzegh, 1988).  Those
+calculations used by \suds\ which are not taken directly from this memorandum
+are outlined below.
+
+\section{Obtaining Dewpoint Temperature from Saturation Mixing 
+	Ratio and Pressure}
+
+The temperature at which a given constant mixing ratio line and isobar 
+intersect is used in many places in \suds.  The formulas used to calculate
+this intersection are:
+
+\begin{eqnarray}
+	T_d (^\circ{\rm K}) &=& \frac{T_3 A}
+		{A - B + \sqrt{B^2 + 2A \ln(E_3/e_{sw})}} \label{eq-T}\\
+	e_{sw} ({\rm mb}) &=& \frac{Pw_{sw}}{1000\epsilon + w_{sw}}\label{eq-e}
+\end{eqnarray}
+
+where $P$ is the pressure in mb, $w$ is the mixing ratio in g kg$^{-1}$, and
+the other terms are constants, as follows:
+\begin{eqnarray*}
+	T_3 &=& 273.15 ^\circ{\rm K} \\
+	E_3 &=& 6.1078 {\rm~mb} \\
+	\epsilon &=& 0.622 \\
+	A &=& 5.0065 \\
+	B &=& 19.83923
+\end{eqnarray*}
+
+The derivation of Equation~\ref{eq-T} proceeds from Note~6 of Herzegh (1988),
+using the formula given there and applying the fact that $T = T_d$ when 
+$e = e_{sw}$:
+\[
+	e_{sw} = E_3 \exp\left[A \ln(T_3 / T_d)] 
+		\exp[(A + B)(1 - T_3 / T_d)\right]
+\]
+Take the logarithm of both sides to obtain:
+\[
+	\ln e_{sw} = \ln E_3 + A \ln(T_3 / T_d) + (A + B)(1 - T_3 / T_d)
+\]
+Perform the substitution $x = T_3 / T_d$:
+\[
+	\ln e_{sw} = \ln E_3 + A \ln x + (A + B)(1 - x)
+\]
+Taylor series expand $\ln x~~(~= (x-1) - \frac{1}{2}(x-1)^2 + \cdots)$, and
+substitute $-(x-1)$ for $(1-x)$:
+\[
+	\ln e_{sw} = \ln E_3 + A(x-1) - \frac{A}{2}(x-1)^2 + 
+		{\rm smaller~terms} - (A+B)(x-1)
+\]
+Combining terms yields:
+\[
+	0 = \ln E_3 - \ln e_{sw} - B(x-1) - \frac{A}{2}(x-1)^2
+\]
+Perform the substitution $u = x - 1$ and simplify:
+\[
+	0 = -\frac{A}{2}u^2 - Bu + ln (E_3 / e_{sw})
+\]
+Solve for $u$, choosing the positive root:
+\[
+	u = \frac{-B + \sqrt{B^2 + 2A \ln (E_3 / e_{sw})}}{A}
+\]
+Solve for $x~~(~= 1 + u)$:
+\[
+	x = \frac{A - B + \sqrt{B^2 + 2A \ln (E_3 / e_{sw})}}{A}
+\]
+Finally, solve for $T_d~~(~= T_3 / x)$ to obtain Equation~\ref{eq-T}:
+\[
+	T_d = \frac{T_3 A}{A - B + \sqrt{B^2 + 2A \ln (E_3 / e_{sw})}}
+\]
+
+Equation~\ref{eq-e} is derived from Note~2 of Herzegh (1988), rearranging
+the terms to express the saturation vapor pressure in terms of the saturation
+mixing ratio:
+\[
+	w_{sw} = \epsilon\left[\frac{e_{sw}}{P-e_{sw}}\right]1000 
+	~~~\Longrightarrow~~~
+	e_{sw} = \frac{Pw_{sw}}{1000\epsilon + w_{sw}}
+\]
+
+\section {Saturation Vapor Pressure}
+The equation for calculating saturation vapor pressure from Note~6 of Herzegh
+(1988) is:
+\[
+	e_{sw} = E_3 \exp\left[A \ln(T_3/T) \right] 
+		\exp\left[(A+B)(1-T_3/T)\right]
+\]
+Applying this equation involves the calculation of two exponentials and one
+logarithm and these calculations are relatively compute-intensive.  Since the
+saturation vapor pressure is calculated many times for many different points
+by \suds, compute times become prohibitive if the exact equation is used every
+time.  For this reason, and because temperature is the only free variable in 
+the equation, calculation of saturation vapor pressure has been 
+implemented as a look-up table with values stored for every 0.5$^\circ$K from
+210.0$^\circ$K to 310.0$^\circ$K.  Simple linear interpolation is used between
+the two temperatures nearest a given input point.  For input values which lie
+outside the table, the exact formula is used.  The lookup table yields a
+maximum relative error on the order of a few parts in 10$^4$.  For most end
+calculations (e.g., temperature of the lifting condensation level), the 
+errors introduced are on this same scale.  For calculations of energy, however,
+the numeric integrations used compound the error, so relative errors may climb
+to the order of 10$^{-2}$.
+
+\section {Potential Temperature}
+
+From Herzegh (1988), the equation for potential temperature is:
+\[
+	\theta = T \left[\frac{1000}{P}\right]^{(R_d/c_p)(1-0.00028w)}
+\]
+Application of this equation involves exponentiation; since \suds\ uses
+this equation frequently, the compute time can be prohibitive if the exact 
+form is used.  The equation has three free parameters, $T$, $P$, and $w$, so 
+a simple look-up table cannot be used as was done for the saturation vapor 
+pressure.  Instead, a relation was developed which is less compute-intensive
+but is not an exact solution.  First, the mixing ratio term $(1-0.00028w)$ in
+the exponent was dropped, due to its small effect (less than 1 part in $10^3$ 
+in realistic situations).  Second, the substitution $u = 1000 / P$ was made, 
+yielding:
+\[
+	\theta = Tu^{(R_d/c_p)}
+\]
+Next, the exponential in $u$ is expanded into a seven term Taylor series about
+some value $u_0$:
+\[
+	\theta = T \sum_{i=0}^6 \left[\prod_{j=0}^{i-1}(R_d/c_p-j)\right]
+		\frac{(u-u_0)^i}{i!} u_0^{R_d/c_p-i} + {\rm smaller~terms}
+\]
+Three values of $u_0$ were chosen: $1000 / 700$, $1000 / 350$, and 
+$1000 / 175$, corresponding to pressures of 700~mb, 350~mb, and 175~mb, 
+respectively.  The resulting formulas and the ranges over which they are 
+applied are shown below:
+\[
+	\newcommand{\diff}{(u - u_0)}
+	\theta~~(^\circ\rm K) = 
+		\cases{	T\Big[1.10714599 + 0.22116497\diff - \cr
+			~~~0.05531763\diff^2 + 0.02213146\diff^3 - \cr
+			~~~0.01051376\diff^4 + 0.00546766\diff^5 - \cr
+			~~~0.00300743\diff^6\Big] 
+					& $u_0 = 1000 / 700$ \cr
+					& if $P > 500$ mb; \cr
+			\cr
+			T\Big[1.34930719 + 0.13476972\diff - \cr
+			~~~0.01685425\diff^2 + 0.00337152\diff^3 - \cr
+			~~~0.00080084\diff^4 + 	0.00020824\diff^5 - 
+					& \hskip 1.75 truein (A.3)
+					  \hskip -2.0truein\cr
+			~~~0.00005727\diff^6\Big]
+					& $u_0 = 1000 / 350$ \cr
+					& if $500{\rm~mb}\ge P > 250$ mb; \cr
+			\cr
+			T\Big[1.64443524 + 0.08212365\diff - \cr
+			~~~0.00513518\diff^2 + 0.00051362\diff^3 - \cr
+			~~~0.00006100\diff^4 + 0.00000793\diff^5 - \cr
+			~~~0.00000109\diff^6\Big]
+					& $u_0 = 1000 / 175$ \cr
+					& if $250{\rm~mb}\ge P > 125$ mb; \cr
+			\cr
+			Tu^{R_d/c_p}	& otherwise.
+			}
+\]
+
+
+\part{Field Names}
+\label{app-fields}
+\begin{center}
+\begin{tabular}{|r|l|}
+	\hline
+	Name(s)				& Description	\\
+	\hline \hline
+	\tt alt, altitude		& Altitude MSL	\\
+	\tt ascent, dz/dt, dz		& Balloon ascent rate \\
+	\tt dp, dewpoint		& Dewpoint	\\
+	\tt lat, latitude		& Latitude	\\
+	\tt lon, longitude		& Longitude	\\
+	\tt mflux\_uv			& Moisture flux w.r.t. u or v wind \\
+	\tt mr				& Mixing ratio	\\
+	\tt pres, press, pressure	& Pressure	\\
+	\tt qpres			& Pressure quality	\\
+	\tt qrh				& Relative humidity quality	\\
+	\tt qtemp			& Temperature quality	\\
+	\tt rh				& Relative humidity	\\
+	\tt ri				& Richardson number \\
+	\tt rtype			& NWS record type	\\
+	\tt temp, temperature, tdry	& Temperature (dry bulb)\\
+	\tt theta, pt			& Potential temperature	\\
+	\tt theta\_e, ept		& Equivalent potential temperature \\
+	\tt theta\_v, vpt		& Virtual potential temperature \\
+	\tt time			& Time since sounding launch	\\
+	\tt u\_wind			& U component of wind	\\
+	\tt vt, t\_v			& virtual temperature	\\
+	\tt v\_wind			& V component of wind	\\
+	\tt wdir			& Wind direction	\\
+	\tt wspd			& Wind speed	\\
+	\tt u\_prime			& $\parallel$ wind component 
+						({\tt xsect} only)	\\
+	\tt v\_prime			& $\perp$ wind component 
+						({\tt xsect} only)	\\
+	\hline
+\end{tabular}
+\end{center}
+
+\part{Color Names}
+\label{color-names}
+\begin{center}
+    \scriptsize
+    \baselineskip 12pt
+    \vfill
+    \begin{tabular}{c|c|c|c|c}
+        snow			& dim gray                & LightSkyBlue                    & MediumSpringGreen       & DarkSalmon              \cr
+        ghost white		& DimGray                 & steel blue                      & green yellow            & salmon                  \cr
+        GhostWhite		& dim grey                & SteelBlue                       & GreenYellow             & light salmon            \cr
+        white smoke		& DimGrey                 & light steel blue                & lime green              & LightSalmon             \cr
+        WhiteSmoke		& slate gray              & LightSteelBlue                  & LimeGreen               & orange                  \cr
+        gainsboro		& SlateGray               & light blue                      & yellow green            & dark orange             \cr
+        floral white		& slate grey              & LightBlue                       & YellowGreen             & DarkOrange              \cr
+        FloralWhite		& SlateGrey               & powder blue                     & forest green            & coral                   \cr
+        old lace		& light slate gray        & PowderBlue                      & ForestGreen             & light coral             \cr
+        OldLace			& LightSlateGray          & pale turquoise                  & olive drab              & LightCoral              \cr
+        linen			& light slate grey        & PaleTurquoise                   & OliveDrab               & tomato                  \cr
+        antique white		& LightSlateGrey          & dark turquoise                  & dark khaki              & orange red              \cr
+        AntiqueWhite		& gray                    & DarkTurquoise                   & DarkKhaki               & OrangeRed               \cr
+        papaya whip		& grey                    & medium turquoise                & khaki                   & red                     \cr
+        PapayaWhip		& light grey              & MediumTurquoise                 & pale goldenrod          & hot pink                \cr
+        blanched almond		& LightGrey               & turquoise                       & PaleGoldenrod           & HotPink                 \cr
+        BlanchedAlmond		& light gray              & cyan                            & light goldenrod yellow  & deep pink               \cr
+        bisque			& LightGray               & light cyan                      & LightGoldenrodYellow    & DeepPink                \cr
+        peach puff		& midnight blue           & LightCyan                       & light yellow            & pink                    \cr
+        PeachPuff		& MidnightBlue            & cadet blue                      & LightYellow             & light pink              \cr
+        navajo white		& navy                    & CadetBlue                       & yellow                  & LightPink               \cr
+        NavajoWhite		& navy blue               & medium aquamarine               & gold                    & pale violet red         \cr
+        moccasin		& NavyBlue                & MediumAquamarine                & light goldenrod         & PaleVioletRed           \cr
+        cornsilk		& cornflower blue         & aquamarine                      & LightGoldenrod          & maroon                  \cr
+        ivory			& CornflowerBlue          & dark green                      & goldenrod               & medium violet red       \cr
+        lemon chiffon		& dark slate blue         & DarkGreen                       & dark goldenrod          & MediumVioletRed         \cr
+        LemonChiffon		& DarkSlateBlue           & dark olive green                & DarkGoldenrod           & violet red              \cr
+        seashell		& slate blue              & DarkOliveGreen                  & rosy brown              & VioletRed               \cr
+        honeydew		& SlateBlue               & dark sea green                  & RosyBrown               & magenta                 \cr
+        mint cream		& medium slate blue       & DarkSeaGreen                    & indian red              & violet                  \cr
+        MintCream		& MediumSlateBlue         & sea green                       & IndianRed               & plum                    \cr
+        azure			& light slate blue        & SeaGreen                        & saddle brown            & orchid                  \cr
+        alice blue		& LightSlateBlue          & medium sea green                & SaddleBrown             & medium orchid           \cr
+        AliceBlue		& medium blue             & MediumSeaGreen                  & sienna                  & MediumOrchid            \cr
+        lavender		& MediumBlue              & light sea green                 & peru                    & dark orchid             \cr
+        lavender blush		& royal blue              & LightSeaGreen                   & burlywood               & DarkOrchid              \cr
+        LavenderBlush		& RoyalBlue               & pale green                      & beige                   & dark violet             \cr
+        misty rose		& blue                    & PaleGreen                       & wheat                   & DarkViolet              \cr
+        MistyRose		& dodger blue             & spring green                    & sandy brown             & blue violet             \cr
+        white			& DodgerBlue              & SpringGreen                     & SandyBrown              & BlueViolet              \cr
+        black			& deep sky blue           & lawn green                      & tan                     & purple                  \cr
+        dark slate gray		& DeepSkyBlue             & LawnGreen                       & chocolate               & medium purple           \cr
+        DarkSlateGray		& sky blue                & green                           & firebrick               & MediumPurple            \cr
+        dark slate grey		& SkyBlue                 & chartreuse                      & brown                   & thistle                 \cr
+        DarkSlateGrey		& light sky blue          & medium spring green             & dark salmon             & snow1                   \cr
+    \end{tabular}
+    \eject
+    \begin{tabular}{c|c|c|c|c}
+        snow2                   & DodgerBlue3             & SeaGreen4                       & burlywood1              & pink2                   \cr
+        snow3                   & DodgerBlue4             & PaleGreen1                      & burlywood2              & pink3                   \cr
+        snow4                   & SteelBlue1              & PaleGreen2                      & burlywood3              & pink4                   \cr
+        seashell1               & SteelBlue2              & PaleGreen3                      & burlywood4              & LightPink1              \cr
+        seashell2               & SteelBlue3              & PaleGreen4                      & wheat1                  & LightPink2              \cr
+        seashell3               & SteelBlue4              & SpringGreen1                    & wheat2                  & LightPink3              \cr
+        seashell4               & DeepSkyBlue1            & SpringGreen2                    & wheat3                  & LightPink4              \cr
+        AntiqueWhite1           & DeepSkyBlue2            & SpringGreen3                    & wheat4                  & PaleVioletRed1          \cr
+        AntiqueWhite2           & DeepSkyBlue3            & SpringGreen4                    & tan1                    & PaleVioletRed2          \cr
+        AntiqueWhite3           & DeepSkyBlue4            & green1                          & tan2                    & PaleVioletRed3          \cr
+        AntiqueWhite4           & SkyBlue1                & green2                          & tan3                    & PaleVioletRed4          \cr
+        bisque1                 & SkyBlue2                & green3                          & tan4                    & maroon1                 \cr
+        bisque2                 & SkyBlue3                & green4                          & chocolate1              & maroon2                 \cr
+        bisque3                 & SkyBlue4                & chartreuse1                     & chocolate2              & maroon3                 \cr
+        bisque4                 & LightSkyBlue1           & chartreuse2                     & chocolate3              & maroon4                 \cr
+        PeachPuff1              & LightSkyBlue2           & chartreuse3                     & chocolate4              & VioletRed1              \cr
+        PeachPuff2              & LightSkyBlue3           & chartreuse4                     & firebrick1              & VioletRed2              \cr
+        PeachPuff3              & LightSkyBlue4           & OliveDrab1                      & firebrick2              & VioletRed3              \cr
+        PeachPuff4              & SlateGray1              & OliveDrab2                      & firebrick3              & VioletRed4              \cr
+        NavajoWhite1            & SlateGray2              & OliveDrab3                      & firebrick4              & magenta1                \cr
+        NavajoWhite2            & SlateGray3              & OliveDrab4                      & brown1                  & magenta2                \cr
+        NavajoWhite3            & SlateGray4              & DarkOliveGreen1                 & brown2                  & magenta3                \cr
+        NavajoWhite4            & LightSteelBlue1         & DarkOliveGreen2                 & brown3                  & magenta4                \cr
+        LemonChiffon1           & LightSteelBlue2         & DarkOliveGreen3                 & brown4                  & orchid1                 \cr
+        LemonChiffon2           & LightSteelBlue3         & DarkOliveGreen4                 & salmon1                 & orchid2                 \cr
+        LemonChiffon3           & LightSteelBlue4         & khaki1                          & salmon2                 & orchid3                 \cr
+        LemonChiffon4           & LightBlue1              & khaki2                          & salmon3                 & orchid4                 \cr
+        cornsilk1               & LightBlue2              & khaki3                          & salmon4                 & plum1                   \cr
+        cornsilk2               & LightBlue3              & khaki4                          & LightSalmon1            & plum2                   \cr
+        cornsilk3               & LightBlue4              & LightGoldenrod1                 & LightSalmon2            & plum3                   \cr
+        cornsilk4               & LightCyan1              & LightGoldenrod2                 & LightSalmon3            & plum4                   \cr
+        ivory1                  & LightCyan2              & LightGoldenrod3                 & LightSalmon4            & MediumOrchid1           \cr
+        ivory2                  & LightCyan3              & LightGoldenrod4                 & orange1                 & MediumOrchid2           \cr
+        ivory3                  & LightCyan4              & LightYellow1                    & orange2                 & MediumOrchid3           \cr
+        ivory4                  & PaleTurquoise1          & LightYellow2                    & orange3                 & MediumOrchid4           \cr
+        honeydew1               & PaleTurquoise2          & LightYellow3                    & orange4                 & DarkOrchid1             \cr
+        honeydew2               & PaleTurquoise3          & LightYellow4                    & DarkOrange1             & DarkOrchid2             \cr
+        honeydew3               & PaleTurquoise4          & yellow1                         & DarkOrange2             & DarkOrchid3             \cr
+        honeydew4               & CadetBlue1              & yellow2                         & DarkOrange3             & DarkOrchid4             \cr
+        LavenderBlush1          & CadetBlue2              & yellow3                         & DarkOrange4             & purple1                 \cr
+        LavenderBlush2          & CadetBlue3              & yellow4                         & coral1                  & purple2                 \cr
+        LavenderBlush3          & CadetBlue4              & gold1                           & coral2                  & purple3                 \cr
+        LavenderBlush4          & turquoise1              & gold2                           & coral3                  & purple4                 \cr
+        MistyRose1              & turquoise2              & gold3                           & coral4                  & MediumPurple1           \cr
+        MistyRose2              & turquoise3              & gold4                           & tomato1                 & MediumPurple2           \cr
+        MistyRose3              & turquoise4              & goldenrod1                      & tomato2                 & MediumPurple3           \cr
+        MistyRose4              & cyan1                   & goldenrod2                      & tomato3                 & MediumPurple4           \cr
+        azure1                  & cyan2                   & goldenrod3                      & tomato4                 & thistle1                \cr
+        azure2                  & cyan3                   & goldenrod4                      & OrangeRed1              & thistle2                \cr
+        azure3                  & cyan4                   & DarkGoldenrod1                  & OrangeRed2              & thistle3                \cr
+        azure4                  & DarkSlateGray1          & DarkGoldenrod2                  & OrangeRed3              & thistle4                \cr
+        SlateBlue1              & DarkSlateGray2          & DarkGoldenrod3                  & OrangeRed4              & gray0                   \cr
+        SlateBlue2              & DarkSlateGray3          & DarkGoldenrod4                  & red1                    & gray1                   \cr
+        SlateBlue3              & DarkSlateGray4          & RosyBrown1                      & red2                    & $\cdot$                 \cr
+        SlateBlue4              & aquamarine1             & RosyBrown2                      & red3                    & $\cdot$                 \cr
+        RoyalBlue1              & aquamarine2             & RosyBrown3                      & red4                    & $\cdot$                 \cr
+        RoyalBlue2              & aquamarine3             & RosyBrown4                      & DeepPink1               & gray99                  \cr
+        RoyalBlue3              & aquamarine4             & IndianRed1                      & DeepPink2               & gray100                 \cr
+        RoyalBlue4              & DarkSeaGreen1           & IndianRed2                      & DeepPink3               & grey0                   \cr
+        blue1                   & DarkSeaGreen2           & IndianRed3                      & DeepPink4               & grey1                   \cr
+        blue2                   & DarkSeaGreen3           & IndianRed4                      & HotPink1                & $\cdot$                 \cr
+        blue3                   & DarkSeaGreen4           & sienna1                         & HotPink2                & $\cdot$                 \cr
+        blue4                   & SeaGreen1               & sienna2                         & HotPink3                & $\cdot$                 \cr
+        DodgerBlue1             & SeaGreen2               & sienna3                         & HotPink4                & grey99                  \cr
+        DodgerBlue2             & SeaGreen3               & sienna4                         & pink1                   & grey100                 \cr
+    \end{tabular}
+\end{center}
+
+
+\part{References}
+
+\newcommand{\reference}{\penalty-1000\hangindent = 2em\hangafter = 1}
+
+\reference
+Foote, G. B., 1984: Influences of gust fronts on the propagation of storms. 
+{\sl Proc. 9th International Cloud Physics Conf.}, Tallinn Estonia 
+International Association of Meteorology and Atmospheric Physics.  419--421.
+
+\reference
+Herzegh, P. H., 1988: Formulation of output parameters for PAM II CMF data.
+NCAR/FOF informal publication.
+
+\reference
+Wilson, J. W., and C. K. Mueller, 1987: Thunderstorm nowcasting using Doppler
+radar and soundings.  {\sl Proc. Symp. Mesoscale Analysis and Forecasting},
+Vancouver, 55--60.
+
+\part{Index}
+{ % begin special index stuff
+\makeatletter
+\gdef\thepage{Index--\the\c@page}
+
+\catcode`\@=\other
+
+\catcode`\% = \other	\catcode`\& = \other	\catcode`\# = \other
+\catcode`\$ = \other	\catcode`\_ = \other	\catcode`\~ = \other
+
+\input{sudsndx.dats}
+} % end special index stuff
+
+\end{document}

@@ -1,0 +1,680 @@
+%
+% SUDS document style.  Modified from report.sty and rep12.sty
+%
+\typeout{SUDS Document Style, 12 July 2002}
+
+\chardef\other=12
+
+%
+% Modify the page number stuff from latex.tex to make
+% page numbers like 4-3 (for part 4, page 3).
+%
+\def\pagenumbering#1{\global\c@page \@ne 
+  \gdef\thepage{\thechapter--\csname @#1\endcsname\c@page}}
+
+%
+% Modify \enddocument from latex.tex also
+%
+\let\oldenddoc\enddocument
+\def\enddocument{\endextras\oldenddoc}
+
+%
+% Extra stuff to do at the end of a document
+%
+\def\endextras{
+  \cleardoublepage
+  \setcounter{page}{1}		% Set the page to one
+  \printtoc \printlof \printlot	% print the tables (if they exist)
+  \cleardoublepage}		% make sure we end on an even page
+
+
+\def\ds@twoside{\@twosidetrue \@mparswitchtrue} 
+\def\ds@draft{\overfullrule 5pt}
+\@options
+
+%
+% This is the start of the modified rep12.sty
+%
+\lineskip 1pt \normallineskip 1pt
+\def\baselinestretch{1}
+
+\def\@normalsize{\@setsize\normalsize{14.5pt}\xiipt\@xiipt
+\abovedisplayskip 12pt plus3pt minus7pt\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip \z@ plus3pt\belowdisplayshortskip 6.5pt plus3.5pt
+minus3pt}
+\def\small{\@setsize\small{13.6pt}\xipt\@xipt
+\abovedisplayskip 11pt plus3pt minus6pt\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip \z@ plus3pt\belowdisplayshortskip 6.5pt plus3.5pt
+minus3pt
+\def\@listi{\parsep 4.5pt plus 2pt minus 1pt
+ \itemsep \parsep
+ \topsep 9pt plus 3pt minus 5pt}}
+\def\footnotesize{\@setsize\footnotesize{12pt}\xpt\@xpt
+\abovedisplayskip 10pt plus2pt minus5pt\belowdisplayskip \abovedisplayskip
+\abovedisplayshortskip \z@ plus3pt\belowdisplayshortskip 6pt plus3pt minus3pt
+\def\@listi{\topsep 6pt plus 2pt minus 2pt\parsep 3pt plus 2pt minus 1pt
+\itemsep \parsep}}
+\def\scriptsize{\@setsize\scriptsize{9.5pt}\viiipt\@viiipt}
+\def\tiny{\@setsize\tiny{7pt}\vipt\@vipt}
+\def\large{\@setsize\large{14pt}\xivpt\@xivpt}
+\def\Large{\@setsize\Large{17pt}\xviipt\@xviipt}
+\def\LARGE{\@setsize\LARGE{20pt}\xxpt\@xxpt}
+\def\huge{\@setsize\huge{25pt}\xxvpt\@xxvpt}
+\let\Huge=\huge
+\normalsize
+
+\oddsidemargin  0.50 truein
+\evensidemargin 0.00 truein
+\marginparwidth 0.70 truein
+
+\marginparsep 10pt
+\topmargin 0pt 
+\headheight 12pt
+\headsep 15pt 
+\footheight 12pt 
+\footskip 25pt
+
+\textheight 8.5 truein
+\textwidth 6.0 truein 
+
+\columnsep 10pt 
+\columnseprule 0pt
+
+\footnotesep 8.4pt
+\skip\footins 10.8pt plus 4pt minus 2pt
+\floatsep 14pt plus 2pt minus 4pt \textfloatsep 20pt plus 2pt minus 4pt
+\intextsep 14pt plus 4pt minus 4pt \@maxsep 20pt \dblfloatsep 14pt plus 2pt
+minus 4pt \dbltextfloatsep 20pt plus 2pt minus 4pt \@dblmaxsep 20pt
+\@fptop 0pt plus 1fil \@fpsep 10pt plus 2fil \@fpbot 0pt plus 1fil
+\@dblfptop 0pt plus 1fil \@dblfpsep 10pt plus 2fil \@dblfpbot 0pt plus 1fil
+\marginparpush 7pt
+
+\parskip 9pt plus 1pt minus 1pt \parindent 0pt \topsep 10pt plus 4pt minus 6pt
+\partopsep 3pt plus 2pt minus 2pt \itemsep 5pt plus 2.5pt minus 1pt
+\@lowpenalty 51 \@medpenalty 151 \@highpenalty 301
+\@beginparpenalty -\@lowpenalty \@endparpenalty -\@lowpenalty \@itempenalty
+-\@lowpenalty
+
+\def\@makechapterhead#1{ \vspace*{50pt} { \parindent 0pt \raggedright
+ \ifnum \c@secnumdepth >\m@ne \Large\bf \@chapapp{} \thechapter \par
+ \vskip 20pt \fi \LARGE \bf #1\par
+ \nobreak \vskip 40pt } }
+
+\def\@makeschapterhead#1{ \vspace*{50pt} { \parindent 0pt \raggedright
+ \LARGE \bf #1\par
+ \nobreak \vskip 40pt } }
+
+\def\chapter{\cleardoublepage 
+  \thispagestyle{plain} \global\@topnum\z@
+  \@afterindentfalse \secdef\@chapter\@schapter}
+
+\let\part=\chapter
+
+\def\@chapter[#1]#2{\ifnum \c@secnumdepth >\m@ne
+ \setcounter{page}{1}
+ \refstepcounter{chapter}
+ \typeout{\@chapapp\space\thechapter.}
+ \addcontentsline{toc}{chapter}{\protect
+ \numberline{\thechapter}#1}\else
+ \addcontentsline{toc}{chapter}{#1}\fi
+ \chaptermark{#1}
+ \addtocontents{lof}{\protect\addvspace{10pt}}
+ \addtocontents{lot}{\protect\addvspace{10pt}} \if@twocolumn
+ \@topnewpage[\@makechapterhead{#2}]
+ \else \@makechapterhead{#2}
+ \@afterheading \fi}
+\def\@schapter#1{\if@twocolumn \@topnewpage[\@makeschapterhead{#1}]
+ \else \@makeschapterhead{#1}
+ \@afterheading\fi}
+
+\@secpenalty -1000
+\def\section{\@startsection {section}{1}{\z@}
+ {-3.0ex plus -1.0ex minus -0.5ex}
+ {0.1ex plus 0.2ex}{\large\bf}}
+\def\subsection{\@startsection{subsection}{2}{\z@}
+ {-1.5ex plus -0.5ex minus -0.2ex}
+ {1pt plus 1pt}{\normalsize\bf}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\z@}
+ {-1.0ex plus -0.3ex minus -0.2ex}
+ {1pt plus 1pt}{\normalsize}}
+\def\paragraph{\@startsection
+ {paragraph}{4}{\z@}{3.25ex plus 1ex minus .2ex}{-1em}{\normalsize\bf}}
+\def\subparagraph{\@startsection
+ {subparagraph}{4}{\parindent}{3.25ex plus 1ex minus
+ .2ex}{-1em}{\normalsize\bf}}
+
+\def\chaptermark#1{}
+
+\setcounter{secnumdepth}{2}
+
+\def\appendix{\par
+ \cleardoublepage	% Do this before we zero the chapter number
+ \setcounter{chapter}{0}
+ \setcounter{section}{0}
+ \def\@chapapp{Appendix}
+ \def\thechapter{\Alph{chapter}}}
+
+\leftmargini 2.5em \leftmarginii 2.2em \leftmarginiii 1.87em 
+\leftmarginiv 1.7em \leftmarginv 1em \leftmarginvi 1em
+\leftmargin\leftmargini
+\labelsep .5em
+\labelwidth\leftmargini\advance\labelwidth-\labelsep
+\parsep 5pt plus 2.5pt minus 1pt
+\itemsep \parsep
+\def\@listi{\leftmargin\leftmargini}
+\def\@listii{\leftmargin\leftmarginii
+ \labelwidth\leftmarginii\advance\labelwidth-\labelsep
+ \topsep 5pt plus 2.5pt minus 1pt
+ \parsep 2.5pt plus 1pt minus 1pt}
+\def\@listiii{\leftmargin\leftmarginiii
+ \labelwidth\leftmarginiii\advance\labelwidth-\labelsep}
+\def\@listiv{\leftmargin\leftmarginiv
+ \labelwidth\leftmarginiv\advance\labelwidth-\labelsep}
+\def\@listv{\leftmargin\leftmarginv
+ \labelwidth\leftmarginv\advance\labelwidth-\labelsep}
+\def\@listvi{\leftmargin\leftmarginvi
+ \labelwidth\leftmarginvi\advance\labelwidth-\labelsep}
+%
+% End of modified rep12.sty
+%
+
+
+\def\labelenumi{\arabic{enumi}.}
+\def\theenumi{\arabic{enumi}}
+\def\labelenumii{(\alph{enumii})}
+\def\theenumii{\alph{enumii}}
+\def\p@enumii{\theenumi}
+\def\labelenumiii{\roman{enumiii}.}
+\def\theenumiii{\roman{enumiii}}
+\def\p@enumiii{\theenumi(\theenumii)}
+\def\labelenumiv{\Alph{enumiv}.}
+\def\theenumiv{\Alph{enumiv}}
+\def\p@enumiv{\p@enumiii\theenumiii}
+
+\def\labelitemi{$\bullet$}
+\def\labelitemii{\bf --}
+\def\labelitemiii{$\ast$}
+\def\labelitemiv{$\cdot$}
+
+\def\verse{\let\\=\@centercr
+ \list{}{\itemsep\z@ \itemindent -1.5em\listparindent \itemindent
+ \rightmargin\leftmargin\advance\leftmargin 1.5em}\item[]}
+\let\endverse\endlist
+\def\quotation{\list{}{\listparindent 1.5em
+ \itemindent\listparindent
+ \rightmargin\leftmargin\parsep 0pt plus 1pt}\item[]}
+\let\endquotation=\endlist
+\def\quote{\list{}{\rightmargin\leftmargin}\item[]}
+\let\endquote=\endlist
+
+\def\descriptionlabel#1{\hspace\labelsep \bf #1}
+\def\description{\list{}{\labelwidth\z@ \itemindent-\leftmargin
+ \let\makelabel\descriptionlabel}}
+\let\enddescription\endlist
+\newdimen\descriptionmargin
+\descriptionmargin=3em
+
+\def\titlepage{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn
+ \else \newpage \fi \thispagestyle{empty}\c@page\z@}
+\def\endtitlepage{\if@restonecol\twocolumn \else \newpage \fi
+  \if@twoside\pagestyle{empty}\cleardoublepage\pagestyle{plain}\fi
+  \setcounter{page}{1}}
+
+\arraycolsep 5pt \tabcolsep 6pt \arrayrulewidth .4pt \doublerulesep 2pt
+\tabbingsep \labelsep
+\skip\@mpfootins = \skip\footins
+\fboxsep = 3pt \fboxrule = .4pt
+
+\newcounter {part}
+\newcounter {chapter}
+\countdef\c@chapter=1		% Use counter 1 as the chapter counter for dvi 
+\countdef\c@part=\c@chapter	% translator convenience later
+\newcounter {section}[chapter]
+\newcounter {subsection}[section]
+\newcounter {subsubsection}[subsection]
+\newcounter {paragraph}[subsubsection]
+\newcounter {subparagraph}[paragraph]
+
+\def\thepart {\Roman{part}}
+\def\thechapter {\arabic{chapter}}
+\def\thesection {\thechapter.\arabic{section}}
+\def\thesubsection {\thesection.\arabic{subsection}}
+\def\thesubsubsection {\thesubsection .\arabic{subsubsection}}
+\def\theparagraph {\thesubsubsection.\arabic{paragraph}}
+\def\thesubparagraph {\theparagraph.\arabic{subparagraph}}
+\def\@chapapp{Part}
+
+
+\def\@pnumwidth{2.55em}
+\def\@tocrmarg {2.55em}
+\def\@dotsep{4.5}
+\setcounter{tocdepth}{2}
+
+
+%
+% Modified toc (lot, lof) routines, so that:
+% 	1: We get the correct toc in one run of LaTeX
+%	2: The page numbering comes out in roman
+%
+\def\begintoc{\starttablefile{toc}}
+\let\tableofcontents=\begintoc
+\def\printtoc{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
+  {\makeatletter
+  \@ifundefined{tf@toc} {} 
+	{\chapter*{Contents\@mkboth{CONTENTS}{CONTENTS}}
+	\pagestyle{plain}
+	\printtable{toc}}}}
+
+\def\beginlof{\starttablefile{lof}}
+\let\listoffigures\beginlof
+\def\l@figure{\@dottedtocline{1}{1.5em}{2.3em}}
+\def\printlof{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
+  {\makeatletter
+  \@ifundefined{tf@lof} {} 
+	{\chapter*{List of Figures\@mkboth{LIST OF FIGURES}{LIST OF FIGURES}}
+	\pagestyle{plain}
+	\printtable{lof}}}}
+
+\def\beginlot{\starttablefile{lot}}
+\let\listoftables\beginlot
+\let\l@table\l@figure
+\def\printlot{\@restonecolfalse\if@twocolumn\@restonecoltrue\onecolumn\fi
+  {\makeatletter
+  \@ifundefined{tf@lot} {}
+	{\chapter*{List of Tables\@mkboth{LIST OF TABLES}{LIST OF TABLES}}
+	\pagestyle{plain}
+	\printtable{lot}}}}
+
+\def\starttablefile#1{\begingroup \makeatletter 
+ \if@filesw \expandafter\newwrite\csname tf@#1\endcsname
+ \immediate\expandafter\openout \csname tf@#1\endcsname \jobname.#1\relax
+ \fi \endgroup}
+
+\def\printtable#1{\begingroup \makeatletter 
+ {\immediate\expandafter\closeout\csname tf@#1\endcsname
+ \gdef\thepage{\@roman\c@page}
+ \parskip = 0pt
+ \input{\jobname.#1}}
+ \endgroup}
+
+% Modified \@writefile which does a normal \write instead of \immediate\write
+\def\writeifopen#1#2{\@ifundefined{tf@#1}{}{\write\csname tf@#1\endcsname{#2}}}
+
+\def\addcontentsline#1#2#3{\if@filesw \begingroup
+  \let\label\@gobble \let\index\@gobbletwo
+  \def\protect##1{\string##1
+    \space}\@temptokena{\thepage}%
+  {\let\thepage=0
+   \edef\@tempa{\writeifopen{#1}{\protect
+     \contentsline{#2}{#3}{\thepage}}}\@tempa}
+  \if@nobreak \ifvmode\nobreak\fi\fi\endgroup\fi}
+
+\long\def\addtocontents#1#2{\if@filesw \begingroup
+  \let\label\@gobble \let\index\@gobbletwo
+  \def\protect##1{\string##1\space}%
+  \edef\@tempa{\@writefile{#1}{#2}}\@tempa
+  \if@nobreak \ifvmode\nobreak\fi\fi\endgroup\fi}
+
+\def\l@part#1#2{\addpenalty{-\@highpenalty}
+ \addvspace{2.25em plus 1pt} \begingroup
+ \@tempdima 3em \parindent \z@ \rightskip \@pnumwidth \parfillskip
+-\@pnumwidth
+ {\large \bf \leavevmode #1\hfil \hbox to\@pnumwidth{\hss #2}}\par
+ \nobreak \endgroup}
+
+\def\l@chapter#1#2{\pagebreak[3]
+ \vskip 1.0em plus 1pt \@tempdima 1.5em \begingroup
+ \parindent \z@ \rightskip \@pnumwidth
+ \parfillskip -\@pnumwidth
+ \bf \leavevmode #1\hfil 
+ \hbox to\@pnumwidth{\hfil}
+% \hbox to\@pnumwidth{\hss #2}	% No page number for chapter entries
+ \par
+ \endgroup}
+
+\def\l@section{\@dottedtocline{1}{1.5em}{2.3em}}
+
+\def\l@subsection{\@dottedtocline{2}{3.8em}{3.2em}}
+
+\def\l@subsubsection{\@dottedtocline{3}{7.0em}{4.1em}}
+
+\def\l@paragraph{\@dottedtocline{4}{10em}{5em}}
+
+\def\l@subparagraph{\@dottedtocline{5}{12em}{6em}}
+
+
+%\def\thebibliography#1{\chapter*{Bibliography\@mkboth
+% {BIBLIOGRAPHY}{BIBLIOGRAPHY}}\list
+\def\thebibliography#1{\part {Bibliography}\list
+ {[\arabic{enumi}]}{\settowidth\labelwidth{[#1]}\leftmargin\labelwidth
+ \advance\leftmargin\labelsep
+ \usecounter{enumi}}
+ \def\newblock{\hskip .11em plus .33em minus -.07em}
+ \sloppy
+ \sfcode`\.=1000\relax}
+\let\endthebibliography=\endlist
+
+
+\newif\if@restonecol
+\def\theindex{\@restonecoltrue\if@twocolumn\@restonecolfalse\fi
+\columnseprule \z@
+\columnsep 35pt\twocolumn[\@makeschapterhead{Index}]
+ \@mkboth{INDEX}{INDEX}\thispagestyle{plain}\parindent\z@
+ \parskip\z@ plus .3pt\relax\let\item\@idxitem}
+\def\@idxitem{\par\hangindent 40pt}
+\def\subitem{\par\hangindent 40pt \hspace*{20pt}}
+\def\subsubitem{\par\hangindent 40pt \hspace*{30pt}}
+\def\endtheindex{\if@restonecol\onecolumn\else\cleardoublepage\fi}
+\def\indexspace{\par \vskip 10pt plus 5pt minus 3pt\relax}
+
+\def\footnoterule{\kern-3\p@
+ \hrule width .4\columnwidth
+ \kern 2.6\p@}
+\@addtoreset{footnote}{chapter}
+\long\def\@makefntext#1{\parindent 1em\noindent
+ \hbox to 1.8em{\hss$^{\@thefnmark}$}#1}
+
+
+\setcounter{topnumber}{2}
+\def\topfraction{.7}
+\setcounter{bottomnumber}{1}
+\def\bottomfraction{.3}
+\setcounter{totalnumber}{3}
+\def\textfraction{.2}
+\def\floatpagefraction{.5}
+\setcounter{dbltopnumber}{2}
+\def\dbltopfraction{.7}
+\def\dblfloatpagefraction{.5}
+
+\long\def\@makecaption#1#2{
+ \vskip 10pt
+ \setbox\@tempboxa\hbox{#1: #2}
+ \ifdim \wd\@tempboxa >\hsize \unhbox\@tempboxa\par \else \hbox
+to\hsize{\hfil\box\@tempboxa\hfil}
+ \fi}
+
+
+\newcounter{figure}[chapter]
+\def\thefigure{\thechapter.\@arabic\c@figure}
+\def\fps@figure{tbp}
+\def\ftype@figure{1}
+\def\ext@figure{lof}
+\def\fnum@figure{Figure \thefigure}
+\def\figure{\@float{figure}}
+\let\endfigure\end@float
+\@namedef{figure*}{\@dblfloat{figure}}
+\@namedef{endfigure*}{\end@dblfloat}
+\newcounter{table}[chapter]
+\def\thetable{\thechapter.\@arabic\c@table}
+\def\fps@table{tbp}
+\def\ftype@table{2}
+\def\ext@table{lot}
+\def\fnum@table{Table \thetable}
+\def\table{\@float{table}}
+\let\endtable\end@float
+\@namedef{table*}{\@dblfloat{table}}
+\@namedef{endtable*}{\end@dblfloat}
+
+\input sudstitle.sty
+
+\mark{{}{}}
+
+\if@twoside \def\ps@headings{\let\@mkboth\markboth
+\def\@oddfoot{}\def\@evenfoot{}\def\@evenhead{\rm \thepage\hfil \sl
+\leftmark}\def\@oddhead{\hbox{}\sl \rightmark \hfil
+\rm\thepage}
+%\def\chaptermark##1{\markboth {\uppercase{\ifnum \c@secnumdepth>\m@ne
+% \@chapapp\ \thechapter. \ \fi ##1}}{}}
+%\def\sectionmark##1{\markright
+%{\uppercase{\ifnum \c@secnumdepth >\z@\thesection. \ \fi ##1}}}
+\def\chaptermark##1{}
+\def\sectionmark##1{}
+}
+\else \def\ps@headings{\let\@mkboth\markboth
+\def\@oddfoot{}\def\@evenfoot{}\def\@oddhead{\hbox {}\sl \rightmark \hfil
+\rm\thepage}\def\chaptermark##1{\markright {\uppercase{\ifnum \c@secnumdepth
+>\m@ne
+ \@chapapp\ \thechapter. \ \fi ##1}}}}
+\fi
+\def\ps@myheadings{\let\@mkboth\@gobbletwo
+\def\@oddhead{\hbox{}\sl\rightmark \hfil
+\rm\thepage}\def\@oddfoot{}\def\@evenhead{\rm \thepage\hfil\sl\leftmark\hbox
+{}}\def\@evenfoot{}\def\sectionmark##1{}\def\subsectionmark##1{}}
+
+
+\def\today{\ifcase\month\or
+ January\or February\or March\or April\or May\or June\or
+ July\or August\or September\or October\or November\or December\fi
+ \space\number\day, \number\year}
+\@addtoreset{equation}{chapter}
+\def\theequation{\thechapter.\arabic{equation}}
+
+%
+% The prog environment
+%
+% This environment is intended to be used to put code fragments into a
+% document.  It is a verbatim environment, i.e. all characters will be
+% printed as themselves.  The only exception is the tilde (~) character
+% which is left as a control character.  The sequence ~~ will cause a
+% single tilde to be printed in the document.  The environment is exited
+% when the string "\end{prog}" is encountered.  Note that there cannot
+% be a space between "\end" and "{prog}".
+%
+% The most important difference between the prog environment and the
+% verbatim environment of LaTeX is that prog deals with tabs like a
+% typewriter or terminal; they are converted into a variable amount of
+% space so that the printed output will line up like typing the code
+% on a terminal.
+%
+
+\newcount\tabwidth	% A count buffer so we can divide by it
+\newdimen\bwidth
+\newbox\tabbox
+\newbox\tabline
+\newbox\twbox
+
+\def\prog{\par\nobreak
+	\vskip\parskip\nobreak
+	\tt
+	\setbox\twbox = \hbox {MMMMMMMM}	% A tab is 8 M's wide
+	\tabwidth = \wd\twbox
+	\let\do\@makeother
+	\dospecials
+	\catcode`\|=\other	% dospecials doesn't do |, so do it now
+	\chardef\~=`\~	% So we can print a tilde by typing ~~
+	\catcode`\~=0	% Make tilde a control character
+	\obeylines	%
+	\setupprog	%
+	\frenchspacing	%
+	\obeyspaces\begintabbox\startprog} 
+
+\def\endprog{\egroup\par}
+
+%
+% \startprog makes sure we get out of prog mode with \end{prog}
+%
+\begingroup \catcode`|=0 \catcode`[=1 \catcode`]=2 \catcode`\{=12
+  \catcode`\}=12 \catcode`\\=12
+  |gdef|startprog#1\end{prog}[#1|end[prog]]
+|endgroup
+
+%
+% \setupprog prepares us for dealing with <TAB> and <RET>
+% It also makes TeX print ' as a non-directional single quote instead
+% of a right single quote
+%
+% The strange definition for ^^M causes the first <RET> to be ignored, and
+% successive <RET>'s to be interpreted as \endprogline
+%
+{\catcode`\^^I=\active \catcode`\^^M=\active \catcode`\'=\active
+  \gdef\setupprog{\catcode`\^^I=\active \catcode`\^^M=\active %
+  \catcode`\'=\active \let'=\plainquote \let^^I=\tab %
+  \gdef^^M{\global\let^^M=\endprogline}}} %
+						
+
+%
+% \plainquote prints a non-directional single quote.  The character we 
+% want to use here has character code 13 which corresponds to, you 
+% guessed it, <RET>.  Make <RET> a normal character for a moment while 
+% we print the character.  What a pain in the ASCII...
+%
+\def\plainquote{{\catcode`\^^M=12 \char`\^^M}}
+
+%
+% \begintabbox begins a tab box (which will hold everything between one
+% <TAB> or <RET> and the next <TAB> or <RET>)
+%
+\def\begintabbox{\setbox\tabbox = \hbox\bgroup}
+
+%
+% Deal with tabs
+%
+\def\tab{\egroup
+  %
+  % Find the minimum width in multiples of \tabwidth which will hold the
+  % tab box
+  %
+  \bwidth=\wd\tabbox
+  \divide\bwidth by \tabwidth
+  \advance\bwidth by 1 sp
+  \multiply\bwidth by \tabwidth
+  %
+  % Now add the current width of the line box
+  %
+  \advance\bwidth by \wd\tabline
+  %
+  % Put the tab box and the old line box into the new line box
+  %
+  \setbox\tabline \hbox to \bwidth {\box\tabline\box\tabbox\hfil}
+  \begintabbox}
+
+%
+% \endprogline adds the line to the page
+%
+% We don't allow breaks after blank lines, so something like:
+%
+%	\section{This section}
+%	\begin{prog}
+%
+%		an example
+%
+%	\end{prog}
+%
+% can't leave the section heading at the bottom of a page with
+% just a blank line after it.
+%
+\newcount\proglineht
+\newskip\progindent
+\progindent = 0pt
+\def\endprogline{\egroup 
+  \ifnum \ht\tabbox > \ht\tabline \proglineht=\ht\tabbox \else 
+	\proglineht=\ht\tabline \fi
+  \hbox to \hsize {\hskip\progindent\box\tabline\box\tabbox
+	\hfil\hskip\progindent}
+  \ifnum \proglineht = 0 \nobreak \fi	% no break after blank lines
+  \begintabbox}
+
+%
+% The example environment:  much like the prog environment except
+% \, {, and } still have their normal TeX meanings.
+%
+
+\gdef\example{\par\nobreak
+	\vskip\parskip\nobreak
+	\tt
+	\setbox\twbox = \hbox {MMMMMMMM}	% A tab is 8 M's wide
+	\tabwidth = \wd\twbox
+	\let\vbarfont\pf	% vertical bars invoke parameter font
+	\let\do\@makeother
+	\dospecials
+	\catcode`\\=0		% Make \ the control character again
+	\catcode`\{=1		% left delimiter
+	\catcode`\}=2		% right delimiter
+	\obeylines		%
+	\setupprog		%
+	\frenchspacing		%
+	\obeyspaces\begintabbox}
+
+\def\endexample{\egroup\par}
+
+%
+% Typewriter utility.  These macros cause words enclosed in vertical
+% bars, |like this| to be set in the current \vbarfont (default: 
+% typewriter type).  Words enclosed in double vertical bars, 
+% ||like this||, will be set in typewriter type and will also generate 
+% an index entry.  Underscore (_) and dollar sign ($) are made into 
+% normal characters while this is in effect.
+%
+%
+% Don't fool with the stuff below to make it more readable.  This 
+% will more than likely cause extra space to appear in your document
+% in front of the stuff that gets typewriterized.
+%
+
+{\catcode`\|=\other
+\gdef\typewrite#1{%
+\ifx#1|%
+\def\dotypewrite##1||{{\tt##1}\ndxentry{##1}{\tt##1}\endgroup}%
+\else%
+\def\dotypewrite##1|{{\vbarfont#1##1}\endgroup}%
+\fi%
+\dotypewrite}}
+
+% Make sure we don't break the tabular environment when we make | active
+\let\oldtabular\tabular
+\def\tabular{\catcode`\|=\other \oldtabular}
+
+\catcode`\|=\active
+\def\vbarfont{\tt}
+
+\def|{\begingroup
+  \catcode`| = \other 
+  \catcode`\_ = \other
+  \catcode`\$ = \other
+  \typewrite}
+
+%
+% Glossary-like list environment with two macros defined:
+%
+%	\routine	Creates a list entry for a routine.  The routine
+%			name and parameters are grabbed automatically.
+%			The routine name is set in typewriter type and
+%			the params are set in the parameter font.
+%
+%	\keyword	Creates a list entry for a keyword (or phrase).
+%			Everything up to the next carriage return is
+%			interpreted as the keyword and will be set in
+%			typewriter type.
+%
+\def\glossarylabel#1{#1\hss}
+\def\glossarylist{%
+  \let\makelabel\glossarylabel
+  \def\routine##1(##2){\item[{\tt##1\pf(##2)}]\hfill\par\nobreak}
+  \def\keyword##1{\item[{\tt##1}]\hfill\par\nobreak}
+  \list{}{\setlength{\leftmargin}{15 mm}\let\makelabel\glossarylabel}}
+
+\def\endglossarylist{\endlist}
+
+%
+% lineacross command to generate a rule across the width of the page
+%
+\newcommand{\lineacross}{\hbox to \hsize{\leaders\hrule height 0.8 pt\hfill}}
+
+%
+% Indexing stuff
+%
+\input sudsindex
+
+%
+% Fonts
+%
+\input sudsfonts
+
+\ps@plain 
+\pagenumbering{arabic} 
+\onecolumn 
+\if@twoside
+  % nothing 
+\else
+  \raggedbottom
+\fi
