@@ -1,13 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Log: not supported by cvs2svn $
- * Revision 1.2  89/06/22  15:03:20  burghart
- * Added hodograph plotting routine the the command list
- * 
- * Revision 1.1  89/03/16  15:15:11  burghart
- * Initial revision
- * 
+ * $Revision: 1.4 $ $Date: 1989-08-02 14:41:27 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -127,7 +121,7 @@ char	**argv;
 			ut_open_file (initfile, FALSE);
 		}
 	ON_ERROR
-		exit ();
+		main_finish ();
 	ENDCATCH
 /*
  * GO!  Read commands until there aren't any more
@@ -158,7 +152,7 @@ main_cmd_init ()
 	void	edit_cut (), analyze (), main_show (), snd_write_file ();
 	void	edit_erase (), edit_newvalue (), edit_examine ();
 	void	edit_threshold (), snd_forget (), skt_wscale ();
-	void	ft_plot (), hd_plot ();
+	void	ft_plot (), hd_plot (), color_change ();
 
 	Cmd_routine[KW_FILE]		= snd_read_file;
 	Cmd_routine[KW_OUTPUT]		= out_output;
@@ -181,6 +175,7 @@ main_cmd_init ()
 	Cmd_routine[KW_WSCALE]		= skt_wscale;
 	Cmd_routine[KW_FOOTE]		= ft_plot;
 	Cmd_routine[KW_HODOGRAPH]	= hd_plot;
+	Cmd_routine[KW_COLOR]		= color_change;
 }
 
 
@@ -303,8 +298,9 @@ main_finish ()
 
 	if (Wkstn)
 		G_close (Wkstn);
-
+# ifndef VMS	/* Avoid "Message number 00000000" printed on the VAX */
 	exit (0);
+# endif
 }
 
 
