@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.17 1993-04-28 16:24:41 carson Exp $";
+static char *rcsid = "$Id: edit.c,v 1.18 1993-08-09 17:02:00 burghart Exp $";
 
 # include <math.h>
 # include <met_formulas.h>
@@ -196,7 +196,7 @@ struct ui_command	*cmds;
 	 * If we have an index match, save the point; this is the new
 	 * physical cursor position
 	 */
-		if (pt->index == E_datum->index)
+		if (pt && pt->index == E_datum->index)
 			edit_saveloc (E_datum, pt);
 	}
 /*
@@ -260,7 +260,7 @@ struct ui_command	*cmds;
 	 * If we have an index match, save the point; this is the new
 	 * physical cursor position
 	 */
-		if (pt->index == E_datum->index)
+		if (pt && pt->index == E_datum->index)
 			edit_saveloc (E_datum, pt);
 	}
 /*
