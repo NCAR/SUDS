@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.8 $ $Date: 1989-10-09 15:53:25 $ $Author: burghart $
+ * $Revision: 1.9 $ $Date: 1990-01-23 09:26:24 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -643,8 +643,8 @@ int	plot_ndx;
 	strcpyUC (string + 3, id_name);
 	strcat (string, ")  ");
 	skt_top_text (string, C_WHITE, FALSE);
-	skt_top_text ("TEMP/WINDS ", C_TRACE1 + 2 * plot_ndx, FALSE);
-	skt_top_text ("DEWPOINT  ", C_TRACE2 + 2 * plot_ndx, FALSE);
+	skt_top_text ("TEMP/WINDS ", C_DATA1 + 2 * plot_ndx, FALSE);
+	skt_top_text ("DEWPOINT  ", C_DATA2 + 2 * plot_ndx, FALSE);
 }
 
 
@@ -943,9 +943,9 @@ int	plot_ndx;
 /*
  * Draw the lines
  */
-	G_polyline (Skewt_ov, GPLT_SOLID, C_TRACE1 + 2 * plot_ndx, good_t, 
+	G_polyline (Skewt_ov, GPLT_SOLID, C_DATA1 + 2 * plot_ndx, good_t, 
 		xt, yt);
-	G_polyline (Skewt_ov, GPLT_SOLID, C_TRACE2 + 2 * plot_ndx, good_d, 
+	G_polyline (Skewt_ov, GPLT_SOLID, C_DATA2 + 2 * plot_ndx, good_d, 
 		xd, yd);
 /*
  * Draw the lifted parcel lines if requested
@@ -959,8 +959,8 @@ int	plot_ndx;
 /*
  * Tell edit about these two traces
  */
-	edit_set_trace (id_name, f_temp, f_pres, C_TRACE1 + 2 * plot_ndx);
-	edit_set_trace (id_name, f_dp, f_pres, C_TRACE2 + 2 * plot_ndx);
+	edit_set_trace (id_name, f_temp, f_pres, C_DATA1 + 2 * plot_ndx);
+	edit_set_trace (id_name, f_dp, f_pres, C_DATA2 + 2 * plot_ndx);
 /*
  * Done
  */
@@ -1034,7 +1034,7 @@ int	plot_ndx, nplots;
 	/*
 	 * Draw the wind line
 	 */
-		G_polyline (Winds_ov, GPLT_SOLID, C_TRACE1 + 2 * plot_ndx, 2, 
+		G_polyline (Winds_ov, GPLT_SOLID, C_DATA1 + 2 * plot_ndx, 2, 
 			xov, yov);
 	}
 /*
