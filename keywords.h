@@ -1,6 +1,5 @@
 /*
  * UI keywords for SUDS
- *
  */
 # define KW_SUGAR	0
 # define KW_FILE	1
@@ -29,12 +28,13 @@
 # define KW_FOOTE	24
 # define KW_BRIEF	25
 # define KW_HODOGRAPH	26
+# define KW_COLOR	27
+# define KW_LIST	28
 
 /*
  * Change MAXKW each time a new keyword is added
  */
-# define MAXKW	26
-
+# define MAXKW	28
 
 /*
  * Threshold criteria keywords
