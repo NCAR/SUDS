@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: hodograph.c,v 1.17 1992-08-10 15:28:28 burghart Exp $";
+static char *rcsid = "$Id: hodograph.c,v 1.18 1998-02-13 18:29:46 burghart Exp $";
 
 # include <math.h>
 # include <ui_param.h>
@@ -52,12 +52,13 @@ static float	Xtxt_top, Ytxt_top;
 /*
  * Mark increment and top altitude
  */
-static int	Mark_inc;
+static int	HodoMarkInc;
 static int	Top_alt;
 
 /*
  * ``Stepped'' plot?
  */
+static int	HodoStepInc;
 static char	Stepping;
 
 /*
@@ -84,7 +85,7 @@ struct ui_command	*cmds;
 /*
  * Initialize
  */
-	Mark_inc = 1000;
+	HodoMarkInc = 1000;
 	Top_alt = 20000;
 	Stepping = FALSE;
 /*
@@ -96,12 +97,12 @@ struct ui_command	*cmds;
 		{
 		    case KW_MARK:
 			cmds++;
-			Mark_inc = (int)(UFLOAT (cmds[0]) * 1000);
+			HodoMarkInc = (int)(UFLOAT (cmds[0]) * 1000);
 			break;
 		    case KW_STEP:
 			Stepping = TRUE;
 			cmds++;
-			Mark_inc = (int)(UFLOAT (cmds[0]) * 1000);
+			HodoStepInc = (int)(UFLOAT (cmds[0]) * 1000);
 			break;
 		    case KW_TOP:
 			cmds++;
@@ -191,11 +192,11 @@ int	plot_ndx;
  * Draw the actual data part of the hodograph
  */
 {
-	float	u[BUFLEN], v[BUFLEN], ustep[BUFLEN], vstep[BUFLEN];
-	float	alt[BUFLEN], mark_alt, prev_alt = 0.0;
+	float	u[BUFLEN], v[BUFLEN], udraw[BUFLEN], vdraw[BUFLEN];
+	float	alt[BUFLEN], altdraw[BUFLEN], mark_alt, next_alt;
 	float	site_alt, frac, xmark, ymark;
 	float	snd_s_alt ();
-	int	i, npts, steppts, ndx;
+	int	i, npts, drawpts, ndx;
 	int	color = C_DATA1 + plot_ndx;
 	char	string[10];
 /*
@@ -229,70 +230,97 @@ int	plot_ndx;
 		for (i = 0; i < npts; i++)
 			alt[i] -= site_alt;
 /*
- * If we're doing a stepped plot, start out with the surface winds
+ * Build the arrays of points to draw.  If we are not stepping, then we
+ * just use every point up to Top_alt.  Otherwise we interpolate to the
+ * chosen step increments (overwriting points in the existing data arrays)
  */
-	if (Stepping)
+	if (!Stepping)
 	{
-		ustep[0] = u[0];
-		vstep[0] = v[0];
-		steppts = 1;
+	    for (i = 0; i < npts && alt[i] <= Top_alt; i++)
+	    {
+		udraw[i] = u[i];
+		vdraw[i] = v[i];
+		altdraw[i] = alt[i];
+		drawpts = i;
+	    }
 	}
+	else
+	{
+	/*
+	 * Always use the first point when stepping
+	 */
+	    udraw[0] = u[0];
+	    vdraw[0] = v[0];
+	    altdraw[0] = alt[0];
+	    drawpts = 1;
+	/*
+	 * What's the next altitude to draw?
+	 */
+	    next_alt = Flg_hodo_msl ? 
+		(float)HodoStepInc * ((int) site_alt / HodoStepInc + 1) : 0.0;
+	/*
+	 * Run through the remaining points, stepping next_alt as necessary
+	 */
+	    for (i = 1; i < npts && next_alt <= Top_alt; i++)
+	    {
+		while (alt[i] > next_alt)
+		{
+		/*
+		 * Interpolate to the step altitude
+		 */
+		    frac = (next_alt - alt[i-1]) / (alt[i] - alt[i-1]);
+		    udraw[drawpts] = u[i-1] + frac * (u[i] - u[i-1]);
+		    vdraw[drawpts] = v[i-1] + frac * (v[i] - v[i-1]);
+		    altdraw[drawpts] = next_alt;
+		    drawpts++;
+			
+		    next_alt += (float) HodoStepInc;
+		}
+	    }
+	}
+	    
+/*
+ * Draw the hodograph
+ */
+	G_polyline (Hodo_ov, GPLT_SOLID, color, drawpts, udraw, vdraw);
 /*
  * Find the first mark altitude
  */
-	if (Flg_hodo_msl)
-		mark_alt = (float)(Mark_inc) * ((int) site_alt / Mark_inc + 1);
-	else
-		mark_alt = 0.0;
+	mark_alt = Flg_hodo_msl ? 
+	    (float)(HodoMarkInc) * ((int) site_alt / HodoMarkInc + 1) : 0.0;
 /*
- * Put in the altitude marks, and find the plot points if we're doing
- * a stepped plot
+ * Put in the altitude marks, stepping by the mark increment
  */
-	for (i = 1; i < npts && (int) mark_alt <= Top_alt; i++)
+	for (i = 1; i < drawpts && (int) mark_alt <= Top_alt; i++)
 	{
 	/*
 	 * Put in a mark if we passed the mark altitude
 	 */
-		while (alt[i] > mark_alt)
+		while (altdraw[i] > mark_alt)
 		{
 		/*
 		 * Interpolate to the mark altitude
 		 */
-			frac = (mark_alt - alt[i-1]) / (alt[i] - alt[i-1]);
-			xmark = u[i-1] + frac * (u[i] - u[i-1]);
-			ymark = v[i-1] + frac * (v[i] - v[i-1]);
+			frac = (mark_alt - altdraw[i-1]) / 
+			    (altdraw[i] - altdraw[i-1]);
+			xmark = udraw[i-1] + frac * (udraw[i] - udraw[i-1]);
+			ymark = vdraw[i-1] + frac * (vdraw[i] - vdraw[i-1]);
 		/*
 		 * Draw the mark
 		 */
 			G_write (Hodo_ov, color, GTF_MINSTROKE, 0.05 * W_scale,
-				GT_CENTER, GT_CENTER, xmark, ymark, 0.0, "+");
+				 GT_CENTER, GT_CENTER, xmark, ymark, 0.0, "+");
 
 			sprintf (string, "%.1f", mark_alt / 1000.0);
 			G_write (Hodo_ov, color, GTF_DEV, 0.05 * W_scale,
-				GT_LEFT, GT_CENTER, xmark + 0.02 * W_scale, 
-				ymark, 0.0, string);
-		/*
-		 * Save the point if we're doing a stepped plot
-		 */
-			if (Stepping)
-			{
-				ustep[steppts] = xmark;
-				vstep[steppts] = ymark;
-				steppts++;
-			}
+				 GT_LEFT, GT_CENTER, xmark + 0.02 * W_scale, 
+				 ymark, 0.0, string);
 		/*
 		 * Increment the mark altitude
 		 */
-			mark_alt += (float) Mark_inc;
+			mark_alt += (float) HodoMarkInc;
 		}
 	}
-/*
- * Draw the hodograph from the u and v arrays we just built
- */
-	if (Stepping)
-		G_polyline (Hodo_ov, GPLT_SOLID, color, steppts, ustep, vstep);
-	else
-		G_polyline (Hodo_ov, GPLT_SOLID, color, i - 1, u, v);
 /*
  * Annotate
  */
