@@ -1,7 +1,7 @@
 /*
  * Foote chart stuff
  *
- * $Revision: 1.7 $ $Date: 1989-10-09 15:52:33 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1989-12-27 11:25:44 $ $Author: burghart $
  * 
  */
 # include <ui_date.h>
@@ -101,7 +101,7 @@ struct ui_command *cmds;
 	/*
 	 * Set the color
 	 */
-		color = C_TRACE1 + plt;
+		color = C_DATA1 + plt;
 	/*
 	 * Get the name of the sounding (use the default if necessary)
 	 */
