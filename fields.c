@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.18 1993-07-21 21:50:40 burghart Exp $";
+static char *rcsid = "$Id: fields.c,v 1.19 1996-12-31 16:23:34 burghart Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -130,9 +130,6 @@ static struct
 		{"wdir", ""},
 		0.0,	360.0,	180.0,	10.0	},
 	{f_wspd, "wind speed", "m/s",
-		{"wspd", ""},
-		0.0,	50.0,	0.0,	5.0	},
-	{f_qrh, "wind speed", "m/s",
 		{"wspd", ""},
 		0.0,	50.0,	0.0,	5.0	},
 	{f_ri, "Richardson Number", "",
