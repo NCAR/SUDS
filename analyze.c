@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.32 1994-05-16 20:28:59 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.33 1994-06-24 21:51:00 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -590,7 +590,8 @@ int	npts;
  * Bulk Richardson number
  */
 	shear = an_shear ();
-	an_printf ("\t Shear over lowest 6km: %.1f m/s\n", shear);
+	an_printf ("\t Shear over lowest %.1f km: %.1f m/s\n", Shear_depth,
+		   shear);
 
 	if (shear != 0.0)
 		an_printf ("\t Bulk Richardson number: %.1f\n", 
@@ -1111,11 +1112,12 @@ an_shear ()
 		return (0.0);
 	}
 /*
- * Find the density weighted vector mean wind speeds up to 500m and up to 6km
+ * Find the density weighted vector mean wind speeds up to 500m and up to the
+ * selected shear depth (default 6km)
  */
 	i = 0;	/* index into data arrays */
 
-	for (a = 0.0; a <= 6000.0; a += 100.0)
+	for (a = 0.0; a <= 1000.0 * Shear_depth; a += 100.0)
 	{
 	/*
 	 * Go on to the next a if this one is lower than the lowest datum
@@ -1139,7 +1141,8 @@ an_shear ()
 			}
 			else
 			{
-				ui_warning ("Sounding shallower than 6km.");
+				ui_warning ("Sounding shallower than %.1f km.",
+					    Shear_depth);
 				ui_warning ("Using available data for shear.");
 				break;
 			}

@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: init_globals.c,v 1.6 1993-04-28 16:20:15 carson Exp $";
+static char *rcsid = "$Id: init_globals.c,v 1.7 1994-06-24 21:51:00 burghart Exp $";
 
 # ifdef VMS
 #	define var	globaldef
@@ -42,7 +42,8 @@ init_globals ()
 	W_scale = 25.0;
 	Mark_inc = 1;
 	Wb_res = 10.0;
-	Forecast_pres = 700.0;
+	Forecast_pres = 700.0;	/* mb */
+	Shear_depth = 6.0;	/* km */
 /*
  * Set the flags and initialize the skew-t package
  */
@@ -58,6 +59,10 @@ init_globals ()
  */
 	usy_c_indirect (symtbl, "out_dev", Out_dev, SYMT_STRING, 40);
 	usy_c_indirect (symtbl, "dev_type", Dev_type, SYMT_STRING, 40);
+/*
+ * Make the depth used to calculate shear a UI variable
+ */
+	usy_c_indirect (symtbl, "sheardepth", &Shear_depth, SYMT_FLOAT, 0);
 /*
  * Initialize the color arrays
  */

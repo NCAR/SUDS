@@ -19,7 +19,7 @@
  * through use or modification of this software.  UCAR does not provide 
  * maintenance or updates for its software.
  *
- * $Id: globals.h,v 1.8 1993-10-01 15:48:29 case Exp $
+ * $Id: globals.h,v 1.9 1994-06-24 21:51:00 burghart Exp $
  */
 
 # include <ui.h>
@@ -86,6 +86,11 @@ var int		Mark_inc;
  * Pressure value to use for forecast analyses
  */
 var float	Forecast_pres;
+
+/*
+ * Depth to use in calculating shear
+ */
+var float	Shear_depth;
 
 /*
  * MIN macro
