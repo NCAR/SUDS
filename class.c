@@ -1,7 +1,7 @@
 /*
  * CLASS format sounding access
  *
- * $Revision: 1.7 $ $Date: 1989-12-19 15:20:47 $ $Author: burghart $
+ * $Revision: 1.8 $ $Date: 1990-01-23 09:02:24 $ $Author: burghart $
  * 
  */
 # include <stdio.h>
@@ -23,8 +23,10 @@ struct fldmatch	F_match_tbl[] =
 	{f_time, "Tim", ":s"}, {f_lat, "Lat", ":d"}, {f_lon, "Lon", ":d"},
 	{f_alt, "Alt", ":m"}, {f_pres, "Prs", ":mb"}, {f_temp, "Tmp", ":C"},
 	{f_dp, "Dpt", ":C"}, {f_rh, "RH", ":%"}, {f_wspd, "WS", ":m/s"},
-	{f_wdir, "WD", ":d"}, {f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""},
-	{f_qrh, "Qh", ""}, {f_qwind, "Quv", ""}, {f_null, "", ""}
+	{f_wdir, "WD", ":d"}, {f_u_wind, "U", ":m/s"}, {f_v_wind, "V", ":m/s"},
+	{f_qpres, "Qp", ""}, {f_qtemp, "Qt", ""}, {f_qrh, "Qh", ""}, 
+	{f_qwind, "Quv", ""}, {f_qu, "Qu", ""}, {f_qv, "Qv", ""}, 
+	{f_null, "", ""}
 };
 
 
@@ -46,6 +48,7 @@ struct snd	*sounding;
 	struct snd_datum	*dptr[MAXFLDS], *prevpt;
 	float	val;
 	char	string[STRSIZE], character;
+	float	ui_float_prompt ();
 /*
  * Open the file
  */
@@ -66,7 +69,7 @@ struct snd	*sounding;
 	else
 		ui_error ("Bad location string -- Is this a CLASS file?");
 /*
- * Read the lat, lon, and alt
+ * Read the lon, lat, and alt
  */
 	fscanf (sfile, "%f,%f,%f\n", &(sounding->sitelon), 
 		&(sounding->sitelat), &(sounding->sitealt));
@@ -74,6 +77,28 @@ struct snd	*sounding;
 	sounding->site = (char *) 
 		malloc ((1 + strlen (string)) * sizeof (char));
 	strcpy (sounding->site, string);
+/*
+ * Make sure we got non-zero lat, lon, and alt.  This is here because
+ * some old files written by SUDS have these values as zero.
+ */
+	if (sounding->sitelon == 0.0 && sounding->sitelat == 0.0)
+	{
+		ui_printf ("Site latitude and longitude in file are bad\n");
+		sounding->sitelat = ui_float_prompt (
+			"   Enter site latitude", (char *) 0, -90.0, 
+			90.0, 0.0);
+		sounding->sitelon = ui_float_prompt (
+			"   Enter site longitude, west is negative",
+			(char *) 0, -180.0, 180.0, 0.0);
+	}
+
+	if (sounding->sitelat == 0.0)
+	{
+		ui_printf ("Site altitude in file is zero\n");
+		sounding->sitealt = ui_float_prompt (
+			"Enter site altitude in meters", (char *) 0, -50.0,
+			5000.0, 0.0);
+	}
 /*
  * Sounding release date and time
  */
