@@ -1,7 +1,7 @@
 /*
  * Skew-t plotting module
  *
- * $Revision: 1.11 $ $Date: 1990-04-05 10:51:29 $ $Author: burghart $
+ * $Revision: 1.12 $ $Date: 1990-05-04 13:39:41 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -54,8 +54,9 @@ static float	Xtxt_bot, Ytxt_bot, Xtxt_top, Ytxt_top;
 /*
  * Do we need to draw a new background?
  */
-static int	Redraw = TRUE;
-
+static char	Redraw = TRUE;
+static char	Bg_theta_w;	/* state of the "theta_w" flag when the	*/
+				/* background is drawn			*/
 /*
  * Forward declarations
  */
@@ -201,7 +202,7 @@ skt_background ()
  * Draw the background for a skew T, log p diagram
  */
 {
-	int	i;
+	int	i, min, max, step;
 	float	x[128], y[128];
 	char	string[64];
 	float	t, pt, p, annot_angle, slope, intercept, xloc, yloc;
@@ -217,7 +218,7 @@ skt_background ()
 /*
  * Return if our old background is still good
  */
-	if (! Redraw)
+	if (! Redraw  && Bg_theta_w == Flg_theta_w)
 		return;
 /*
  * Clear the overlay and get the clipping right
@@ -367,9 +368,25 @@ skt_background ()
 			GT_CENTER, x[1], y[1] + 0.01, annot_angle, string);
 	}
 /*
+ * Do saturated adiabats as equivalent wet-bulb temperature or
+ * equivalent potential temperature?
+ */
+	if (Flg_theta_w)
+	{
+		min = 0;
+		max = 32;
+		step = 4;
+	}
+	else
+	{
+		min = 275;
+		max = 410;
+		step = 15;
+	}
+/*
  * Saturated adiabats
  */
-	for (t = 0; t <= 32; t += 4)
+	for (t = min; t <= max; t += step)
 	{
 		int	npts = 0;
 		float	ept;
@@ -382,7 +399,10 @@ skt_background ()
 	 * Find the equivalent potential temperature which corresponds
 	 * to a saturated parcel at the surface at temperature t
 	 */
-		ept = theta_w (t + T_K, 1000.);
+		if (Flg_theta_w)
+			ept = theta_e (t + T_K, 1000.);
+		else
+			ept = (float) t;
 	/*
 	 * Build the "iso-ept" curve
 	 */
@@ -488,9 +508,11 @@ skt_background ()
 		}
 	}
 /*
- * Reset the redraw flag
+ * Reset the redraw flag and save the state of the "theta_w" flag 
+ * used for this background
  */
 	Redraw = FALSE;
+	Bg_theta_w = Flg_theta_w;
 }
 
 
@@ -805,7 +827,7 @@ float	*pres, *temp, *dp;
 	pt = theta_dry (t_sfc, p_sfc);
 	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
 	t_lcl = lcl_temp (t_sfc, dp_sfc);
-	ept = theta_w (t_lcl, p_lcl);
+	ept = theta_e (t_lcl, p_lcl);
 /*
  * Get the forecasted (700 mb) LCL pressure, temp, and ept
  */
@@ -814,7 +836,7 @@ float	*pres, *temp, *dp;
 		pt_700 = theta_dry (t_700, 700.0);
 		p_lcl700 = lcl_pres (t_700, dp_700, 700.0);
 		t_lcl700 = lcl_temp (t_700, dp_700);
-		ept_700 = theta_w (t_lcl700, p_lcl700);
+		ept_700 = theta_e (t_lcl700, p_lcl700);
 		do_700 = TRUE;
 	}
 	else
