@@ -30,7 +30,10 @@ suds.lf:suds.state suds.menu keywords.h
 	@ rm -f suds.i
 
 clean:
-	rm -f core *.o
+	rm -f core *.o suds libsuds.a
+
+cleandist:
+	rm -f core *.o suds libsuds.a $(RDSSBIN)/suds $(RDSSLIBRARIES)/suds.lf
 
 coda:
 	(CODA=./.codarc; export CODA; coda sources)
