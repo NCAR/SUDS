@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: suds.c,v 1.19 1991-10-22 20:41:47 case Exp $";
+static char *rcsid = "$Id: suds.c,v 1.20 1991-11-13 21:46:01 burghart Exp $";
 
 # ifdef VMS
 #	include <ssdef.h>
@@ -96,7 +96,7 @@ char	**argv;
 			loadfile = "ds:[burghart.suds]suds.lf";
 			ui_init (loadfile, ! argc, TRUE);
 # else
-			loadfile = "/locallib/suds.lf";
+			loadfile = LOADFILE;
 			ui_init (loadfile, ! argc, TRUE);
 			ui_setup ("suds", &argc, argv, (char *) 0);
 # endif
@@ -114,7 +114,7 @@ char	**argv;
 # ifdef VMS
 			helpdir.us_v_ptr = "ds:[burghart.suds.help]";
 # else
-			helpdir.us_v_ptr = "/rdss/suds/help/";
+			helpdir.us_v_ptr = HELPDIR;
 # endif
 
 # ifndef VMS
