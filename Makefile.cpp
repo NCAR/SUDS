@@ -1,5 +1,5 @@
 TOP = ..
-LOCALCFLAGS = -Bstatic -I$(XINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG)
+LOCALCFLAGS = -Bstatic $(XINCLUDE) -DLOADFILE=\"$(RDSSLIBRARIES)/suds.lf\" -DHELPDIR=\"$(ROOT)/suds/help\" $(NETCDFFLAG)
 
 OBJS =	suds.o analyze.o cape.o class.o color.o contour.o \
 	convert.o edit.o eformat.o \
