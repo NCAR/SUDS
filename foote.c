@@ -2,6 +2,9 @@
  * Foote chart stuff
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:14:08  burghart
+ * Initial revision
+ * 
  */
 # include <ui_date.h>
 # include "globals.h"
@@ -375,12 +378,13 @@ int	npts;
  * Calculate the thickness of the layer from the floor to the LFC and add 
  * it to the floor altitude
  *
- * This formula is adapted from equations 2.28, 2.29, and 2.30 in Wallace and
- * Hobbs (1977): "Atmospheric Science" using a simple estimation of the 
+ * This formula is adapted from equations 2.24 of Wallace and Hobbs' 
+ * "Atmospheric Science" (1977) using a simple estimation of the 
  * integral.
  */
-	return (alt[floor] + R_D / G_0 * (vt_floor + vt_lfc) * 
-		(pres[floor] - lfc_pres) / (pres[floor] + lfc_pres));
+	return (alt[floor] + R_D / G_0 * 0.5 * 
+		(vt_floor / pres[floor] + vt_lfc / lfc_pres) * 
+		(pres[floor] - lfc_pres));
 }
 
 
