@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: analyze.c,v 1.30 1993-04-08 21:38:52 burghart Exp $";
+static char *rcsid = "$Id: analyze.c,v 1.31 1993-10-01 15:47:32 case Exp $";
 
 # include <math.h>
 # include <stdio.h>
@@ -32,6 +32,12 @@ static char *rcsid = "$Id: analyze.c,v 1.30 1993-04-08 21:38:52 burghart Exp $";
 # include "fields.h"
 # include "flags.h"
 # include "keywords.h"
+
+# ifdef __STDC__
+#  include <stdarg.h>
+# else
+#  include <varargs.h>
+# endif
 
 # define R_D	287.
 
@@ -69,9 +75,32 @@ int	Show_len = 0;
 /*
  * Forward declarations
  */
-float	an_lfc_calc (), an_area (), an_li (), an_li_ref (), an_shear ();
-void	an_surface (), an_printf (), an_do_analysis (), an_mlvw ();
-void	an_set_showlist (), an_show ();
+
+
+void an_do_analysis FP ((float *, float *, float *, int, double, 
+                    double, double));
+double an_lfc_calc FP ((float *, float *, float *, int, double, double,
+                    double, double));
+double an_area FP ((double, double, double, double, double, int));
+void an_surface FP ((float *, float *, float *, int, float *,
+                    float *, float *));
+int an_forecast FP ((float *, float *, float *, int, double, double, float *,
+                    float *, int *));
+double an_li FP ((float *, float *, int, double ));
+double an_li_ref FP ((float *, float *, int));
+double an_shear FP ((void));
+void an_mlvw FP ((float *, float *));
+void an_mlvw_limits FP ((struct ui_command *));
+void an_mix_depth FP ((struct ui_command *));
+void an_set_showlist FP ((struct ui_command *));
+void an_show FP ((void));
+
+/* our FP macro won't work here */
+# ifdef __STDC__
+void an_printf ( char *, ...);
+# else
+void an_printf ();
+# endif /*ifdef __STDC__ */
 
 /*
  * Sounding id
@@ -282,7 +311,8 @@ struct ui_command	*cmds;
 
 void
 an_do_analysis (t, p, dp, npts, t_sfc, p_sfc, dp_sfc)
-float	*t, *p, *dp, t_sfc, p_sfc, dp_sfc;
+float	*t, *p, *dp;
+double  t_sfc, p_sfc, dp_sfc;
 int	npts;
 /*
  * Perform the analysis of the sounding data in arrays t, p, and dp, using
@@ -299,15 +329,15 @@ int	npts;
  * Get the pressure, temperature, potential temp. and equivalent
  * potential temp. of the LCL
  */
-	p_lcl = lcl_pres (t_sfc, dp_sfc, p_sfc);
-	t_lcl = lcl_temp (t_sfc, dp_sfc);
+	p_lcl = lcl_pres ( t_sfc, dp_sfc, p_sfc);
+	t_lcl = lcl_temp ( t_sfc, dp_sfc);
 	an_printf ("\t LCL pressure: %.1f mb\n", p_lcl);
 	theta_lcl = theta_dry (t_lcl, p_lcl);
 	theta_e_lcl = theta_e (t_lcl, t_lcl, p_lcl);
 /*
  * Print the lifted index info
  */
-	li = an_li (p, t, npts, theta_e_lcl, TRUE);
+	li = an_li (p, t, npts, theta_e_lcl);
 
 	if (li != BADVAL)
 		an_printf ("\t %s index: %.2f\n", 
@@ -389,7 +419,7 @@ int	npts;
 /*
  * Integrate the area (energy) from the LCL to the LFC
  */
-	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0, TRUE);
+	p_lfc = an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, 0.0);
 
 	if (p_lfc != BADVAL)
 		an_printf ("\t LFC pressure: %.1f mb\n", p_lfc);
@@ -581,9 +611,10 @@ int	npts;
 
 
 
-float
+double
 an_lfc_calc (t, p, dp, npts, t_sfc, p_sfc, dp_sfc, p_lim)
-float	*t, *dp, *p, t_sfc, p_sfc, dp_sfc, p_lim;
+float	*t, *dp, *p;
+double  t_sfc, p_sfc, dp_sfc, p_lim;
 int	npts;
 /*
  * Calculate the LFC from the data arrays and the surface values given
@@ -606,7 +637,7 @@ int	npts;
  */
 	while (p[i] > p_lcl || p[i] == BADVAL)
 		if (++i == npts)
-			return (BADVAL);
+			return ( BADVAL);
 
 	for (i--; p[i] == BADVAL || t[i] == BADVAL || dp[i] == BADVAL; i--)
 		/* nothing */;
@@ -622,7 +653,7 @@ int	npts;
 	 * Return if we pass the pressure limit
 	 */
 		if (p[i] < p_lim)
-			return (BADVAL);
+			return ( BADVAL);
 	/*
 	 * Move to the next good point
 	 */
@@ -631,7 +662,7 @@ int	npts;
 		while (p[i] >= p_prev || p[i] == BADVAL || t[i] == BADVAL ||
 			dp[i] == BADVAL)
 			if (++i == npts)
-				return (BADVAL);
+				return ( BADVAL);
 	}
 /*
  * Check for super-adiabatic case (i.e. we didn't go anywhere because the
@@ -642,7 +673,7 @@ int	npts;
 		an_printf (
 			"\tSuper-adiabatic case at %d mb, no LFC calculated\n",
 			(int) p_prev);
-		return (BADVAL);
+		return ( BADVAL);
 	}
 /*
  * The LFC is between p_prev and p[i], calculate its pressure and temperature.
@@ -653,15 +684,15 @@ int	npts;
 
 	ln_p_lfc = (dt_bot * log (p[i]) + dt_top * log (p_prev)) / 
 		(dt_bot + dt_top);
-	return ((float) (exp (ln_p_lfc)));
+	return ( exp (ln_p_lfc));
 }
 
 
 
 
-float
+double
 an_area (p1, p0, t1, t0, theta, moist)
-float	p1, p0, t1, t0, theta;
+double	p1, p0, t1, t0, theta;
 int	moist;
 /*
  * Numerical integration of area between (t0,p0) and (t1,p1), using
@@ -734,7 +765,7 @@ int	moist;
 /*
  * We're done
  */
-	return (area);
+	return ( (double) area);
 }
 
 
@@ -849,7 +880,8 @@ int	npts;
 
 int
 an_forecast (t, p, dp, npts, p_sfc, dp_sfc, temp_fore, dp_fore, ndx_fore)
-float	*t, *p, *dp, p_sfc, dp_sfc, *temp_fore, *dp_fore;
+float	*t, *p, *dp, *temp_fore, *dp_fore;
+double  p_sfc, dp_sfc;
 int	npts, *ndx_fore;
 /*
  * Find the temperature, dewpoint corresponding to the surface mixing ratio 
@@ -898,10 +930,11 @@ int	npts, *ndx_fore;
 
 
 
-float
-an_li (p, t, npts, theta_e_lcl)
-float	*p, *t, theta_e_lcl;
-int	npts;
+double
+an_li ( p, t, npts, theta_e_lcl)
+float *p, *t;
+double theta_e_lcl;
+int npts;
 /*
  * Find the lifted index (or modified lifted index) for the sounding
  */
@@ -922,13 +955,13 @@ int	npts;
 /*
  * Done
  */
-	return (li);
+	return ( (double) li);
 }
 
 
 
 
-float
+double
 an_li_ref (p, t, npts)
 float	*p, *t;
 int	npts;
@@ -960,7 +993,7 @@ int	npts;
  */
 	if (p_prev == BADVAL || i == npts)
 	{
-		return (BADVAL);
+		return ( BADVAL);
 	}
 /*
  * Interpolate the temperature
@@ -971,20 +1004,43 @@ int	npts;
 
 
 
+# ifdef __STDC__  /*  Use Ansi variable args */
+
 void
-an_printf (fmt, ARGS)
-char	*fmt;
-int	ARGS;	/* ARGS is defined in ui_param.h */
+an_printf ( char *fmt, ... )
+
 /*
  * printf-like interface to write to the screen and also to an output
  * file if requested
  */
 {
 	char	buf[1000];
+        va_list args;
+ 
+        va_start (args, fmt);
+
+# else  /* use non-ANSI variable list */ 
+
+void
+an_printf ( va_alist)
+va_dcl
+
+{
+        char    buf[1000];
+        char    *fmt;
+        va_list args;
+
+        va_start (args);
+        fmt = va_arg (args, char *);
+
+# endif /* ifdef __STDC__ */
+
 /*
- * Encode the output (SPRINTARGS is defined in ui_param.h)
+ * Encode the output 
  */
-	sprintrmt (buf, fmt, SPRINTARGS);
+	vsprintf (buf, fmt, args );
+        va_end (args);
+
 /*
  * ui_printf the buffer
  */
@@ -999,7 +1055,7 @@ int	ARGS;	/* ARGS is defined in ui_param.h */
 
 
 
-float
+double
 an_shear ()
 /*
  * Find a shear value for use in the Bulk Richardson number calculation
@@ -1335,3 +1391,10 @@ an_show ()
 		}
 	}
 }
+
+
+
+
+
+
+
