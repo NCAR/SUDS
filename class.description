@@ -1,23 +1,14 @@
-Sandy,
-  Here is the description of the SUDS format which you requested.  Let me
-know if you have any questions.
-				Chris
+"Old" CLASS format
+==================
 
+The CLASS format is a simple ASCII form for storing sounding data.  The
+file consists of 9 lines of header information, followed by one line of
+surface data, then the sounding data in order of increasing time.  The
+complete rules for specifying bad or missing values will not be discussed
+here; just use 99999.0 for any bad value and the file will work fine in
+SUDS.
 
-
-
-SUDS uses a sounding format which corresponds to that used for CLASS
-10-second data files.  Although this format leaves some to be desired, it
-was selected as the output format for SUDS because it is more flexible than
-other formats used.  The structure consists of variable-length text 
-lines which in turn consist of comma separated fields.  Unless otherwise
-noted, all numeric values in the file are floating-point values.  The format
-used to write floating-point data is not fixed, but all can be read using C 
-standard I/O with the %f format.  Bad data are flagged by SUDS with a
-value of 99999.0 (In older SUDS output files, the bad data flag is 9999.9;
-in CLASS files, the bad data flag varies depending on the field).
-
-A description of the information in each record follows:
+A description of the information in each line of a CLASS file follows:
 
 line		data
 ------------------------------------------------------------------------------
@@ -45,7 +36,11 @@ Lines 4 and 5 are lists of the surface and flight fields, respectively. Each
 begins with a string ("SURFACE:" or "FLIGHT: ") followed by the field names
 and the associated units.  Each name-units pair is one comma-separated field
 in the line; the names and the units are divided within the field by a colon.
-A list of the fields and units which may occur are given below.  
+A list of the fields and units which may occur are given below.  Any number
+of these fields may be used, and they may be placed on the "FLIGHT" or 
+"SURFACE" line in any order.  The associated surface and flight data lines
+should contain data for the listed fields, in the same order.
+
 NOTE:  The quality fields do not have associated units, and that the colon 
 is left off in these cases.  
 
@@ -63,3 +58,25 @@ is left off in these cases.
 	Qt	-- temperature quality (no units)
 	Qh	-- humidity (?) quality (no units)
 	Quv	-- winds (?) quality (no units)
+
+Below is a truncated example file:
+
+DVR,-104.86917,39.76722,1611
+1987,07,03,15:35:19
+CLASS 10 SECOND DATA,345
+SURFACE:,Tim:s,Lon:d,Lat:d,Alt:m,Prs:mb,Tmp:C,Dpt:C,RH:%,WS:m/s,WD:d
+FLIGHT: ,Tim:s,Lon:d,Lat:d,Alt:m,Prs:mb,Tmp:C,Dpt:C,RH:%,WS:m/s,WD:d,Qp,Qt
+RMW
+/
+/
+/
+-42.1,-104.86917,39.76722,1608,836.7,23.5,13.1,52
+10,-104.86907,39.76723,1626.2,835,20.1,11.1,48.9,.3,130.9,.7,.1
+20,-104.86905,39.76713,1667.1,831,20,9.6,52.7,2.4,343.6,.3,.1
+30,-104.86895,39.7669,1718.4,826.1,19.6,10,53.9,3.1,342.9,.3,.1
+40,-104.8688,39.76662,1769.6,821.2,19.2,10,54.7,3.6,331,.3,0
+[...337 lines deleted...]
+3420,-104.21129,39.779,16550,101.8,-63.7,-106.3,1,9.7,233.8,0,.1
+3430,-104.21055,39.77946,16597.2,101.1,-63.6,-106.3,1,10,232.3,0,0
+3440,-104.2101,39.78008,16643.2,100.3,-63.5,-106.3,1,9.6,229.1,99999.0,99999.0
+3450,-104.2097,39.78068,16691.2,99.5,-63.5,-106.2,1,9.4,226.5,0,0
