@@ -2,6 +2,9 @@
  * E-format sounding access module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  1990/01/12  15:10:01  burghart
+ * Fixed the kluge that prompts for site altitude
+ *
  * Revision 1.2  89/04/06  10:28:44  burghart
  * Changed call to fclose () to bfclose ()
  * 
@@ -11,9 +14,6 @@
  */
 # include <stdio.h>
 # include "sounding.h"
-
-# define TRUE	1
-# define FALSE	0
 
 # define BADVAL	 -999.
 
