@@ -1,7 +1,7 @@
 /*
  * SUDS main driver
  *
- * $Revision: 1.10 $ $Date: 1990-10-26 10:29:10 $ $Author: burghart $
+ * $Revision: 1.11 $ $Date: 1990-12-05 16:01:39 $ $Author: burghart $
  */
 # ifdef VMS
 #	include <ssdef.h>
@@ -39,6 +39,7 @@ char	**argv;
 {
 	char	*loadfile;
 	void	main_finish (), main_interrupt (), main_cmd_init();
+	void	main_copyright ();
 	int	main_dispatch ();
 	char	*getenv ();
 	int	status, read_init = TRUE;
@@ -127,6 +128,11 @@ char	**argv;
 			strcat (initfile, "suds.ini");
 			ut_open_file (initfile, FALSE);
 		}
+	/*
+	 * (Bleep)ing copyright message
+	 */
+		if (! getenv ("NIX_COPYRIGHT"))
+			main_copyright ();
 	ON_ERROR
 		main_finish ();
 	ENDCATCH
@@ -336,7 +342,8 @@ main_copyright ()
  */
 {
 ui_printf (
-"		Copyright (C) 1990 by UCAR\n\
+"\n\
+		Copyright (C) 1990 by UCAR\n\
 	University Corporation for Atmospheric Research\n\
 		   All rights reserved\n\
 \n\
@@ -351,7 +358,8 @@ any kind, either express or implied, including but not limited to the\n\
 implied warranties of merchantibility and fitness for a particular purpose.\n\
 UCAR does not indemnify any infringement of copyright, patent, or trademark\n\
 through use or modification of this software.  UCAR does not provide \n\
-maintenance or updates for its software.\n"
+maintenance or updates for its software.\n\
+\n\n"
 );
 }
 
