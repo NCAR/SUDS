@@ -1,7 +1,7 @@
 /*
  * netCDF sounding access
  *
- * $Revision: 1.2 $ $Date: 1990-12-12 13:56:01 $ $Author: burghart $
+ * $Revision: 1.3 $ $Date: 1991-03-21 15:45:06 $ $Author: burghart $
  * 
  */
 # include <time.h>
@@ -205,13 +205,10 @@ struct snd	*sounding;
 			else
 				sounding->dlists[fld] = pt;
 		/*
-		 * Change altitude to meters AGL
+		 * Change altitude to meters
 		 */
 			if (sounding->fields[fld] == f_alt)
-			{
 				data[ndx] *= 1000;
-				data[ndx] -= sounding->sitealt;
-			}
 		/*
 		 * Assign the value and index
 		 */
@@ -248,28 +245,37 @@ struct ui_command	*cmds;
  * Handle the NETCDF command for writing a netCDF sounding file
  */
 {
-	int	i, j, offset, ndx, nflds, have_time = FALSE;
-	int	v_sitelat, v_sitelon, v_sitealt, v_base, v_time;
+	int	i, j, offset, ndx, nflds, c;
+	int	have_time = FALSE, have_lat = FALSE, have_lon = FALSE;
+	int	v_sitelat, v_sitelon, v_sitealt, v_base, v_time, v_lat, v_lon;
 	int	v_id[MAXFLDS], timedim;
+	int	add_alt = FALSE, v_alt, n_alts;
 	long	current_time, base_time;
 	char	*fname, *id_name, *snd_default ();
 	struct snd	sounding, snd_find_sounding ();
 	struct tm	t;
-	float	val, bv = NC_BADVAL, zero = 0.0;
+	float	val, bv = NC_BADVAL, zero = 0.0, altbuf[1024];
 	char	string[80];
 	fldtype	fld, nc_fld;
 	struct snd_datum	*data[MAXFLDS];
 /*
- * Get the sounding name then the sounding
+ * Get the filename then the sounding name
  */
-	fname = UPTR (cmds[0]);
+	c = 0;
 
-	if (cmds[1].uc_ctype != UTT_END)
-		id_name = UPTR (cmds[1]);
+	fname = UPTR (cmds[c++]);
+
+	if (cmds[c].uc_ctype == UTT_VALUE)
+		id_name = UPTR (cmds[c++]);
 	else
 		id_name = snd_default ();
 
 	sounding = snd_find_sounding (id_name);
+/*
+ * kluge to add altitude field
+ */
+	if (cmds[c].uc_ctype == UTT_KW)
+		add_alt = TRUE;
 /*
  * Set netCDF errors to non-verbose, non-fatal
  */
@@ -312,7 +318,15 @@ struct ui_command	*cmds;
 	v_sitelat = ncvardef (Sfile, "site_lat", NC_FLOAT, 0, 0);
 	v_sitelon = ncvardef (Sfile, "site_lon", NC_FLOAT, 0, 0);
 	v_sitealt = ncvardef (Sfile, "site_alt", NC_FLOAT, 0, 0);
+
 	v_time = ncvardef (Sfile, "time_offset", NC_FLOAT, 1, &timedim);
+	(void) ncattput (Sfile, v_time, "missing_value", NC_FLOAT, 1, &bv);
+
+	v_lat = ncvardef (Sfile, "lat", NC_FLOAT, 1, &timedim);
+	(void) ncattput (Sfile, v_lat, "missing_value", NC_FLOAT, 1, &bv);
+
+	v_lon = ncvardef (Sfile, "lon", NC_FLOAT, 1, &timedim);
+	(void) ncattput (Sfile, v_lon, "missing_value", NC_FLOAT, 1, &bv);
 
 	for (i = 0; sounding.fields[i] != f_null; i++)
 	{
@@ -335,20 +349,49 @@ struct ui_command	*cmds;
 	/*
 	 * Create the variable in the netCDF file
 	 */
-		if (fld != f_time)
-			v_id[i] = ncvardef (Sfile, Netcdf_tbl[j].nc_name, 
-				NC_FLOAT, 1, &timedim);
-		else
+		if (fld == f_time)
 		{
 			v_id[i] = v_time;
 			have_time = TRUE;
 		}
-
-		(void) ncattput (Sfile, v_id[i], "missing_value",
-			NC_FLOAT, 1, &bv);
+		else if (fld == f_lat)
+		{
+			v_id[i] = v_lat;
+			have_lat = TRUE;
+		}
+		else if (fld == f_lon)
+		{
+			v_id[i] = v_lon;
+			have_lon = TRUE;
+		}
+		else
+		{
+			v_id[i] = ncvardef (Sfile, Netcdf_tbl[j].nc_name, 
+				NC_FLOAT, 1, &timedim);
+			(void) ncattput (Sfile, v_id[i], "missing_value",
+				NC_FLOAT, 1, &bv);
+		}
 	}
 
 	nflds = i;
+/*
+ * Get the data for the altitude kluge
+ */
+	if (add_alt)
+	{
+		v_alt = ncvardef (Sfile, "alt", NC_FLOAT, 1, &timedim);
+		(void) ncattput (Sfile, v_alt, "missing_value",
+			NC_FLOAT, 1, &bv);
+
+		nflds++;
+
+		n_alts = snd_get_data (id_name, altbuf, 1024, f_alt, 
+			NC_BADVAL);
+
+		for (i = 0; i < n_alts; i++)
+			if (altbuf[i] != NC_BADVAL)
+				altbuf[i] *= 0.001;
+	}
 /*
  * Get out of definition mode
  */
@@ -380,7 +423,20 @@ struct ui_command	*cmds;
  */
 	if (! have_time)
 		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
-			ncvarput1 (Sfile, v_time, &ndx, &zero);
+		{
+			float	faketime = 0.1 * ndx;
+			ncvarput1 (Sfile, v_time, &ndx, &faketime);
+		}
+/*
+ * If we don't have latitude or longitude, fill in with the site lat and/or lon
+ */
+	if (! have_lat)
+		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
+			ncvarput1 (Sfile, v_lat, &ndx, &sounding.sitelat);
+
+	if (! have_lon)
+		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
+			ncvarput1 (Sfile, v_lon, &ndx, &sounding.sitelon);
 /*
  * Site lat, lon, altitude
  */
@@ -413,13 +469,10 @@ struct ui_command	*cmds;
 				val = data[i]->value;
 				data[i] = data[i]->next;
 			/*
-			 * Adjust altitude to km MSL
+			 * Adjust altitude to km
 			 */
 				if (fld == f_alt)
-				{
-					val += sounding.sitealt;
 					val *= 0.001;
-				}
 			}
 			else
 				val = NC_BADVAL;
@@ -428,6 +481,9 @@ struct ui_command	*cmds;
 		 */
 			ncvarput1 (Sfile, v_id[i], &ndx, (void *)(&val));
 		}
+
+		if (add_alt)
+			ncvarput1 (Sfile, v_alt, &ndx, (void *)(altbuf + ndx));
 	}
 /*
  * Close the file
