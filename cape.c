@@ -21,7 +21,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: cape.c,v 1.2 1991-12-10 23:39:30 case Exp $";
+static char *rcsid = "$Id: cape.c,v 1.3 1994-01-10 21:56:41 case Exp $";
 
 # include <stdio.h>
 # include <ui_param.h>
@@ -39,7 +39,7 @@ static char *rcsid = "$Id: cape.c,v 1.2 1991-12-10 23:39:30 case Exp $";
 /*
  * Bad value flags for each field
  */
-float	Bad[NFLD];
+static float	Bad[NFLD];
 
 /*
  * Scale factors for each field

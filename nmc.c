@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: nmc.c,v 1.2 1991-10-21 21:51:53 burghart Exp $";
+static char *rcsid = "$Id: nmc.c,v 1.3 1994-01-10 21:56:56 case Exp $";
 
 # include <stdio.h>
 # include <ui_param.h>
@@ -36,7 +36,7 @@ static char *rcsid = "$Id: nmc.c,v 1.2 1991-10-21 21:51:53 burghart Exp $";
 /*
  * Bad value flags for each field
  */
-float	Bad[NFLD];
+static float	Bad[NFLD];
 
 /*
  * Forward declarations
