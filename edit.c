@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.15 1992-03-13 22:53:47 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.16 1993-02-12 21:29:30 burghart Exp $";
 
 # include <math.h>
 # include <met_formulas.h>
@@ -1502,8 +1502,12 @@ struct ui_command	*cmds;
 		 */
 			newpt->next = e;
 			newpt->prev = e->prev;
+
 			if (newpt->prev)
 				newpt->prev->next = newpt;
+			else
+				snd_head (Eid, Efld, newpt);
+
 			e->prev = newpt;
 			e = newpt;
 		}
