@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.16 1993-02-12 21:29:30 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.17 1993-04-28 16:24:41 carson Exp $";
 
 # include <math.h>
 # include <met_formulas.h>
@@ -1113,13 +1113,13 @@ struct ui_command	*cmds;
 	char	*snd_default ();
 	fldtype	targetfld, threshfld[10];
 	int	c, criterion[10], ncrit, ndx, i;
-	float	compare_val[10], *thresh[10];
+	float	compare_val[10], *thresh[10], nextval, prevval;
 	bool	remove;
 	struct snd_datum	*target;
 	struct snd_datum	*snd_data_ptr ();
 /*
  * Get the target field
- */
+ */ 
 	targetfld = fd_num (UPTR (cmds[0]));
 /*
  * Get the threshold fields, criteria, and comparison values
@@ -1143,7 +1143,9 @@ struct ui_command	*cmds;
 	/*
 	 * Comparison value (for criteria other than BAD)
 	 */
-		if (criterion[ncrit] != THR_BAD)
+		if (criterion[ncrit] != THR_BAD && 
+			criterion[ncrit] != THR_INCREASE && 
+			criterion[ncrit] != THR_DECREASE)
 			compare_val[ncrit] = UFLOAT (cmds[ndx++]);
 	/*
 	 * Increment the criterion count
@@ -1202,6 +1204,31 @@ struct ui_command	*cmds;
 			    case THR_BAD:
 				remove &= (thresh[c][ndx] == BADVAL);
 				break;
+			    case THR_INCREASE:
+				if ( target->next )
+				     nextval = thresh[c][target->next->index];
+				else
+				     nextval = thresh[c][ndx];
+				if ( target->prev )
+				     prevval = thresh[c][target->prev->index];
+				else
+				     prevval = thresh[c][ndx];
+				remove &= !( thresh[c][ndx] >= prevval &&
+					     thresh[c][ndx] <= nextval);
+				break;
+                            case THR_DECREASE:
+                                if ( target->next )
+                                     nextval = thresh[c][target->next->index];
+                                else
+                                     nextval = thresh[c][ndx];
+                                if ( target->prev )
+                                     prevval = thresh[c][target->prev->index];
+                                else
+                                     prevval = thresh[c][ndx];
+                                remove &= !( thresh[c][ndx] <= prevval &&
+                                             thresh[c][ndx] >= nextval);
+                                break;
+
 			}
 		/*
 		 * Short-circuit if a criterion fails
@@ -1502,7 +1529,6 @@ struct ui_command	*cmds;
 		 */
 			newpt->next = e;
 			newpt->prev = e->prev;
-
 			if (newpt->prev)
 				newpt->prev->next = newpt;
 			else
