@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: edit.c,v 1.13 1991-12-16 21:03:40 burghart Exp $";
+static char *rcsid = "$Id: edit.c,v 1.14 1992-03-05 21:10:49 burghart Exp $";
 
 # include <math.h>
 # include "globals.h"
@@ -1137,19 +1137,14 @@ struct ui_command	*cmds;
 		threshfld[ncrit] = fd_num (UPTR (cmds[ndx++]));
 		criterion[ncrit] = UKEY (cmds[ndx++]);
 	/*
+	 * Allocate space for this threshold field
+	 */
+		thresh[ncrit] = (float *) malloc (BUFLEN * sizeof (float));
+	/*
 	 * Comparison value (for criteria other than BAD)
 	 */
 		if (criterion[ncrit] != THR_BAD)
-		{
 			compare_val[ncrit] = UFLOAT (cmds[ndx++]);
-		/*
-		 * Allocate space for this threshold field
-		 */
-			thresh[ncrit] = (float *) 
-				malloc (BUFLEN * sizeof (float));
-		}
-		else
-			thresh[ncrit] = (float *) 0;
 	/*
 	 * Increment the criterion count
 	 */
@@ -1170,11 +1165,8 @@ struct ui_command	*cmds;
  * Get threshold field data arrays
  */
 	for (c = 0; c < ncrit; c++)
-	{
-		if (thresh[c])
-			snd_get_data (id_name, thresh[c], BUFLEN, threshfld[c],
-				BADVAL);
-	}
+		snd_get_data (id_name, thresh[c], BUFLEN, threshfld[c], 
+			BADVAL);
 /*
  * Loop through the target points
  */
