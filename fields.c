@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: fields.c,v 1.17 1993-04-28 16:18:10 carson Exp $";
+static char *rcsid = "$Id: fields.c,v 1.18 1993-07-21 21:50:40 burghart Exp $";
 
 # include <ui.h>
 # include "fields.h"
@@ -93,6 +93,9 @@ static struct
 	{f_rtype, "record type", "",
 		{"rtype", ""},
 		0.0,	10.0,	0.0,	1.0	},
+	{f_t_wet, "wet bulb temperature", "C", 
+		{"t_wet", "twet", "t_w", ""},
+		 -60.0,	40.0,	0.0,	5.0	},	
 	{f_temp, "temperature", "C",
 		{"temp", "temperature", "tdry", ""},
 		-60.0,	40.0,	0.0,	5.0	},
