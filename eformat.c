@@ -2,6 +2,9 @@
  * E-format sounding access module
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  89/03/16  15:13:11  burghart
+ * Initial revision
+ * 
  */
 # include <stdio.h>
 # include "sounding.h"
@@ -133,6 +136,6 @@ struct snd	*sounding;
 /*
  * Close the file and return
  */
-	fclose (file_id);
+	bfclose (file_id);
 	return;
 }
