@@ -1,7 +1,7 @@
 /*
  * Vertical cross-sectioning
  *
- * $Revision: 1.3 $ $Date: 1990-04-02 09:30:18 $ $Author: burghart $
+ * $Revision: 1.4 $ $Date: 1990-05-07 10:09:29 $ $Author: burghart $
  */
 # include <math.h>
 # include <ui_date.h>
@@ -33,6 +33,11 @@ static float	X0 = 0.0, X1 = 0.0, Y0 = 0.0, Y1 = 0.0;
 static date	T0;
 
 /*
+ * Macro to identify points in the plot area
+ */
+# define INPLOT(x,y)	((x)>=0.0 && (x)<=P_len && (y)>=0.0 && (y)<=P_hgt)
+
+/*
  * The overlays for the plot
  */
 static overlay	Xs_ov, Xs_bg_ov;
@@ -60,11 +65,21 @@ static int	Nsnd = 0;
 static float	Xtxt_pos, Ytxt_pos;
 
 /*
+ * Points for a sounding trace
+ */
+static float	Xtrace[BUFLEN], Ytrace[BUFLEN];
+static int	Tracelen = 0;
+
+/*
  * Forward declarations
  */
 void	xs_abort (), xs_ov_check (), xs_background (), xs_side_text ();
 void	xs_reset_annot (), xs_plot (), xs_vscale ();
 void	xs_from_to (), xs_pos (), xs_timepos (), xs_time_height ();
+void	xs_spatial (), xs_special_data (), xs_extend_trace ();
+void	xs_draw_trace ();
+
+
 
 
 void
@@ -90,7 +105,6 @@ struct ui_command	*cmds;
 	{
 	    case KW_TIMHGT:
 		xs_time_height ();
-		Time_height = TRUE;
 		xs_plot (cmds);
 		break;
 	    case KW_USE:
@@ -116,8 +130,7 @@ struct ui_command	*cmds;
 		xs_vscale (cmds);
 		break;
 	    default:
-		Time_height = FALSE;
-		P_len = hypot (X1 - X0, Y1 - Y0);
+		xs_spatial ();
 		xs_plot (cmds);
 	}
 	return;
@@ -169,6 +182,15 @@ struct ui_command	*cmds;
 	Plane = (float *) malloc (HDIM * VDIM * sizeof (float));
 	Weight = (float *) malloc (HDIM * VDIM * sizeof (float));
 /*
+ * Get the overlays ready and draw the background
+ */
+	G_clear (Xs_ov);
+	G_set_coords (Xs_ov, -BORDER * P_len, -BORDER * P_hgt, 
+		P_len * (1+BORDER), P_hgt * (1+BORDER));
+	G_clip_window (Xs_ov, 0.0, 0.0, P_len, P_hgt);
+
+	xs_background ();
+/*
  * Fill the arrays with BADVALs, then put the real data in
  */
 	for (i = 0; i < HDIM; i++)
@@ -179,15 +201,6 @@ struct ui_command	*cmds;
 		}
 
 	xs_put_data ();
-/*
- * Get the overlays ready
- */
-	G_clear (Xs_ov);
-	G_set_coords (Xs_ov, -BORDER * P_len, -BORDER * P_hgt, 
-		P_len * (1+BORDER), P_hgt * (1+BORDER));
-	G_clip_window (Xs_ov, 0.0, 0.0, P_len, P_hgt);
-
-	xs_background ();
 /*
  * Draw the contours
  */
@@ -279,7 +292,10 @@ xs_put_data ()
 	/*
 	 * Get the data for the field to be contoured
 	 */
-		snd_get_data (S_id[snd], fdata, BUFLEN, Fld, BADVAL);
+		if (Fld == f_u_prime || Fld == f_v_prime)
+			xs_special_data (S_id[snd], fdata, Fld);
+		else
+			snd_get_data (S_id[snd], fdata, BUFLEN, Fld, BADVAL);
 	/*
 	 * Assign each data point to the closest point on the plane
 	 */
@@ -312,6 +328,10 @@ xs_put_data ()
 				dis = fabs (hypot (x, y) * sin (pt_ang));
 			}
 		/*
+		 * Add a point to the trace for this sounding
+		 */
+			xs_extend_trace (hlen, zpos[pt]);
+		/*
 		 * Find the indices of the closest point on the plane
 		 */
 			i = (int)((HDIM - 1) * hlen / P_len + 0.5);
@@ -328,6 +348,10 @@ xs_put_data ()
 				WDATA (i,j) = dis;
 			}
 		}
+	/*
+	 * Draw the trace for this sounding
+	 */
+		xs_draw_trace (snd);
 	}
 /*
  * We have the "raw" data in the array, now apply splines horizontally
@@ -825,9 +849,22 @@ struct ui_command	*cmds;
 
 
 void
+xs_spatial ()
+/*
+ * Initialize for a spatial cross-section plot
+ */
+{
+	P_len = hypot (X1 - X0, Y1 - Y0);
+	Time_height = FALSE;
+}
+
+
+
+
+void
 xs_time_height ()
 /*
- * Prepare for a time-height plot
+ * Initialize for a time-height plot
  */
 {
 	int	snd, sec_delta, pt, npts;
@@ -901,6 +938,10 @@ xs_time_height ()
 		(diff.ds_hhmmss % 100) + sec_delta;	/* seconds */
 
 	P_len /= 3600.0;
+/*
+ * Set the time-height flag
+ */
+	Time_height = TRUE;
 }
 
 	
@@ -1077,4 +1118,132 @@ float	*tpos;
 			tpos[pt] = BADVAL;
 
 	return;
+}
+
+
+
+void
+xs_special_data (sid, data, fld)
+char	*sid;
+float	*data;
+fldtype	fld;
+/*
+ * Return the wind component parallel (u') or perpendicular (v') to
+ * the cross-section plane
+ */
+{
+	int	npts, i;
+	float	*u, *v;
+	float	plane_cos, plane_sin;
+/*
+ * Sanity check
+ */
+	if (Time_height)
+		ui_error ("u_prime and v_prime only work in spatial plots!");
+/*
+ * Get the raw u and v wind data
+ */
+	u = (float *) malloc (BUFLEN * sizeof (float));
+	v = (float *) malloc (BUFLEN * sizeof (float));
+
+	npts = snd_get_data (sid, u, BUFLEN, f_u_wind, BADVAL);
+	snd_get_data (sid, v, BUFLEN, f_v_wind, BADVAL);
+/*
+ * Find the sine and cosine of the angle of the plane
+ */
+	plane_cos = (X1 - X0) / hypot (X1 - X0, Y1 - Y0);
+	plane_sin = (Y1 - Y0) / hypot (X1 - X0, Y1 - Y0);
+/*
+ * Calculate the chosen field
+ */
+	for (i = 0; i < npts; i++)
+	{
+		if (u[i] == BADVAL || v[i] == BADVAL)
+			data[i] = BADVAL;
+		else if (fld == f_u_prime)
+			data[i] = u[i] * plane_cos + v[i] * plane_sin;
+		else if (fld == f_v_prime)
+			data[i] = v[i] * plane_cos - u[i] * plane_sin;
+		else
+			ui_error ("BUG! Shouldn't be here in xs_special_data");
+	}
+}
+
+
+
+
+void
+xs_extend_trace (x, y)
+float	x, y;
+/*
+ * Add this (x,y) point to the trace for the current sounding
+ */
+{
+	if (Tracelen >= BUFLEN)
+		ui_error ("BUG! Too many points in x-section sounding trace!");
+
+	Xtrace[Tracelen] = x;
+	Ytrace[Tracelen] = y;
+	Tracelen++;
+}
+
+
+
+
+void
+xs_draw_trace (sndx)
+int	sndx;
+/*
+ * Draw the current sounding's trace
+ */
+{
+	char	*string;
+	float	label_x, label_y;
+	int	i;
+/*
+ * Draw the trace
+ */
+	G_polyline (Xs_ov, GPLT_DOT, C_BG1, Tracelen, Xtrace, Ytrace);
+/*
+ * Find the first point of the trace which lies in the plot region
+ */
+	for (i = 0; i < Tracelen; i++)
+		if (INPLOT (Xtrace[i], Ytrace[i]))
+			break;
+/*
+ * Put the label at this point (or return if there isn't a point
+ * in the plot region
+ */
+	if (i == Tracelen)
+	{
+		Tracelen = 0;
+		return;
+	}
+	else
+	{
+		label_x = Xtrace[i];
+		label_y = Ytrace[i];
+	}
+/*
+ * Unclip for the label
+ */
+	G_clip_window (Xs_ov, -BORDER * P_len, -BORDER * P_hgt, 
+		(1.0 + BORDER) * P_len, (1.0 + BORDER) * P_hgt);
+/*
+ * Draw the label
+ */
+	string = (char *) malloc ((2 + strlen (S_id[sndx])) * sizeof (char));
+	string[0] = ' ';
+	strcpyUC (string + 1, S_id[sndx]);
+	G_write (Xs_ov, C_BG1, GTF_MINSTROKE, 0.02 * P_hgt, GT_LEFT, 
+		GT_CENTER, label_x, label_y, -90.0, string);
+	free (string);
+/*
+ * Restore the clipping
+ */
+	G_clip_window (Xs_ov, 0.0, 0.0, P_len, P_hgt);
+/*
+ * Set up to start a new trace
+ */
+	Tracelen = 0;
 }
