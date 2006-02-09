@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.23 1993-06-17 22:49:19 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.24 2006-02-09 16:05:10 burghart Exp $";
 
 # include <stdio.h>
 # include <errno.h>
@@ -197,7 +197,6 @@ struct snd	*sounding;
 	fscanf (Sfile, "%d,%d,%d,%d:%d:%d\n", &year, &month, &day, &hour,
 		&minute, &second);
 
-	year -= 1900;	/* ui date stuff puts on 1900 for us */
 	sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
 	sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
 /*
