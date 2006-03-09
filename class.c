@@ -20,7 +20,7 @@
  * maintenance or updates for its software.
  */
 
-static char *rcsid = "$Id: class.c,v 1.24 2006-02-09 16:05:10 burghart Exp $";
+static char *rcsid = "$Id: class.c,v 1.25 2006-03-09 02:49:01 burghart Exp $";
 
 # include <stdio.h>
 # include <errno.h>
@@ -945,6 +945,12 @@ struct snd	*sounding;
 		 * Don't put bad values in the list
 		 */
 			if (val[i] == badval[i])
+				continue;
+		/*
+		 * AspenQC writes NaN's for missing data, so we need to skip 
+		 * those as well...
+		 */
+			if (isnan(val[i]))
 				continue;
 		/*
 		 * KLUGE: U. of Lowell soundings have wspd in knots, even
