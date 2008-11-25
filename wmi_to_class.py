@@ -170,4 +170,5 @@ class WMI_to_CLASS:
             outfile.write('\n')
         
 
-if __name__ == '__main__': WMI_to_CLASS().main()
+if __name__ == '__main__': 
+    WMI_to_CLASS().main()
