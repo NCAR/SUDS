@@ -25,6 +25,7 @@ static char *rcsid = "$Id: suds.c,v 1.28 2002-07-12 18:39:00 burghart Exp $";
 # ifdef VMS
 #	include <ssdef.h>
 # endif
+# include <stdlib.h>
 # include <string.h>
 # include <ui_param.h>
 # include <ui_date.h>

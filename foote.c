@@ -23,6 +23,9 @@
 static char *rcsid = "$Id: foote.c,v 1.21 1993-10-01 15:49:52 case Exp $";
 
 # include <math.h>
+# include <string.h>
+# include <time.h>
+
 # include <ui_param.h>
 # include <ui_date.h>
 # include <met_formulas.h>

@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: fgge.c,v 1.6 1991-10-21 21:37:39 burghart Exp $";
 
 # include <stdio.h>
+# include <stdlib.h>
+
 # include <ui_param.h>
 # include "globals.h"
 # include "sounding.h"

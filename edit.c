@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: edit.c,v 1.19 1995-09-14 20:48:58 burghart Exp $";
 
 # include <math.h>
+# include <stdlib.h>
+
 # include <met_formulas.h>
 # include "globals.h"
 # include "keywords.h"

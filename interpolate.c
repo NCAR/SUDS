@@ -22,12 +22,14 @@
 
 static char *rcsid = "$Id: interpolate.c,v 1.1 1993-04-28 16:21:23 carson Exp $";
 
+# include <math.h>
+# include <stdlib.h>
+
 # include <ui_param.h>
 # include "globals.h"
 # include "sounding.h"
 # include "keywords.h"
 # include "flags.h"
-# include <math.h>
 
 /*
  * Forward declarations

@@ -7,6 +7,8 @@
  * L. W. Johnson and R. D. Riess, Addison-Wesley 1982.
  */
 # include <math.h>
+# include <stdlib.h>
+# include <string.h>
 
 # define TRUE	1
 # define FALSE	0

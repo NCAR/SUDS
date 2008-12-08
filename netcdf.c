@@ -24,7 +24,9 @@ static char *rcsid = "$Id: netcdf.c,v 1.21 2002-08-23 23:00:34 burghart Exp $";
 
 # if HAVE_LIBNETCDF
 
+# include <stdlib.h>
 # include <time.h>
+
 # include <netcdf.h>
 # include <ui.h>
 # include "sounding.h"

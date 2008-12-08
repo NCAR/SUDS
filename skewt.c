@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: skewt.c,v 1.29 1997-06-20 19:48:01 burghart Exp $";
 
 # include <math.h>
+# include <time.h>
+
 # include <ui_param.h>
 # include <ui_date.h>
 # include <met_formulas.h>
@@ -172,7 +174,8 @@ struct ui_command	*cmds;
  */
 {
 	char	*id_name, string[25];
-	int	plot_ndx = 0, nplots, curtime;
+	int	plot_ndx = 0, nplots;
+	time_t	curtime;
 	float	pmin, pmax;
 	overlay ovlist[3];
 	char	*snd_default ();

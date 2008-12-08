@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: nmc.c,v 1.3 1994-01-10 21:56:56 case Exp $";
 
 # include <stdio.h>
+# include <stdlib.h>
+
 # include <ui_param.h>
 # include "sounding.h"
 

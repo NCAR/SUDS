@@ -23,6 +23,7 @@
 static char *rcsid = "$Id: color.c,v 1.7 1991-10-21 21:32:26 burghart Exp $";
 
 # include <stdio.h>
+# include <stdlib.h>
 # include "globals.h"
 # include "color.h"
 # include "keywords.h"

@@ -25,6 +25,9 @@ static char *rcsid = "$Id: contour.c,v 1.7 1998-05-15 21:43:38 burghart Exp $";
 # include <errno.h>
 # include <math.h>
 # include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+
 # include <graphics.h>
 
 # define TRUE	1

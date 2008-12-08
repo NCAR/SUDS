@@ -23,6 +23,9 @@
 static char *rcsid = "$Id: hodograph.c,v 1.18 1998-02-13 18:29:46 burghart Exp $";
 
 # include <math.h>
+# include <string.h>
+# include <time.h>
+
 # include <ui_param.h>
 # include <ui_date.h>
 # include <met_formulas.h>

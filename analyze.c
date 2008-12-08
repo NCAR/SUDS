@@ -24,6 +24,9 @@ static char *rcsid = "$Id: analyze.c,v 1.34 1995-09-14 20:51:07 burghart Exp $";
 
 # include <math.h>
 # include <stdio.h>
+# include <string.h>
+# include <time.h>
+
 # include <ui_error.h>
 # include <ui_param.h>
 # include <ui_date.h>
