@@ -60,7 +60,6 @@ struct snd	snd_find_sounding();
 void	snd_load_file(), snd_set_default();
 int	interp();
 double	fd_ibot(), fd_itop(), fd_istep(), fd_igap();
-int snd_count_one();
 
 
 
@@ -139,7 +138,7 @@ snd_init()
 	SoundingCountFunc[SFMT_DREXEL]	= 0;
 	Fmt_name[SFMT_DREXEL] = "DREXEL";
 	
-	GetSoundingFunc[SFMT_WMO]		= wmo_get_sounding;
+	GetSoundingFunc[SFMT_WMO]	= wmo_get_sounding;
 	SoundingCountFunc[SFMT_WMO]	= wmo_snd_count;
 	Fmt_name[SFMT_WMO] = "WMO";
 
@@ -174,7 +173,7 @@ int	type;
 	int	sCount;
 	int	s;
 	char	sname[64];
-	int	multiSoundingSupport = (SoundingCountFunc[type] != 0);
+	int	multiSoundingSupport;
 /*
  * Initialize if necessary
  */
@@ -184,7 +183,13 @@ int	type;
  * Get a count of soundings in the file (if supported), otherwise
  * assume there's exactly one sounding.
  */
+	multiSoundingSupport = (SoundingCountFunc[type] != 0);
 	sCount = (multiSoundingSupport) ? (*SoundingCountFunc[type])(fname) : 1;
+	if (! sCount)
+	{
+		ui_warning("No soundings found in file '%s'", fname);
+		return;
+	}
 /*
  * Loop through the soundings in this file
  */
