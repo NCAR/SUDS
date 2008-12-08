@@ -22,6 +22,8 @@
 
 static char *rcsid = "$Id: sounding.c,v 1.20 1993-04-28 16:21:23 carson Exp $";
 
+# include <stdlib.h>
+
 # include <ui_param.h>
 # include <ui_date.h>		/* for date formatting stuff */
 # include "globals.h"
@@ -40,7 +42,10 @@ static struct snd	*Snd_list = 0;
 /*
  * Access routines for each format
  */
-static void	(*Read_file[MAXFMT + 1])();
+/* Return a count of soundings in the file */
+static int	(*SoundingCountFunc[MAXFMT + 1])();
+/* Read a sounding from the file */
+static void	(*GetSoundingFunc[MAXFMT + 1])();
 static char	*Fmt_name[MAXFMT + 1];
 
 /*
@@ -51,71 +56,92 @@ static int	Init = FALSE;
 /*
  * Forward declarations
  */
-struct snd	snd_find_sounding ();
-void	snd_load_file (), snd_set_default ();
+struct snd	snd_find_sounding();
+void	snd_load_file(), snd_set_default();
 int	interp();
 double	fd_ibot(), fd_itop(), fd_istep(), fd_igap();
+int snd_count_one();
 
 
 
 
 void
-snd_init ()
+snd_init()
 /*
  * Initialize the array of format-dependent read routines
  */
 {
-	void	cls_read_file (), jaw_read_file ();
-	void	noa_read_file (), nws_read_file (), fgge_read_file ();
-	void	rsn_read_file (), ef_read_file (), ncar_read_file ();
-	void	mist_read_file (), gale_read_file (), nmc_read_file ();
-	void	nc_read_file (), cape_read_file (), nssl_read_file ();
-        void    drexel_read_file ();
+	void	cls_read_file(), jaw_read_file();
+	void	noa_read_file(), nws_read_file(), fgge_read_file();
+	void	rsn_read_file(), ef_read_file(), ncar_read_file();
+	void	mist_read_file(), gale_read_file(), nmc_read_file();
+	void	nc_read_file(), cape_read_file(), nssl_read_file();
+	void	drexel_read_file(), wmo_get_sounding();
+	int	wmo_snd_count();
 
-	Read_file[SFMT_CLASS]	= cls_read_file;
-	Fmt_name[SFMT_CLASS]	= "CLASS";
+	GetSoundingFunc[SFMT_CLASS]	= cls_read_file;
+	SoundingCountFunc[SFMT_CLASS]	= 0;
+	Fmt_name[SFMT_CLASS] = "CLASS";
 
-	Read_file[SFMT_JAWS]	= jaw_read_file;
-	Fmt_name[SFMT_JAWS]	= "JAWS";
+	GetSoundingFunc[SFMT_JAWS]	= jaw_read_file;
+	SoundingCountFunc[SFMT_JAWS]	= 0;
+	Fmt_name[SFMT_JAWS] = "JAWS";
 
-	Read_file[SFMT_NOAA]	= noa_read_file;
-	Fmt_name[SFMT_NOAA]	= "NOAA mobile";
+	GetSoundingFunc[SFMT_NOAA]	= noa_read_file;
+	SoundingCountFunc[SFMT_NOAA]	= 0;
+	Fmt_name[SFMT_NOAA] = "NOAA mobile";
 
-	Read_file[SFMT_NWS]	= nws_read_file;
-	Fmt_name[SFMT_NWS]	= "NWS";
+	GetSoundingFunc[SFMT_NWS]		= nws_read_file;
+	SoundingCountFunc[SFMT_NWS]	= 0;
+	Fmt_name[SFMT_NWS] = "NWS";
 
-	Read_file[SFMT_FGGE]	= fgge_read_file;
-	Fmt_name[SFMT_FGGE]	= "FGGE";
+	GetSoundingFunc[SFMT_FGGE]	= fgge_read_file;
+	SoundingCountFunc[SFMT_FGGE]	= 0;
+	Fmt_name[SFMT_FGGE] = "FGGE";
 
-	Read_file[SFMT_RSANAL]	= rsn_read_file;
-	Fmt_name[SFMT_RSANAL]	= "RSANAL";
+	GetSoundingFunc[SFMT_RSANAL]	= rsn_read_file;
+	SoundingCountFunc[SFMT_RSANAL]	= 0;
+	Fmt_name[SFMT_RSANAL] = "RSANAL";
 
-	Read_file[SFMT_EFMT]	= ef_read_file;
-	Fmt_name[SFMT_EFMT]	= "E-format";
+	GetSoundingFunc[SFMT_EFMT]	= ef_read_file;
+	SoundingCountFunc[SFMT_EFMT]	= 0;
+	Fmt_name[SFMT_EFMT] = "E-format";
 
-	Read_file[SFMT_NCAR]	= ncar_read_file;
-	Fmt_name[SFMT_NCAR]	= "NCAR mobile";
+	GetSoundingFunc[SFMT_NCAR]	= ncar_read_file;
+	SoundingCountFunc[SFMT_NCAR]	= 0;
+	Fmt_name[SFMT_NCAR] = "NCAR mobile";
 
-	Read_file[SFMT_MIST]	= mist_read_file;
-	Fmt_name[SFMT_MIST]	= "MIST";
+	GetSoundingFunc[SFMT_MIST]	= mist_read_file;
+	SoundingCountFunc[SFMT_MIST]	= 0;
+	Fmt_name[SFMT_MIST] = "MIST";
 
-	Read_file[SFMT_GALE]	= gale_read_file;
-	Fmt_name[SFMT_GALE]	= "GALE";
+	GetSoundingFunc[SFMT_GALE]	= gale_read_file;
+	SoundingCountFunc[SFMT_GALE]	= 0;
+	Fmt_name[SFMT_GALE] = "GALE";
 
-	Read_file[SFMT_NMC]	= nmc_read_file;
-	Fmt_name[SFMT_NMC]	= "NMC";
+	GetSoundingFunc[SFMT_NMC]		= nmc_read_file;
+	SoundingCountFunc[SFMT_NMC]	= 0;
+	Fmt_name[SFMT_NMC] = "NMC";
 
-	Read_file[SFMT_NETCDF]	= nc_read_file;
-	Fmt_name[SFMT_NETCDF]	= "netCDF";
+	GetSoundingFunc[SFMT_NETCDF]	= nc_read_file;
+	SoundingCountFunc[SFMT_NETCDF]	= 0;
+	Fmt_name[SFMT_NETCDF] = "netCDF";
 
-	Read_file[SFMT_CAPE]	= cape_read_file;
-	Fmt_name[SFMT_CAPE]	= "CaPE";
+	GetSoundingFunc[SFMT_CAPE]	= cape_read_file;
+	SoundingCountFunc[SFMT_CAPE]	= 0;
+	Fmt_name[SFMT_CAPE] = "CaPE";
 
-	Read_file[SFMT_NSSL]	= nssl_read_file;
-	Fmt_name[SFMT_NSSL]	= "NSSL";
+	GetSoundingFunc[SFMT_NSSL]	= nssl_read_file;
+	SoundingCountFunc[SFMT_NSSL]	= 0;
+	Fmt_name[SFMT_NSSL] = "NSSL";
 
-        Read_file[SFMT_DREXEL]  = drexel_read_file;
-        Fmt_name[SFMT_DREXEL]   = "DREXEL";
+	GetSoundingFunc[SFMT_DREXEL]	= drexel_read_file;
+	SoundingCountFunc[SFMT_DREXEL]	= 0;
+	Fmt_name[SFMT_DREXEL] = "DREXEL";
+	
+	GetSoundingFunc[SFMT_WMO]		= wmo_get_sounding;
+	SoundingCountFunc[SFMT_WMO]	= wmo_snd_count;
+	Fmt_name[SFMT_WMO] = "WMO";
 
 	Init = TRUE;
 }
@@ -124,20 +150,20 @@ snd_init ()
 
 
 void
-snd_read_file (cmds)
+snd_read_file(cmds)
 struct ui_command	*cmds;
 /*
  * Handle the FILE command to get a new sounding
  */
 {
-	snd_load_file (UPTR (cmds[0]), UKEY (cmds[1]), UKEY (cmds[2]));
+	snd_load_file(UPTR(cmds[0]), UKEY(cmds[1]), UKEY(cmds[2]));
 }
 
 
 
 
 void
-snd_load_file (fname, type, id_name)
+snd_load_file(fname, type, id_name)
 char	*fname, *id_name;
 int	type;
 /*
@@ -145,54 +171,83 @@ int	type;
  */
 {
 	struct snd	*sounding = Snd_list, *prev = 0;
+	int	sCount;
+	int	s;
+	char	sname[64];
+	int	multiSoundingSupport = (SoundingCountFunc[type] != 0);
 /*
  * Initialize if necessary
  */
 	if (! Init)
-		snd_init ();
+		snd_init();
 /*
- * Find the end of the list, looking for name collisions on the way
+ * Get a count of soundings in the file (if supported), otherwise
+ * assume there's exactly one sounding.
  */
-	while (sounding)
+	sCount = (multiSoundingSupport) ? (*SoundingCountFunc[type])(fname) : 1;
+/*
+ * Loop through the soundings in this file
+ */
+	for (s = 0; s < sCount; s++)
 	{
-		if (! strcmp (sounding->name, id_name))
-			ui_error ("Sounding name '%s' is already used", 
-				id_name);
-		prev = sounding;
-		sounding = sounding->next;
+	/*
+	 * Copy id_name to our sounding name
+	 */
+		strncpy(sname, id_name, sizeof(sname));
+	/*
+	 * Generate a suffix for this sounding name if there's more than one
+	 * sounding in the file.
+	 */
+		char suffix[8];
+		if (sCount > 1)
+			sprintf(sname + strlen(sname), "_%d", s + 1);
+	/*
+	 * Find the end of the list, looking for name collisions on the way
+	 */
+		while (sounding)
+		{
+			if (! strcmp(sounding->name, sname))
+				ui_error("Sounding name '%s' is already used", 
+					sname);
+			prev = sounding;
+			sounding = sounding->next;
+		}
+	/*
+	 * Get a new sounding structure
+	 */
+		sounding = (struct snd *) calloc(1, sizeof(struct snd));
+	/*
+	 * Read the file using the appropriate routine and put the data 
+	 * into our structure
+	 */
+		if (multiSoundingSupport)
+			(*GetSoundingFunc[type])(fname, s, sounding);
+		else
+			(*GetSoundingFunc[type])(fname, sounding);
+	/*
+	 * Link it to the end of the list or make it the head of the list
+	 */
+		if (prev)
+			prev->next = sounding;
+		else
+			Snd_list = sounding;
+	/*
+	 * Put in the sounding id, filename, and format
+	 */
+		sounding->name = (char *) 
+			malloc((1 + strlen(sname)) * sizeof(char));
+		strcpy(sounding->name, sname);
+	
+		sounding->filename = (char *) 
+			malloc((1 + strlen(fname)) * sizeof(char));
+		strcpy(sounding->filename, fname);
+	
+		sounding->format = type;
 	}
-/*
- * Get a new sounding structure
- */
-	sounding = (struct snd *) calloc (1, sizeof (struct snd));
-/*
- * Read the file using the appropriate routine and put the data 
- * into our structure
- */
-	(*Read_file[type]) (fname, sounding);
-/*
- * Link it to the end of the list or make it the head of the list
- */
-	if (prev)
-		prev->next = sounding;
-	else
-		Snd_list = sounding;
-/*
- * Put in the sounding id, filename, and format
- */
-	sounding->name = (char *) 
-		malloc ((1 + strlen (id_name)) * sizeof (char));
-	strcpy (sounding->name, id_name);
-
-	sounding->filename = (char *) 
-		malloc ((1 + strlen (fname)) * sizeof (char));
-	strcpy (sounding->filename, fname);
-
-	sounding->format = type;
 /*
  * Set the default sounding
  */
-	snd_set_default (id_name);
+	snd_set_default(sname);
 /*
  * Done
  */
@@ -203,7 +258,7 @@ int	type;
 
 
 void
-snd_create (cmds)
+snd_create(cmds)
 struct ui_command	*cmds;
 /*
  * Create a new sounding from another one
@@ -217,27 +272,27 @@ struct ui_command	*cmds;
 /*
  * Get the name of the new sounding and the parent sounding
  */
-	id_name = UPTR (cmds[0]);
-	p_name = UPTR (cmds[1]);
+	id_name = UPTR(cmds[0]);
+	p_name = UPTR(cmds[1]);
 /*
  * Find the parent sounding
  */
 	while (parent)
 	{
-		if (! strcmp (parent->name, p_name))
+		if (! strcmp(parent->name, p_name))
 			break;
 		parent = parent->next;
 	}
 
 	if (! parent)
-		ui_error ("Sounding '%s' does not exist", p_name);
+		ui_error("Sounding '%s' does not exist", p_name);
 /*
  * Find the end of the list, looking for name collisions on the way
  */
 	while (sounding)
 	{
-		if (! strcmp (sounding->name, id_name))
-			ui_error ("Sounding name '%s' is already used", 
+		if (! strcmp(sounding->name, id_name))
+			ui_error("Sounding name '%s' is already used", 
 				id_name);
 		prev = sounding;
 		sounding = sounding->next;
@@ -245,7 +300,7 @@ struct ui_command	*cmds;
 /*
  * Get a new sounding structure
  */
-	sounding = (struct snd *) calloc (1, sizeof (struct snd));
+	sounding = (struct snd *) calloc(1, sizeof(struct snd));
 /*
  * Link it to the end of the list or make it the head of the list
  */
@@ -257,16 +312,16 @@ struct ui_command	*cmds;
  * Copy the sounding id, filename, and site
  */
 	sounding->name = (char *) 
-		malloc ((1 + strlen (id_name)) * sizeof (char));
-	strcpy (sounding->name, id_name);
+		malloc((1 + strlen(id_name)) * sizeof(char));
+	strcpy(sounding->name, id_name);
 
 	sounding->filename = (char *) 
-		malloc ((1 + strlen (parent->filename)) * sizeof (char));
-	strcpy (sounding->filename, parent->filename);
+		malloc((1 + strlen(parent->filename)) * sizeof(char));
+	strcpy(sounding->filename, parent->filename);
 
 	sounding->site = (char *) 
-		malloc ((1 + strlen (parent->site)) * sizeof (char));
-	strcpy (sounding->site, parent->site);
+		malloc((1 + strlen(parent->site)) * sizeof(char));
+	strcpy(sounding->site, parent->site);
 /*
  * Copy the site altitude, format, and size
  */
@@ -292,7 +347,7 @@ struct ui_command	*cmds;
 		 * Get a new datum and copy over the index and value
 		 */
 			sdatum = (struct snd_datum *)
-				calloc (1, sizeof (struct snd_datum));
+				calloc(1, sizeof(struct snd_datum));
 
 			sdatum->index = pdatum->index;
 			sdatum->value = pdatum->value;
@@ -323,7 +378,7 @@ struct ui_command	*cmds;
 
 
 int
-snd_has_field (id_name, fld)
+snd_has_field(id_name, fld)
 char	*id_name;
 fldtype	fld;
 /*
@@ -334,22 +389,22 @@ fldtype	fld;
 	struct snd	sounding;
 	int	fpos;
 
-	sounding = snd_find_sounding (id_name);
+	sounding = snd_find_sounding(id_name);
 /*
  * Try to find the field in the list
  */
 	for (fpos = 0; sounding.fields[fpos] != f_null; fpos++)
 		if (sounding.fields[fpos] == fld)
-			return (TRUE);
+			return(TRUE);
 
-	return (FALSE);
+	return(FALSE);
 }
 
 
 
 
 int
-snd_get_data (id_name, buf, buflen, fld, badval)
+snd_get_data(id_name, buf, buflen, fld, badval)
 char	*id_name;
 float	*buf, badval;
 int	buflen;
@@ -360,20 +415,20 @@ fldtype fld;
 {
 	int	npts;
 
-	npts = snd_derive_data (id_name, buf, buflen, fld, badval, 0, 0);
+	npts = snd_derive_data(id_name, buf, buflen, fld, badval, 0, 0);
 
 	if (! npts)
-		ui_error ("Unable to obtain or derive '%s' in sounding '%s'", 
-			fd_name (fld), id_name);
+		ui_error("Unable to obtain or derive '%s' in sounding '%s'", 
+			fd_name(fld), id_name);
 	else
-		return (npts);
+		return(npts);
 }
 
 
 
 
 int
-snd_derive_data (id_name, buf, buflen, fld, badval, chain, chainlen)
+snd_derive_data(id_name, buf, buflen, fld, badval, chain, chainlen)
 char	*id_name;
 float	*buf, badval;
 int	buflen, chainlen;
@@ -402,7 +457,7 @@ fldtype fld, *chain;
 	float		*dbufs[5];	/* Up to 5 fields in a derivation */
 	void		(* dfunc)();
 
-	sounding = snd_find_sounding (id_name);
+	sounding = snd_find_sounding(id_name);
 /*
  * Find the position of this field
  */
@@ -429,36 +484,35 @@ fldtype fld, *chain;
 			if (datum->index < buflen)
 				buf[datum->index] = datum->value;
 			else
-				ui_error (
-				"*BUG* Buffer too small in snd_derive_data");
+				ui_error("*BUG* Buffer too small in snd_derive_data");
 
 			datum = datum->next;
 		}
 	/*
 	 * Return the number of points
 	 */
-		return (npts);
+		return(npts);
 	}
 	else
 	{
 	/*
 	 * We don't have a raw field, see if we can derive it
 	 */
-		for (i = 0; fdd_derive (fld, i, &dfld, &ndflds, &dfunc); i++)
+		for (i = 0; fdd_derive(fld, i, &dfld, &ndflds, &dfunc); i++)
 		{
 		/*
 		 * Allocate space to hold the fields for the derivation
 		 */
 			for (fndx = 0; fndx < ndflds; fndx++)
 				dbufs[fndx] = (float *) 
-					malloc (buflen * sizeof (float));
+					malloc(buflen * sizeof(float));
 		/*
 		 * Build a new derivation chain
 		 */
 			dchain = (fldtype *) 
-				malloc ((chainlen + 1) * sizeof (fldtype));
+				malloc((chainlen + 1) * sizeof(fldtype));
 
-			memcpy (dchain, chain, chainlen * sizeof (fldtype));
+			memcpy(dchain, chain, chainlen * sizeof(fldtype));
 
 			dchain[chainlen] = fld;
 			dchainlen = chainlen + 1;
@@ -478,7 +532,7 @@ fldtype fld, *chain;
 			/*
 			 * Get the data for this field
 			 */
-				npts = snd_derive_data (id_name, 
+				npts = snd_derive_data(id_name, 
 					dbufs[fndx], buflen, dfld[fndx], 
 					badval, dchain, dchainlen);
 				if (npts > 0)
@@ -495,8 +549,8 @@ fldtype fld, *chain;
 				(* dfunc)(buf, dbufs, npts, badval);
 
 				for (fndx = 0; fndx < ndflds; fndx++)
-					free (dbufs[fndx]);
-				free (dchain);
+					free(dbufs[fndx]);
+				free(dchain);
 			/*
 			 * KLUGE: altitude derivation returns AGL data,
 			 * and we need MSL, so convert altitudes now
@@ -510,7 +564,7 @@ fldtype fld, *chain;
 							buf[pt] += s_alt;
 				}
 
-				return (npts);
+				return(npts);
 			}
 		/*
 		 * We didn't get all needed fields, free allocated space
@@ -519,22 +573,22 @@ fldtype fld, *chain;
 			else
 			{
 				for (fndx = 0; fndx < ndflds; fndx++)
-					free (dbufs[fndx]);
-				free (dchain);
+					free(dbufs[fndx]);
+				free(dchain);
 			}
 		}
 	}
 /*
  * If we get here, the field isn't in the sounding and can't be derived
  */
-	return (0);
+	return(0);
 }
 
 
 
 
 date
-snd_time (id_name)
+snd_time(id_name)
 char	*id_name;
 /*
  * Return the start time of the sounding
@@ -542,14 +596,14 @@ char	*id_name;
 {
 	struct snd	sounding;
 
-	sounding = snd_find_sounding (id_name);
-	return (sounding.rls_time);
+	sounding = snd_find_sounding(id_name);
+	return(sounding.rls_time);
 }
 
 
 
 char *
-snd_site (id_name)
+snd_site(id_name)
 char	*id_name;
 /*
  * Return the site name for this sounding
@@ -557,15 +611,15 @@ char	*id_name;
 {
 	struct snd	sounding;
 
-	sounding = snd_find_sounding (id_name);
-	return (sounding.site);
+	sounding = snd_find_sounding(id_name);
+	return(sounding.site);
 }
 
 
 
 
 float
-snd_s_alt (id_name)
+snd_s_alt(id_name)
 char	*id_name;
 /*
  * Return the site altitude
@@ -573,14 +627,14 @@ char	*id_name;
 {
 	struct snd	sounding;
 
-	sounding = snd_find_sounding (id_name);
-	return (sounding.sitealt);
+	sounding = snd_find_sounding(id_name);
+	return(sounding.sitealt);
 }
 
 
 
 float
-snd_s_lat (id_name)
+snd_s_lat(id_name)
 char	*id_name;
 /*
  * Return the site latitude
@@ -588,14 +642,14 @@ char	*id_name;
 {
 	struct snd	sounding;
 
-	sounding = snd_find_sounding (id_name);
-	return (sounding.sitelat);
+	sounding = snd_find_sounding(id_name);
+	return(sounding.sitelat);
 }
 
 
 
 float
-snd_s_lon (id_name)
+snd_s_lon(id_name)
 char	*id_name;
 /*
  * Return the site longitude
@@ -603,14 +657,14 @@ char	*id_name;
 {
 	struct snd	sounding;
 
-	sounding = snd_find_sounding (id_name);
-	return (sounding.sitelon);
+	sounding = snd_find_sounding(id_name);
+	return(sounding.sitelon);
 }
 
 
 
 void
-snd_forget (cmds)
+snd_forget(cmds)
 struct ui_command	*cmds;
 /*
  * Forget about the given sounding
@@ -618,47 +672,31 @@ struct ui_command	*cmds;
 {
 	int	i;
 	struct snd	*prev = 0, *sounding = Snd_list;
-	struct snd_datum	*datum, *next;
 	char	*id_name;
-	void	edit_forget ();
+	void	edit_forget();
 
-	id_name = UPTR (cmds[0]);
+	id_name = UPTR(cmds[0]);
 /*
  * Find the sounding in the list
  */
 	while (sounding)
 	{
-		if (! strcmp (id_name, sounding->name))
+		if (! strcmp(id_name, sounding->name))
 			break;
 		prev = sounding;
 		sounding = sounding->next;
 	}
 
 	if (! sounding)
-		ui_error ("There is no sounding with name '%s'", id_name);
+		ui_error("There is no sounding with name '%s'", id_name);
 /*
- * Release our strings
+ * Release allocated memory belonging to the struct snd
  */
-	free (sounding->name);
-	free (sounding->filename);
-	free (sounding->site);
-/*
- * Release the snd_datum structures
- */
-	for (i = 0; i < MAXFLDS; i++)
-	{
-		datum = sounding->dlists[i];
-		while (datum)
-		{
-			next = datum->next;
-			cfree (datum);
-			datum = next;
-		}
-	}
+	freeSoundingContents(sounding);
 /*
  * Tell edit to forget if necessary
  */
-	edit_forget (id_name);
+	edit_forget(id_name);
 /*
  * Remove it from the sounding list
  */
@@ -666,8 +704,10 @@ struct ui_command	*cmds;
 		prev->next = sounding->next;
 	else
 		Snd_list = sounding->next;
-
-	cfree (sounding);
+/*
+ * Finally, free the struct snd itself
+ */
+	free(sounding);
 /*
  * Done
  */
@@ -678,7 +718,7 @@ struct ui_command	*cmds;
 
 
 struct snd
-snd_find_sounding (id_name)
+snd_find_sounding(id_name)
 char	*id_name;
 /*
  * Return the sounding associated with id_name
@@ -688,22 +728,22 @@ char	*id_name;
 
 	while (sounding)
 	{
-		if (! strcmp (id_name, sounding->name))
+		if (! strcmp(id_name, sounding->name))
 			break;
 		sounding = sounding->next;
 	}
 
 	if (! sounding)
-		ui_error ("There is no sounding with name '%s'", id_name);
+		ui_error("There is no sounding with name '%s'", id_name);
 
-	return (*sounding);
+	return(*sounding);
 }
 
 
 
 
 char *
-snd_data_ptr (id_name, fld)
+snd_data_ptr(id_name, fld)
 char	*id_name;
 fldtype	fld;
 /*
@@ -713,7 +753,7 @@ fldtype	fld;
 	struct snd	sounding;
 	int	fpos;
 
-	sounding = snd_find_sounding (id_name);
+	sounding = snd_find_sounding(id_name);
 /*
  * Find the position of this field
  */
@@ -722,16 +762,16 @@ fldtype	fld;
 			break;
 
 	if (sounding.fields[fpos] == f_null)
-		ui_error ("No sounding data for field '%s'", fd_name (fld));
+		ui_error("No sounding data for field '%s'", fd_name(fld));
 
-	return ((char *) sounding.dlists[fpos]);
+	return((char *) sounding.dlists[fpos]);
 }
 
 
 
 
 void
-snd_show (cmds)
+snd_show(cmds)
 struct ui_command	*cmds;
 /*
  * List the soundings currently available
@@ -741,17 +781,17 @@ struct ui_command	*cmds;
 	struct snd	*sounding = Snd_list;
 	char	string[30];
 
-	brief = (cmds[0].uc_ctype == UTT_KW) && (UKEY (cmds[0]) == KW_BRIEF);
+	brief = (cmds[0].uc_ctype == UTT_KW) && (UKEY(cmds[0]) == KW_BRIEF);
 /*
  * Print a heading
  */
 	if (! sounding)
 	{
-		ui_nf_printf ("\n    No soundings have been loaded\n");
+		ui_nf_printf("\n    No soundings have been loaded\n");
 		return;
 	}
 	else
-		ui_nf_printf ("\n            Sounding List\n");
+		ui_nf_printf("\n            Sounding List\n");
 /*
  * Print a line for each sounding
  */
@@ -768,14 +808,14 @@ struct ui_command	*cmds;
 		 * Commas between each and a new line every 8th sounding
 		 */
 			if (nlist)
-				ui_nf_printf (", ");
+				ui_nf_printf(", ");
 
 			if ((nlist % 8) == 0)
-				ui_nf_printf ("\n");
+				ui_nf_printf("\n");
 		/*
 		 * ID
 		 */
-			ui_nf_printf ("%s", sounding->name);
+			ui_nf_printf("%s", sounding->name);
 			nlist++;
 		}
 	/*
@@ -786,112 +826,112 @@ struct ui_command	*cmds;
 		/*
 		 * ID
 		 */
-			ui_nf_printf ("\nID: %s\n", sounding->name);
+			ui_nf_printf("\nID: %s\n", sounding->name);
 		/*
 		 * Format
 		 */
-			ui_nf_printf ("Format: %s  ", 
+			ui_nf_printf("Format: %s  ", 
 				Fmt_name[sounding->format]);
 		/*
 		 * Site name
 		 */
-			ui_nf_printf ("Site: %s  ", sounding->site);
+			ui_nf_printf("Site: %s  ", sounding->site);
 		/*
 		 * Time
 		 */
-			ud_format_date (string, &sounding->rls_time, UDF_FULL);
-			ui_nf_printf ("Time: %s\n", string);
+			ud_format_date(string, &sounding->rls_time, UDF_FULL);
+			ui_nf_printf("Time: %s\n", string);
 		/*
 		 * Site location
 		 */
-			ui_nf_printf ("Alt: %d m  ", (int) sounding->sitealt);
-			ui_nf_printf ("Lat: %.4f deg.  ", sounding->sitelat);
-			ui_nf_printf ("Lon: %.4f deg.\n", sounding->sitelon);
+			ui_nf_printf("Alt: %d m  ", (int)sounding->sitealt);
+			ui_nf_printf("Lat: %.4f deg.  ", sounding->sitelat);
+			ui_nf_printf("Lon: %.4f deg.\n", sounding->sitelon);
 		/*
 		 * Fields
 		 */
 			for (i = 0; sounding->fields[i] != f_null; i++)
 			{
 				if (i == 0)
-					ui_nf_printf ("Fields: ");
+					ui_nf_printf("Fields: ");
 				else
 				{
-					ui_nf_printf (", ");
+					ui_nf_printf(", ");
 					if ((i % 10) == 0)
-						ui_nf_printf ("\n          ");
+						ui_nf_printf("\n          ");
 				}
-				ui_nf_printf ("%s", 
-					fd_name (sounding->fields[i]));
+				ui_nf_printf("%s", 
+					fd_name(sounding->fields[i]));
 			}
 
-			ui_nf_printf ("\n");
+			ui_nf_printf("\n");
 		}
 	/*
 	 * Next sounding
 	 */
 		sounding = sounding->next;
 	}
-	ui_printf ("\n");
+	ui_printf("\n");
 	return;
 }
 
 
 
 
-snd_write_file (cmds)
+snd_write_file(cmds)
 struct ui_command	*cmds;
 /*
  * Write a sounding into a file
  */
 {
-	char	*id_name, *snd_default ();
-	char	*fname = UPTR (cmds[0]);
+	char	*id_name, *snd_default();
+	char	*fname = UPTR(cmds[0]);
 	struct snd	sounding;
-	void	cls_write_file ();
+	void	cls_write_file();
 /*
  * Get the sounding name then the sounding
  */
 	if (cmds[1].uc_ctype != UTT_END)
-		id_name = UPTR (cmds[1]);
+		id_name = UPTR(cmds[1]);
 	else
-		id_name = snd_default ();
+		id_name = snd_default();
 
-	sounding = snd_find_sounding (id_name);
+	sounding = snd_find_sounding(id_name);
 /*
  * Write the CLASS format sounding
  */
-	cls_write_file (fname, &sounding);
+	cls_write_file(fname, &sounding);
 }
 	
 
 
 
 void
-snd_set_default (id_name)
+snd_set_default(id_name)
 char	*id_name;
 /*
  * Set the current default sounding
  */
 {
-	strcpy (Def_snd, id_name);
+	strcpy(Def_snd, id_name);
 	return;
 }
 
 
 
 char *
-snd_default ()
+snd_default()
 /*
  * Return the id of the current default sounding
  */
 {
-	return (Def_snd);
+	return(Def_snd);
 }
 
 
 
 void
-snd_head (id_name, fld, ptr)
+snd_head(id_name, fld, ptr)
 char	*id_name;
 fldtype	fld;
 struct snd_datum	*ptr;
@@ -907,13 +947,13 @@ struct snd_datum	*ptr;
  */
 	while (sounding)
 	{
-		if (! strcmp (id_name, sounding->name))
+		if (! strcmp(id_name, sounding->name))
 			break;
 		sounding = sounding->next;
 	}
 
 	if (! sounding)
-		ui_error ("There is no sounding with name '%s'", id_name);
+		ui_error("There is no sounding with name '%s'", id_name);
 /*
  * Find the index for the field
  */
@@ -924,8 +964,8 @@ struct snd_datum	*ptr;
  * Make sure we got it
  */
 	if (! sounding->fields[i])
-		ui_error ("*BUG* (snd_set_head) -- field '%s' not found",
-			fd_name (fld));
+		ui_error("*BUG* (snd_set_head) -- field '%s' not found",
+			fd_name(fld));
 /*
  * Change the head
  */
@@ -936,7 +976,7 @@ struct snd_datum	*ptr;
 
 
 void
-snd_bump_indices (id_name, newindex)
+snd_bump_indices(id_name, newindex)
 char	*id_name;
 int	newindex;
 /*
@@ -954,14 +994,14 @@ int	newindex;
  */
 	while (sounding)
 	{
-		if (! strcmp (id_name, sounding->name))
+		if (! strcmp(id_name, sounding->name))
 			break;
 		prev = sounding;
 		sounding = sounding->next;
 	}
 
 	if (! sounding)
-		ui_error ("There is no sounding with name '%s'", id_name);
+		ui_error("There is no sounding with name '%s'", id_name);
 /*
  * Increment the indices and maxndx
  */
@@ -976,7 +1016,7 @@ int	newindex;
 
 
 struct snd *
-snd_get_new (id_name)
+snd_get_new(id_name)
 char    *id_name;
 /*
  * Create a new sounding and add it to the list
@@ -989,8 +1029,8 @@ char    *id_name;
  */
         while (sounding)
         {
-                if (! strcmp (sounding->name, id_name))
-                        ui_error ("Sounding name '%s' is already used",
+                if (! strcmp(sounding->name, id_name))
+                        ui_error("Sounding name '%s' is already used",
                                 id_name);
                 prev = sounding;
                 sounding = sounding->next;
@@ -998,7 +1038,7 @@ char    *id_name;
 /*
  * Get a new sounding structure
  */
-        sounding = (struct snd *) calloc (1, sizeof (struct snd));
+        sounding = (struct snd *) calloc(1, sizeof(struct snd));
 /*
  * Link it to the end of the list or make it the head of the list
  */
@@ -1007,6 +1047,5 @@ char    *id_name;
         else     
                 Snd_list = sounding;
 
-	return (sounding);
+	return(sounding);
 }
-

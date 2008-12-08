@@ -227,9 +227,12 @@ define state file-opt-type
 	input 'nssl' SFMT_NSSL
 		next file-opt-id
 	endinput
-        input 'drexel' SFMT_DREXEL
-                next file-opt-id
-        endinput
+	input 'drexel' SFMT_DREXEL
+		next file-opt-id
+	endinput
+	input 'wmo' SFMT_WMO
+		next file-opt-id
+	endinput
 enddef
 
 define state file-type
@@ -276,9 +279,12 @@ define state file-type
 	input 'nssl' SFMT_NSSL
 		next file-opt-id
 	endinput
-        input 'drexel' SFMT_DREXEL
-                next file-opt-id
-        endinput
+	input 'drexel' SFMT_DREXEL
+		next file-opt-id
+	endinput
+	input 'wmo' SFMT_WMO
+		next file-opt-id
+	endinput
 enddef
 
 define state file-opt-id

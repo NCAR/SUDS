@@ -113,8 +113,9 @@
 # define SFMT_CAPE	12
 # define SFMT_NSSL	13
 # define SFMT_DREXEL    14
+# define SFMT_WMO   15
 
-# define MAXFMT		14  /* Increase MAXFMT each time a format is added */
+# define MAXFMT		15  /* Increase MAXFMT each time a format is added */
 
 /*
  * Things we can show

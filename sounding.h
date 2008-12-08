@@ -21,6 +21,10 @@
  *
  * $Id: sounding.h,v 1.3 1991-10-21 22:13:26 burghart Exp $
  */
+# ifndef _SOUNDING_H_
+# define _SOUNDING_H_
+
+# include <stdlib.h>
 
 # include <ui_param.h>		/* for the date stuff */
 # include "fields.h"
@@ -68,3 +72,35 @@ struct snd_datum
  * The current default sounding
  */
 var char	Def_snd[40];
+
+/*
+ * Free allocated pieces belonging to a "struct snd": name,
+ * filename, site, and all associated snd_datum structs
+ */
+static inline void freeSoundingContents(struct snd* sounding)
+{
+	struct snd_datum* datum;
+	struct snd_datum* next;
+	int f;
+/*
+ * Release our strings
+ */
+	free(sounding->name);
+	free(sounding->filename);
+	free(sounding->site);
+/*
+ * Release the snd_datum structures
+ */
+	for (f = 0; f < MAXFLDS; f++)
+	{
+		datum = sounding->dlists[f];
+		while (datum)
+		{
+			next = datum->next;
+			free(datum);
+			datum = next;
+		}
+	}
+}
+
+# endif // _SOUNDING_H_
