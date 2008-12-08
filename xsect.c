@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: xsect.c,v 1.25 1998-05-15 21:44:27 burghart Exp $";
 
 # include <math.h>
+# include <time.h>
+
 # include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
