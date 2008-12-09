@@ -23,6 +23,8 @@
 static char *rcsid = "$Id: xyplot.c,v 1.7 1993-07-23 19:58:10 case Exp $";
 
 # include <math.h>
+# include <time.h>
+
 # include <ui_param.h>
 # include <ui_date.h>
 # include "globals.h"
