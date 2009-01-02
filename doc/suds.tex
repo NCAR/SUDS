@@ -177,7 +177,8 @@ identifier.
 		\tt noaa	& NOAA-mobile format \\
 		\tt nssl	& National Severe Storms Laboratory format \\
 		\tt nws		& National Weather Service format\\
-		\tt rsanal	& RSANAL format \\ \hline
+		\tt rsanal	& RSANAL format \\
+                \tt wmo		& WMO format \\ \hline
 	\end{tabular}
 	\end{center}
 	\caption{Legal formats for the {\tt file} command.}
@@ -197,6 +198,16 @@ convert the site location in $(x,y)$ space into a location in
 (latitude,longitude) space.  If no origin has been specified (see the
 ||origin|| command) when a file in one of these formats is loaded, the user 
 will be prompted for an origin latitude and longitude.
+
+Files in |wmo| format usually contain multiple soundings, but the |only|
+option is provided to allow for loading soundings only from a specific site:
+\begin{example}
+	file [name] |filename| [type] wmo [only |site|] [id] |sounding-id|
+\end{example}
+Also, WMO sounding files are notorious for having bad or mis-formatted
+data.  In general, \suds\ will quietly skip over most of these problems.
+However, the ||wmoQuiet|| flag can be set to false to print messages for
+all problems found.
 
 \section {Creating a Copy of a Sounding}
 \index{copying soundings}
