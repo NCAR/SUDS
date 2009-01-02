@@ -60,6 +60,7 @@ struct snd	snd_find_sounding();
 void	snd_load_file(), snd_set_default();
 int	interp();
 double	fd_ibot(), fd_itop(), fd_istep(), fd_igap();
+void	snd_freeSoundingContents();
 
 
 
@@ -155,21 +156,35 @@ struct ui_command	*cmds;
  * Handle the FILE command to get a new sounding
  */
 {
-	snd_load_file(UPTR(cmds[0]), UKEY(cmds[1]), UKEY(cmds[2]));
+	int type = UKEY(cmds[1]);
+	char* id;
+	char* filter = "";
+	/*
+	 * WMO soundings allow for optional filtering by site name
+	 */
+	if (cmds[2].uc_ctype == UTT_KW)
+	{
+		filter = UPTR(cmds[3]);
+		id = UPTR(cmds[4]);
+	}
+	else
+		id = UPTR(cmds[2]);
+	
+	snd_load_file(UPTR(cmds[0]), UKEY(cmds[1]), id, filter);
 }
 
 
 
 
 void
-snd_load_file(fname, type, id_name)
-char	*fname, *id_name;
+snd_load_file(fname, type, id_name, filter)
+char	*fname, *id_name, *filter;
 int	type;
 /*
  * Load a sounding, given the filename, type, and id name
  */
 {
-	struct snd	*sounding = Snd_list, *prev = 0;
+	struct snd	*sounding, *ss, *end_of_list;
 	int	sCount;
 	int	s;
 	char	sname[64];
@@ -184,39 +199,26 @@ int	type;
  * assume there's exactly one sounding.
  */
 	multiSoundingSupport = (SoundingCountFunc[type] != 0);
-	sCount = (multiSoundingSupport) ? (*SoundingCountFunc[type])(fname) : 1;
-	if (! sCount)
+	if (multiSoundingSupport) 
 	{
-		ui_warning("No soundings found in file '%s'", fname);
-		return;
+		sCount = (*SoundingCountFunc[type])(fname, filter);
+		if (! sCount)
+		{
+			if (strlen(filter) > 0)
+				ui_warning("No soundings for '%s' in %s",
+					filter, fname);
+			else
+				ui_warning("No soundings found in '%s'", fname);
+			return;
+		}
 	}
+	else
+		sCount = 1;
 /*
  * Loop through the soundings in this file
  */
 	for (s = 0; s < sCount; s++)
 	{
-	/*
-	 * Copy id_name to our sounding name
-	 */
-		strncpy(sname, id_name, sizeof(sname));
-	/*
-	 * Generate a suffix for this sounding name if there's more than one
-	 * sounding in the file.
-	 */
-		char suffix[8];
-		if (sCount > 1)
-			sprintf(sname + strlen(sname), "_%d", s + 1);
-	/*
-	 * Find the end of the list, looking for name collisions on the way
-	 */
-		while (sounding)
-		{
-			if (! strcmp(sounding->name, sname))
-				ui_error("Sounding name '%s' is already used", 
-					sname);
-			prev = sounding;
-			sounding = sounding->next;
-		}
 	/*
 	 * Get a new sounding structure
 	 */
@@ -226,14 +228,51 @@ int	type;
 	 * into our structure
 	 */
 		if (multiSoundingSupport)
-			(*GetSoundingFunc[type])(fname, s, sounding);
+			(*GetSoundingFunc[type])(fname, filter, s, sounding);
 		else
 			(*GetSoundingFunc[type])(fname, sounding);
 	/*
-	 * Link it to the end of the list or make it the head of the list
+	 * Copy id_name (or <id_name>_<site_name>_<ddhh>) to our sounding name
 	 */
-		if (prev)
-			prev->next = sounding;
+		if (sCount == 1)
+			strncpy(sname, id_name, sizeof(sname));
+		else
+		{
+			/*
+			 * append site name and sounding date/hour to the
+			 * sounding id name
+			 */
+			date sdate = sounding->rls_time;
+			int ddhh = (sdate.ds_yymmdd % 100) * 100 +
+				sdate.ds_hhmmss / 10000;
+			int i;
+			sprintf(sname, "%s_%s_%04d", id_name, sounding->site,
+				ddhh);
+			/*
+			 * make it all lower case
+			 */
+			for (i = 0; i < strlen(sname); i++)
+				sname[i] = tolower(sname[i]);
+		}
+	/*
+	 * Find the end of the list, looking for name collisions on the way
+	 */
+		end_of_list = 0;
+		ss = Snd_list;
+		while (ss)
+		{
+			if (! strcmp(ss->name, sname))
+				ui_error("Sounding name '%s' is already used", 
+					sname);
+			end_of_list = ss;
+			ss = ss->next;
+		}
+	/*
+	 * Link the new sounding to the end of the list or make it the head 
+	 * of the list
+	 */
+		if (end_of_list)
+			end_of_list->next = sounding;
 		else
 			Snd_list = sounding;
 	/*
@@ -248,6 +287,17 @@ int	type;
 		strcpy(sounding->filename, fname);
 	
 		sounding->format = type;
+	/*
+	 * If more than one sounding is being loaded, print a message
+	 */
+		if (sCount != 1) {
+			int ddhh = (sounding->rls_time.ds_yymmdd % 100) * 100 +
+				sounding->rls_time.ds_hhmmss / 10000;
+			ui_printf("sounding for site %s, date/hour: %d/%02d ",
+				sounding->site, sounding->rls_time.ds_yymmdd % 100,
+				sounding->rls_time.ds_hhmmss / 10000);
+			ui_printf("loaded with id %s\n", sname);
+		}				
 	}
 /*
  * Set the default sounding
@@ -697,7 +747,7 @@ struct ui_command	*cmds;
 /*
  * Release allocated memory belonging to the struct snd
  */
-	freeSoundingContents(sounding);
+	snd_freeSoundingContents(sounding);
 /*
  * Tell edit to forget if necessary
  */
@@ -1053,4 +1103,36 @@ char    *id_name;
                 Snd_list = sounding;
 
 	return(sounding);
+}
+
+
+void
+snd_freeSoundingContents(struct snd* sounding)
+{
+	struct snd_datum* datum;
+	struct snd_datum* next;
+	int f;
+/*
+ * Release our strings
+ */
+	free(sounding->name);
+	free(sounding->filename);
+	free(sounding->site);
+/*
+ * Release the snd_datum structures
+ */
+	for (f = 0; f < MAXFLDS; f++)
+	{
+		datum = sounding->dlists[f];
+		while (datum)
+		{
+			next = datum->next;
+			free(datum);
+			datum = next;
+		}
+	}
+/*
+ * Zero everything
+ */
+	memset(sounding, 0, sizeof(*sounding));
 }

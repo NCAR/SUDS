@@ -13,7 +13,7 @@ suds_SOURCES = suds.c \
 	foote.c gale.c hodograph.c init_globals.c interpolate.c \
 	jaws.c mist.c ncar.c netcdf.c nmc.c noaa.c nssl.c nws.c \
 	output.c rsanal.c skewt.c sounding.c spline.c util.c \
-	windstep.c wmo.c xsect.c xyplot.c \
+	windstep.c wmo.cc xsect.c xyplot.c \
 	\
 	color.h fields.h flags.h globals.h keywords.h sounding.h
 

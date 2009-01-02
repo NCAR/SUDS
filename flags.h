@@ -45,3 +45,4 @@ var bool	Flg_lsqfit;	/* Use least squares fit for interpolation */
 var bool	Flg_annotate;	/* Annotate on xsect plot? */
 var bool	Flg_oldCLASS;	/* Write files in old class format? */
 var bool	Flg_uwind;	/* Compute moisture flux in u-wind direction */
+var bool	Flg_wmoQuiet;	/* suppress verbose complaints for WMO files? */

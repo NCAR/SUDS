@@ -1,6 +1,11 @@
 	FILE [NAME] filename [TYPE] format [ID] id-name
+		OR
+	FILE [NAME] filename [TYPE] WMO [ONLY sitename] [ID] id-name
 
 The FILE command makes the sounding in file 'filename' available for use.
 The parameter 'format' is the type of file being accessed (class, nws, netcdf,
 etc.), and 'id-name' is the name to be assigned to the sounding.  The current
 default sounding will be re-assigned by this command.
+
+For WMO sounding files, a specific sounding site may optionally 
+be selected if "ONLY sitename" is added.

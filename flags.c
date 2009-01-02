@@ -67,6 +67,8 @@ struct flgst
 		"Write files in old CLASS format "},
 	{ "mflux_u",	&Flg_uwind,	TRUE,
 		"Compute moisture flux in u-wind direction "},
+	{ "wmoQuiet",	&Flg_wmoQuiet,	TRUE,
+		"Suppress verbose messages about problems in WMO files"},
 	{ ___,		___,		___,		___ }
 };
 

@@ -231,7 +231,7 @@ define state file-opt-type
 		next file-opt-id
 	endinput
 	input 'wmo' SFMT_WMO
-		next file-opt-id
+		next wmo-opt-only
 	endinput
 enddef
 
@@ -283,7 +283,7 @@ define state file-type
 		next file-opt-id
 	endinput
 	input 'wmo' SFMT_WMO
-		next file-opt-id
+		next wmo-opt-only
 	endinput
 enddef
 
@@ -1457,4 +1457,28 @@ define state windstep-num
 	endinput
 enddef
 
+!
+! For WMO soundings, we can filter by site, e.g., "ONLY 52983"
+!
+define state wmo-opt-only
+	helpfile 'file'
+	input 'only' KW_ONLY
+		next wmo-only-site
+	endinput
+	! the rest is like file-opt-id
+	input 'id' KW_SUGAR
+		ignore
+		next file-idname
+	endinput
+	input string
+		lowercase
+		next ust$no_more
+	endinput
+enddef
 
+define state wmo-only-site
+	helpfile 'file'
+	input string
+		next file-opt-id
+	endinput
+enddef
