@@ -7,7 +7,7 @@ RDSS Libraries
 SUDS requires that the RDSS Libraries package has already been
 installed.  It is available at:
 
-	ftp://ftp.atd.ucar.edu/pub/archive/rdpdist
+	ftp://ftp.eol.ucar.edu/pub/archive/rdpdist
 
 Look for a file named rdsslibs-<version>.tar.gz.
 
