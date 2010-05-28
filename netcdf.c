@@ -85,10 +85,11 @@ struct snd	*sounding;
  * Get the sounding from the given netCDF file
  */
 {
-	int	len, i, status, ndx, npts, fld, nflds, id;
+	int	len, i, status, ndx, fld, nflds, id;
 	int	v_id[MAXFLDS], dims[MAX_VAR_DIMS], ndims, natts;
         long    zero = 0;
 	long	basetime;
+	long    npts;
 	float	v, flag[MAXFLDS], *fdata;
 	double	*ddata, dval;
 	void	*dptr;
@@ -175,7 +176,7 @@ struct snd	*sounding;
  * Number of points
  */
 	if (ncdiminq (Sfile, ncdimid (Sfile, "time"), (char *) 0, 
-                (long *) &npts) == -1)
+                &npts) == -1)
 		ui_error ("Unable to get number of points in file!");
 /*
  * Sounding fields (We can't just ask what fields are available, we have 
@@ -246,7 +247,7 @@ struct snd	*sounding;
 	 */
 		dptr = (type == NC_FLOAT) ? (void *)fdata : (void *)ddata;
 		
-		status = ncvarget (Sfile, v_id[fld], &zero, (long *) &npts, 
+		status = ncvarget (Sfile, v_id[fld], &zero, &npts, 
 				   dptr);
 
 		if (status == -1)
@@ -329,12 +330,13 @@ struct ui_command	*cmds;
  * Handle the NETCDF command for writing a netCDF sounding file
  */
 {
-	int	i, j, offset, ndx, nflds, c;
+	int	i, j, offset, nflds, c;
 	int	have_time = FALSE, have_lat = FALSE, have_lon = FALSE;
 	int	v_sitelat, v_sitelon, v_sitealt, v_base, v_time, v_lat, v_lon;
 	int	v_id[MAXFLDS], timedim;
 	int	add_alt = FALSE, v_alt, n_alts;
 	long	current_time, base_time, zero = 0;
+	long    ndx;
 	char	*fname, *id_name, *snd_default ();
 	struct snd	sounding, snd_find_sounding ();
 	struct tm	t;
@@ -512,19 +514,19 @@ struct ui_command	*cmds;
 		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
 		{
 			float	faketime = 0.1 * ndx;
-			ncvarput1 (Sfile, v_time, (long *) &ndx, &faketime);
+			ncvarput1 (Sfile, v_time, &ndx, &faketime);
 		}
 /*
  * If we don't have latitude or longitude, fill in with the site lat and/or lon
  */
 	if (! have_lat)
 		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
-			ncvarput1 (Sfile, v_lat, (long *) &ndx, 
+			ncvarput1 (Sfile, v_lat, &ndx, 
                                        &sounding.sitelat);
 
 	if (! have_lon)
 		for (ndx = 0; ndx <= sounding.maxndx; ndx++)
-			ncvarput1 (Sfile, v_lon, (long *) &ndx, 
+			ncvarput1 (Sfile, v_lon, &ndx, 
                                        &sounding.sitelon);
 /*
  * Site lat, lon, altitude
@@ -568,13 +570,11 @@ struct ui_command	*cmds;
 		/*
 		 * Write the datum
 		 */
-			ncvarput1 (Sfile, v_id[i], (long *) &ndx, 
-                                             (void *)(&val));
+			ncvarput1 (Sfile, v_id[i], &ndx, (void *)(&val));
 		}
 
 		if (add_alt)
-			ncvarput1 (Sfile, v_alt, (long *) ndx, 
-                                             (void *)(altbuf + ndx));
+			ncvarput1 (Sfile, v_alt, ndx, (void *)(altbuf + ndx));
 	}
 /*
  * Close the file
