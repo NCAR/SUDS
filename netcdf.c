@@ -75,6 +75,32 @@ struct fldmatch
 static int	Sfile;
 
 
+char *
+nc_getstringatt(int cdfid, int varid, char *att_name, char *att_val, int len)
+/*
+ * Retrieve named attribute from given varid, making sure value is of
+ * type NC_CHAR and not longer than len.  Returns att_val if 
+ * if successful, else returns NULL without changing att_val[].
+ */
+{
+	nc_type att_type;
+	int att_len;
+	int saveopts = ncopts;
+
+	ncopts = 0;
+	if ((ncattinq (cdfid, varid, att_name, &att_type, &att_len) >= 0) 
+	    && (att_len+1 < len) && (att_type == NC_CHAR))
+	{
+		ncopts = saveopts;
+		ncattget (cdfid, varid, att_name, (void *)att_val);
+		att_val[att_len] = '\0';
+		return (att_val);
+	}
+	ncopts = saveopts;
+	return (NULL);
+}
+
+
 
 
 void
@@ -155,9 +181,28 @@ struct snd	*sounding;
 		ui_error ("Can't find 'site_lon' or 'lon'!", ncerr);
 	sounding->sitelon = v;
 
-	if ((ncvarget1 (Sfile, ncvarid (Sfile, "site_alt"), &zero, &v) == -1)&&
-		(ncvarget1 (Sfile, ncvarid (Sfile, "alt"), &zero, &v) == -1))
-		ui_error ("Can't find 'site_alt' or 'alt'!", ncerr);
+	int altid = ncvarid (Sfile, "site_alt");
+	float altfactor = 1000.0;
+	char altunits[128];
+	if (altid < 0)
+	  altid = ncvarid (Sfile, "alt");
+	if (altid < 0 || ncvarget1 (Sfile, altid, &zero, &v) == -1)
+	{
+	  ui_error ("Can't find 'site_alt' or 'alt'!", ncerr);
+	}
+	else
+	{
+	  if (! nc_getstringatt(Sfile, altid, "units", altunits, 
+				sizeof(altunits)))
+	  {
+	    strcpy(altunits, "km");
+	  }	      
+	  if (strcmp(altunits, "meters") == 0)
+	  {
+	    ui_warning("Altitudes already in meters, not converting.");
+	    altfactor = 1.0;
+	  }
+	}
 	sounding->sitealt = v;
 /*
  * Sounding release date and time
@@ -168,7 +213,8 @@ struct snd	*sounding;
 
 	t = gmtime (&basetime);
 
-	sounding->rls_time.ds_yymmdd = 10000 * t->tm_year + 
+	/* Use 4-digit y2k convention in ui date by adding 1900 */
+	sounding->rls_time.ds_yymmdd = 10000 * (t->tm_year + 1900) + 
 		100 * (t->tm_mon + 1) + t->tm_mday;
 	sounding->rls_time.ds_hhmmss = 10000 * t->tm_hour + 100 * t->tm_min + 
 		t->tm_sec;
@@ -289,10 +335,10 @@ struct snd	*sounding;
 			else
 				sounding->dlists[fld] = pt;
 		/*
-		 * Change altitude to meters
+		 * Convert altitude to meters
 		 */
 			if (sounding->fields[fld] == f_alt)
-				fdata[ndx] *= 1000;
+				fdata[ndx] *= altfactor;
 		/*
 		 * Assign the value and index
 		 */
@@ -574,7 +620,7 @@ struct ui_command	*cmds;
 		}
 
 		if (add_alt)
-			ncvarput1 (Sfile, v_alt, ndx, (void *)(altbuf + ndx));
+			ncvarput1 (Sfile, v_alt, &ndx, (void *)(altbuf + ndx));
 	}
 /*
  * Close the file
