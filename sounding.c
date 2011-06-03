@@ -142,6 +142,10 @@ snd_init()
 	GetSoundingFunc[SFMT_WMO]	= wmo_get_sounding;
 	SoundingCountFunc[SFMT_WMO]	= wmo_snd_count;
 	Fmt_name[SFMT_WMO] = "WMO";
+	
+	GetSoundingFunc[SFMT_EOL]     = cls_read_file;
+	SoundingCountFunc[SFMT_EOL]   = 0;
+	Fmt_name[SFMT_EOL] = "EOL";
 
 	Init = TRUE;
 }

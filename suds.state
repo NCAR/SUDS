@@ -233,6 +233,9 @@ define state file-opt-type
 	input 'wmo' SFMT_WMO
 		next wmo-opt-only
 	endinput
+	input 'eol' SFMT_EOL
+	  next file-opt-id
+	endinput
 enddef
 
 define state file-type

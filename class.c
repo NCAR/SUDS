@@ -24,6 +24,7 @@ static char *rcsid = "$Id: class.c,v 1.25 2006-03-09 02:49:01 burghart Exp $";
 
 # include <stdio.h>
 # include <errno.h>
+# include <ctype.h>
 # include <time.h>
 # include <math.h>
 # include <ui_param.h>
@@ -71,7 +72,7 @@ struct fldmatch F_match_tbl[] =
  * Forward declarations
  */
 void	cls_newclass (), cls_lowell (), cls_ncbody (), cls_wr_old ();
-void	cls_wr_new ();
+void	cls_wr_new (), cls_eol (), cls_eol_body();
 
 /*
  * The sounding file
@@ -133,7 +134,7 @@ struct snd	*sounding;
 	{
 		string[pos++] = character;
 	/*
-	 * If we have the string "Data Type:", this is a new CLASS
+	 * If the string starts with "Data Type:", this is a new CLASS
 	 * format file, so deal with it elsewhere
 	 */
 		if (pos == 10 && ! strncmp (string, "Data Type:", 10))
@@ -141,6 +142,15 @@ struct snd	*sounding;
 			cls_newclass (sounding);
 			return;
 		}
+	/*
+	 * If the string starts with "Data Type/Direction:", this is an EOL
+	 * format file, handled separately.
+	 */
+        if (pos == 20 && ! strncmp (string, "Data Type/Direction:", 20))
+        {
+            cls_eol (sounding);
+            return;
+        }
 	/*
 	 * Extra kluge for U. Lowell soundings, which have some
 	 * extra garbage in the headers
@@ -993,3 +1003,190 @@ struct snd	*sounding;
 	return;
 }
 
+void
+cls_eol (sounding)
+struct snd  *sounding;
+/*
+ * We have an EOL format file opened and the first 20 characters 
+ * ("Data Type/Direction:") have been read already.  Read the rest and stuff 
+ * the info into 'sounding'.
+ */
+{               
+    char    string[STRSIZE];
+    int i, year, month, day, hour, minute, second;
+    bool dropsonde = 0;
+/*
+ * Read the remainder of line 1 and trim trailing whitespace. If it ends 
+ * with "/Ascending", this is an upsonde.
+ */
+    fgets (string, STRSIZE, Sfile);
+    for (i = strlen (string) - 1; isspace(string[i]); i--)
+        string[i] = '\0';
+    if (strlen(string) >= 11)
+        dropsonde = ! strcmp(string + strlen(string) - 11, "/Descending");
+    ui_printf("This %s a dropsonde\n", (dropsonde ? "IS" : "isn't"));
+/*
+ * Ignore lines 2 and 3
+ */
+    fgets (string, STRSIZE, Sfile);
+    fgets (string, STRSIZE, Sfile);
+/*
+ * Read the fourth line and strip trailing whitespace
+ */
+    fgets (string, STRSIZE, Sfile);
+    for (i = strlen (string) - 1; isspace(string[i]); i--)
+        string[i] = '\0';
+/*
+ * Build a site name from the fourth line info
+ */
+    if (strlen(string) >= 43) {
+        sounding->site = (char *) malloc (strlen (string) - 42);
+        strcpy (sounding->site, string + 43);
+    } else {
+        sounding->site = (char *) malloc (1);
+        sounding->site[0] = '\0';
+    }
+/*
+ * Get the lon, lat, and alt
+ */
+    fscanf (Sfile, "%*[^:]:%*[^EW]%*c%f%*[^NS]%*c%f,%f", &sounding->sitelon, 
+            &sounding->sitelat, &sounding->sitealt);
+/*
+ * Sounding release date and time
+ */
+    fscanf (Sfile, "%*[^:]:%d,%d,%d,%d:%d:%d", &year, &month, 
+        &day, &hour, &minute, &second);
+    year -= 1900;
+
+    sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
+    sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
+    ui_printf("EOL release time %06d %06d\n", sounding->rls_time.ds_yymmdd,
+            sounding->rls_time.ds_hhmmss);
+/*
+ * Skip the rest of this line and the next eight lines
+ */
+    for (i = 0; i < 9; i++)
+        fgets (string, STRSIZE, Sfile);
+/*
+ * Read the body of the file
+ */
+    cls_eol_body (sounding, dropsonde);
+}
+
+void
+cls_eol_body (sounding, dropsonde)
+struct snd  *sounding;
+bool dropsonde;
+/*
+ * Read the body of an EOL format file
+ */
+{
+    char    string[STRSIZE];
+    int     i, status = 0, ndx, nfld;
+    struct snd_datum    *dptr[MAXFLDS], *prevpt, *pt, *nextpt;
+    float   val[MAXFLDS];
+    float   badval = -999.0;
+/*
+ * Initialize the data pointers
+ */
+    for (i = 0; i < MAXFLDS; i++)
+        dptr[i] = 0;
+/*
+ * Assign the fields (hard-wired)
+ */
+    sounding->fields[0] = f_time;
+    sounding->fields[1] = f_hour;
+    sounding->fields[2] = f_minute;
+    sounding->fields[3] = f_second;
+    sounding->fields[4] = f_pres;
+    sounding->fields[5] = f_temp;
+    sounding->fields[6] = f_dp;
+    sounding->fields[7] = f_rh;
+    sounding->fields[8] = f_u_wind;
+    sounding->fields[9] = f_v_wind;
+    sounding->fields[10] = f_wspd;
+    sounding->fields[11] = f_wdir;
+    sounding->fields[12] = f_ascent;
+    sounding->fields[13] = f_alt;
+    sounding->fields[14] = f_lon;
+    sounding->fields[15] = f_lat;
+    sounding->fields[16] = f_gpsalt;
+    sounding->fields[17] = f_null;
+    
+    nfld = 17;
+/*
+ * Get the data
+ */
+    for (ndx = 0; ; ndx++)
+    {
+    /*
+     * Read the data values from the next line.  (we need the %c here 
+     * because the fields are sometimes delimited with commas, sometimes 
+     * with spaces.  Explicitly reading a character gets us past either 
+     * way.)
+     */
+        for (i = 0; i < nfld && status != EOF; i++)
+            status = fscanf (Sfile, "%f", &val[i]);
+
+        if (status == EOF || status == 0)
+            break;
+    /*
+     * Put the data points into their respective data lists
+     */
+        for (i = 0; i < nfld; i++)
+        {
+        /*
+         * Don't put bad values in the list
+         */
+            if (val[i] == badval)
+                continue;
+        /*
+         * Get a new point
+         */
+            prevpt = dptr[i];
+            dptr[i] = (struct snd_datum *)
+                calloc (1, sizeof (struct snd_datum));
+        /*
+         * Set the value and the index
+         */
+            dptr[i]->value = val[i];
+            dptr[i]->index = ndx;
+        /*
+         * Link the point into the list or make it the head
+         */
+            if (prevpt) {
+                prevpt->next = dptr[i];
+                dptr[i]->prev = prevpt;
+            } else {
+                sounding->dlists[i] = dptr[i];
+            }
+        }
+    }
+/*
+ * Set the max index number for the sounding
+ */
+    sounding->maxndx = ndx - 1;
+/*
+ * Swap data order if it's a dropsonde
+ */
+    if (dropsonde) {
+        for (i = 0; i < nfld; i++)
+        {
+            pt = sounding->dlists[i];
+            while (pt) {
+                prevpt = pt->prev;
+                nextpt = pt->next;
+                pt->prev = nextpt;
+                pt->next = prevpt;
+                pt->index = sounding->maxndx - pt->index;
+                sounding->dlists[i] = pt;
+                pt = nextpt;
+            }
+        }
+    }
+/*
+ * Close the file and return
+ */
+    fclose (Sfile);
+    return;
+}

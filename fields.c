@@ -79,6 +79,19 @@ static struct
 	{f_qwind, "wind quality", "",
 		{"qwind", "qdz", ""},
 		0.0, 	10.0,	0.0,	0.1	},
+	{f_hour, "hour", "",
+        {"hour", ""},
+        0.0, 24.0, 12.0, 0.25 },
+	{f_minute, "minute", "",
+        {"minute", ""},
+        0.0, 60.0, 30.0, 1.0 },
+	{f_second, "second", "",
+        {"second", ""},
+        0.0, 60.0, 30.0, 1.0 },
+	{f_gpsalt, "GPS altitude", "m",
+        {"gpsalt", ""},
+        0.0,    16000.0,    0.0,    500.0,
+        1600.0, 16000.0,    50.0,   500.0   },
 /*
  * "elev" doesn't belong here as a synonym for range, but it works as a
  * temporary kluge to deal with STORM Project Office "pseudo-new-CLASS" format
