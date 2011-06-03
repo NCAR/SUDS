@@ -1024,7 +1024,6 @@ struct snd  *sounding;
         string[i] = '\0';
     if (strlen(string) >= 11)
         dropsonde = ! strcmp(string + strlen(string) - 11, "/Descending");
-    ui_printf("This %s a dropsonde\n", (dropsonde ? "IS" : "isn't"));
 /*
  * Ignore lines 2 and 3
  */
@@ -1060,8 +1059,6 @@ struct snd  *sounding;
 
     sounding->rls_time.ds_yymmdd = 10000 * year + 100 * month + day;
     sounding->rls_time.ds_hhmmss = 10000 * hour + 100 * minute + second;
-    ui_printf("EOL release time %06d %06d\n", sounding->rls_time.ds_yymmdd,
-            sounding->rls_time.ds_hhmmss);
 /*
  * Skip the rest of this line and the next eight lines
  */
