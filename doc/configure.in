@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(suds-doc, [20020827], )
+AC_INIT(suds-doc, [20110603], )
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile])
