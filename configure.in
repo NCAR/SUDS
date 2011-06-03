@@ -1,9 +1,10 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(SUDS, [20110603], rdp-support@atd.ucar.edu)
+AC_INIT(SUDS, [20110603], rdp-support@eol.ucar.edu)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([suds.c])
 
 dnl Allow for RDSS home to be set via --with-rdss=<dir>, default to ${prefix}
+
 if test x$prefix = xNONE; then
 	RDSS_DIR=$ac_default_prefix
 else

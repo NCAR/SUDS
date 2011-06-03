@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(suds-doc, [20110603], )
+AC_INIT(suds-doc, [20110603], rdp-support@eol.ucar.edu)
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_FILES([Makefile])
