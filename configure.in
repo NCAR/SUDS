@@ -73,10 +73,24 @@ AC_CHECK_LIB([Xaw], [XawInitializeWidgetSet], ,
 	[echo "Cannot find Athena widget library libXaw"; exit 1])
 
 #
-# netCDF, rdssutil, rdssui, and rdssgraph libraries
+# netCDF
 #
-AC_CHECK_LIB([netcdf], [ncopen], , 
-	[echo "NetCDF library not found.  NetCDF use is disabled."])
+AC_SEARCH_LIBS([ncopen], [netcdf], , )
+# If finding netCDF fails the first time, try adding HDF libraries and see if 
+# that fixes things...
+if test "$ac_cv_search_ncopen" = "no"; then
+  unset ac_cv_search_ncopen # remove the now-cached value so we can try again
+  extra_libs="-lhdf5_hl -lhdf5"
+  AC_SEARCH_LIBS([ncopen], [netcdf], , , [$extra_libs])
+  if test "$ac_cv_search_ncopen" = "no"; then
+	  echo "NetCDF library not found."
+	  exit 1
+	fi
+	LIBS="$LIBS $extra_libs"
+fi
+HAVE_LIB_NETCDF=1
+	
+# rdssutil, rdssui, and rdssgraph libraries
 AC_CHECK_LIB([rdssutil], [fixdir], , 
 	[echo "Cannot find rdssutil library"; exit 1])
 AC_CHECK_LIB([rdssui], [ui_reset], , 
