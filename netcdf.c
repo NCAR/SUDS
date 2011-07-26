@@ -22,8 +22,6 @@
 
 static char *rcsid = "$Id: netcdf.c,v 1.21 2002-08-23 23:00:34 burghart Exp $";
 
-# if HAVE_LIBNETCDF
-
 # include <stdlib.h>
 # include <time.h>
 
@@ -627,29 +625,3 @@ struct ui_command	*cmds;
  */
 	ncclose (Sfile);
 }
-
-
-# else	/* NetCDF not enabled */
-
-# include <ui.h>
-# include "sounding.h"
-
-
-void
-nc_read_file (fname, sounding)
-char	*fname;
-struct snd	*sounding;
-{
-	ui_error ("NetCDF functions not enabled on your system");
-}
-
-
-void
-nc_write_file (cmds)
-struct ui_command	*cmds;
-{
-	ui_error ("NetCDF functions not enabled on your system");
-}
-
-
-# endif /* HAVE_LIBNETCDF */
